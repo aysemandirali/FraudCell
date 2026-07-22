@@ -20,8 +20,14 @@ interface AuthState {
   setHydrated: () => void;
 }
 
+/**
+ * Depoya yalnızca bu alanlar yazılır. persist'e ayrı bir tip olarak verilir;
+ * aksi hâlde partialize'ın tüm state'i döndürmesi beklenir.
+ */
+type PersistedAuth = Pick<AuthState, 'token' | 'user'>;
+
 export const useAuth = create<AuthState>()(
-  persist(
+  persist<AuthState, [], [], PersistedAuth>(
     (set) => ({
       user: null,
       token: null,

@@ -197,6 +197,36 @@ export const adminApi = {
   }) => api.post<{ id: string; temporaryPassword: string }>('/admin/staff', input),
 };
 
+/* ------------------------------------------------------- AI metrikleri -- */
+
+export interface FraudTypeAccuracy {
+  fraudType: FraudType;
+  accuracy: number;
+  sampleSize: number;
+}
+
+/**
+ * Süpervizör panosundaki AI metrikleri (AIM-002..005, DSH-006/007).
+ *
+ * Bunlar vaka listesinden türetilemez: ground truth, analistin override'ı ve
+ * nihai kararıyla karşılaştırma gerektirir. Bu yüzden sahibi AI Service'tir.
+ */
+export interface AiMetrics {
+  /** Fraud türü tahmininin override edilmeden kalma oranı. */
+  overallAccuracy: number;
+  /** AI kararı ile analistin nihai kararının uyuşma oranı. */
+  decisionAgreement: number;
+  /** AI'ın BLOK dediği ama analistin onayladığı vakaların oranı. */
+  falsePositiveRate: number;
+  totalPredictions: number;
+  modelVersion: string;
+  byFraudType: FraudTypeAccuracy[];
+}
+
+export const aiApi = {
+  metrics: () => api.get<AiMetrics>('/ai/metrics'),
+};
+
 /* ----------------------------------------------------- Sistem sağlığı -- */
 
 export interface ServiceHealth {
@@ -209,4 +239,11 @@ export interface ServiceHealth {
 export const systemApi = {
   /** Servis kapatma demosunda arayüzün degraded uyarısı göstermesi için. */
   health: () => api.get<ServiceHealth[]>('/system/health'),
+
+  /**
+   * Demo kontrol panelinden servis durdurup başlatma.
+   * Yalnızca demo profilinde açıktır; üretim yapılandırmasında bu uç bulunmaz.
+   */
+  setStatus: (name: string, status: 'UP' | 'DOWN') =>
+    api.post<ServiceHealth[]>(`/system/health/${name}`, { status }),
 };

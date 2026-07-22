@@ -24,4 +24,5 @@ export const queryKeys = {
   audit: (page: number) => ['audit', page] as const,
   analysts: ['analysts'] as const,
   health: ['health'] as const,
+  aiMetrics: ['ai', 'metrics'] as const,
 };

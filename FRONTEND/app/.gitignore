@@ -9,3 +9,6 @@ dist-ssr
 coverage
 *.log
 .DS_Store
+
+# TypeScript incremental build cache — makineye ozel, repoya girmez
+*.tsbuildinfo

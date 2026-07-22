@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   adminApi,
+  aiApi,
   caseApi,
   gamificationApi,
   notificationApi,
@@ -207,6 +208,28 @@ export function useAnalysts() {
   return useQuery({ queryKey: queryKeys.analysts, queryFn: () => adminApi.analysts() });
 }
 
+export function useCreateStaff() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: adminApi.createStaff,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.analysts });
+    },
+  });
+}
+
+/* --------------------------------------------------------- AI metrikleri -- */
+
+export function useAiMetrics() {
+  return useQuery({
+    queryKey: queryKeys.aiMetrics,
+    queryFn: () => aiApi.metrics(),
+    // AI servisi kapalıyken pano tamamen boş kalmasın; widget kendi
+    // "geçici olarak kullanılamıyor" durumunu gösterir (doküman §30).
+    retry: false,
+  });
+}
+
 /* ------------------------------------------------------- Sistem sağlığı -- */
 
 export function useSystemHealth() {
@@ -215,5 +238,17 @@ export function useSystemHealth() {
     queryFn: () => systemApi.health(),
     // Servis kapatma demosunda banner'ın hızlı tepki vermesi için.
     refetchInterval: 10_000,
+  });
+}
+
+/** Demo kontrol paneli: servisi durdur/başlat ve tüm panoyu tazele. */
+export function useToggleService() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { name: string; status: 'UP' | 'DOWN' }) =>
+      systemApi.setStatus(input.name, input.status),
+    onSuccess: () => {
+      void queryClient.invalidateQueries();
+    },
   });
 }

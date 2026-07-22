@@ -33,7 +33,12 @@ const BASE = '/api/v1';
 
 /* ============================================================ Zarflar == */
 
-function ok<T>(data: T, status = 200): HttpResponse {
+/**
+ * msw v2'de HttpResponse generic bir sınıftır ve HttpResponse.json() StrictResponse
+ * döner. Yardımcıları düz `Response` ile tiplemek hem doğru hem de tip daralmasının
+ * (isResponse) çalışmasını sağlar — HttpResponse ve StrictResponse ikisi de Response'tur.
+ */
+function ok<T>(data: T, status = 200): Response {
   const body: ApiSuccess<T> = { success: true, data, error: null, meta: { traceId: ulid() } };
   return HttpResponse.json(body, { status });
 }
@@ -43,7 +48,7 @@ function fail(
   code: string,
   message: string,
   details?: Record<string, unknown>,
-): HttpResponse {
+): Response {
   const body: ApiFailure = {
     success: false,
     data: null,
@@ -78,26 +83,26 @@ function currentUser(request: Request): MockUser | null {
 }
 
 /** Kimliği doğrulanmış kullanıcıyı ya da 401 yanıtını döner. */
-function requireUser(request: Request): MockUser | HttpResponse {
+function requireUser(request: Request): MockUser | Response {
   const user = currentUser(request);
   if (!user) return fail(401, 'UNAUTHENTICATED', 'Bu işlem için giriş yapmalısın.');
   return user;
 }
 
-function isResponse(value: unknown): value is HttpResponse {
-  return value instanceof HttpResponse;
+function isResponse(value: unknown): value is Response {
+  return value instanceof Response;
 }
 
 /**
  * Kaynak sahipliği doğrulanamadığında kaynağın varlığını sızdırmamak için
  * 403 yerine 404 döneriz (doküman §7 — IDOR).
  */
-function notFound(): HttpResponse {
+function notFound(): Response {
   return fail(404, 'RESOURCE_NOT_FOUND', 'Kayıt bulunamadı.');
 }
 
 /** İlgili servis kapalıysa 503 döner — arayüz degraded modunu gösterir. */
-function guardService(name: string): HttpResponse | null {
+function guardService(name: string): Response | null {
   if (serviceStatus(name) === 'DOWN') {
     return fail(
       503,
@@ -644,6 +649,110 @@ export const handlers = [
     return ok(analysts);
   }),
 
+  http.post(`${BASE}/admin/staff`, async ({ request }) => {
+    const user = requireUser(request);
+    if (isResponse(user)) return user;
+    // Personel hesabını yalnızca admin açabilir (ROLE-012).
+    if (user.role !== 'ADMIN') {
+      return fail(403, 'FORBIDDEN', 'Personel hesabı yalnızca yönetici oluşturabilir.');
+    }
+
+    const body = (await request.json()) as {
+      fullName: string;
+      email: string;
+      role: 'ANALYST' | 'SUPERVISOR';
+      specialties: MockUser['specialties'];
+      regions: MockUser['regions'];
+    };
+
+    if (findUserByEmail(body.email)) {
+      return fail(409, 'EMAIL_ALREADY_REGISTERED', 'Bu e-posta zaten kayıtlı.');
+    }
+
+    // Geçici şifre şifre politikasını sağlar: 8+, büyük harf, rakam, özel karakter.
+    const temporaryPassword = `Fc${Math.floor(1000 + Math.random() * 9000)}!ge`;
+
+    const created: MockUser = {
+      id: ulid(),
+      fullName: body.fullName,
+      role: body.role,
+      email: body.email,
+      specialties: body.specialties,
+      regions: body.regions,
+      password: temporaryPassword,
+      failedAttempts: 0,
+      lockedUntil: null,
+      activeCases: 0,
+      // Yeni analistte veri yok; atama skorunda nötr başlangıç (doküman §13).
+      performance: 0.5,
+    };
+    db.users.push(created);
+
+    db.audit.unshift({
+      id: ulid(),
+      actorId: user.id,
+      actorName: user.fullName,
+      action: 'STAFF_CREATED',
+      sourceService: 'identity-service',
+      resourceType: 'user',
+      resourceId: created.id,
+      ipAddress: '127.0.0.1',
+      result: 'SUCCESS',
+      occurredAt: new Date().toISOString(),
+      correlationId: ulid(),
+      details: { role: created.role, email: created.email },
+    });
+
+    return ok({ id: created.id, temporaryPassword }, 201);
+  }),
+
+  /* ------------------------------------------------------- AI metrikleri -- */
+
+  http.get(`${BASE}/ai/metrics`, ({ request }) => {
+    const user = requireUser(request);
+    if (isResponse(user)) return user;
+
+    const down = guardService('ai');
+    if (down) return down;
+
+    // Ground truth: analistin nihai kararı ve fraud tipi override'ı.
+    const decided = db.cases.filter(
+      (item) => item.status === 'ONAYLANDI' || item.status === 'BLOKLANDI',
+    );
+
+    const ratio = (numerator: number, denominator: number) =>
+      denominator === 0 ? 0 : numerator / denominator;
+
+    const notOverridden = decided.filter((item) => item.fraudTypeOverriddenFrom === null).length;
+
+    const agreed = decided.filter((item) => {
+      const aiSaidBlock = item.transaction.decision === 'BLOK';
+      return aiSaidBlock ? item.status === 'BLOKLANDI' : item.status === 'ONAYLANDI';
+    }).length;
+
+    const aiBlocked = decided.filter((item) => item.transaction.decision === 'BLOK');
+    const falsePositives = aiBlocked.filter((item) => item.status === 'ONAYLANDI').length;
+
+    const types = [...new Set(decided.map((item) => item.fraudType).filter(Boolean))];
+
+    return ok({
+      overallAccuracy: ratio(notOverridden, decided.length),
+      decisionAgreement: ratio(agreed, decided.length),
+      falsePositiveRate: ratio(falsePositives, aiBlocked.length),
+      totalPredictions: db.assessments.size,
+      modelVersion: [...db.assessments.values()][0]?.modelVersion ?? 'risk-1.0.0',
+      byFraudType: types.map((type) => {
+        const sample = decided.filter((item) => item.fraudType === type);
+        const correct = sample.filter((item) => item.fraudTypeOverriddenFrom === null).length;
+        return {
+          fraudType: type!,
+          accuracy: ratio(correct, sample.length),
+          sampleSize: sample.length,
+        };
+      }),
+    });
+  }),
+
   /* ------------------------------------------------------- Sistem sağlığı -- */
 
   http.get(`${BASE}/system/health`, () => ok(db.health)),
@@ -673,7 +782,7 @@ function sumSince(timestamp: number): number {
     .reduce((sum, entry) => sum + entry.points, 0);
 }
 
-function versionConflict(riskCase: RiskCase): HttpResponse {
+function versionConflict(riskCase: RiskCase): Response {
   return fail(409, 'CONCURRENCY_CONFLICT', 'Bu vaka başka biri tarafından güncellendi. Yenile.', {
     currentVersion: riskCase.version,
   });
@@ -687,7 +796,7 @@ async function guardCaseAction(
   request: Request,
   caseId: string,
   targetStatus: CaseStatus,
-): Promise<{ user: MockUser; riskCase: RiskCase } | HttpResponse> {
+): Promise<{ user: MockUser; riskCase: RiskCase } | Response> {
   const user = requireUser(request);
   if (isResponse(user)) return user;
 
