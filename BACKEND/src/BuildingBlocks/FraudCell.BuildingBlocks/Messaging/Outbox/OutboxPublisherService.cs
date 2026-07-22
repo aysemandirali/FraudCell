@@ -1,0 +1,182 @@
+using FraudCell.BuildingBlocks.Messaging.RabbitMq;
+using FraudCell.BuildingBlocks.Time;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+
+namespace FraudCell.BuildingBlocks.Messaging.Outbox;
+
+/// <summary>
+/// Outbox'taki bekleyen event'leri RabbitMQ'ya tasiyan arka plan worker'i.
+///
+/// Iki fazli calisir; publish islemi ASLA acik bir DB transaction'i icinde
+/// yapilmaz, aksi halde broker yavasladiginda tablo kilitleri uzun sure tutulur:
+///
+///   Faz 1 (kisa transaction): SKIP LOCKED ile bir grup kayit "kiralanir"
+///                             (next_attempt_at ileri atilir) ve commit edilir.
+///   Faz 2 (transaction disi): kayitlar tek tek publish edilir, sonuc yazilir.
+///
+/// Broker kapaliysa hicbir kayit kaybolmaz; kira suresi dolunca tekrar denenir.
+/// </summary>
+public sealed class OutboxPublisherService(
+    IServiceScopeFactory scopeFactory,
+    RabbitMqEventPublisher publisher,
+    IOptions<OutboxOptions> options,
+    IClock clock,
+    ILogger<OutboxPublisherService> logger) : BackgroundService
+{
+    private readonly OutboxOptions _options = options.Value;
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        logger.LogInformation("Outbox publisher started (poll interval {IntervalMs} ms).", _options.PollIntervalMilliseconds);
+
+        // Uygulama acilisinda migration/seed ile yarismamak icin kisa bir gecikme.
+        await Task.Delay(TimeSpan.FromSeconds(_options.StartupDelaySeconds), stoppingToken);
+
+        using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(_options.PollIntervalMilliseconds));
+
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            try
+            {
+                // Kuyruk doluysa beklemeden devam et; bos donene kadar cek.
+                var processed = await PublishBatchAsync(stoppingToken);
+                if (processed == _options.BatchSize)
+                {
+                    continue;
+                }
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                break;
+            }
+            catch (Exception ex)
+            {
+                // Worker dongusu asla olmemeli; olurse event'ler sonsuza kadar beklerdi.
+                logger.LogError(ex, "Outbox publish cycle failed; will retry.");
+            }
+
+            await timer.WaitForNextTickAsync(stoppingToken);
+        }
+
+        logger.LogInformation("Outbox publisher stopped.");
+    }
+
+    private async Task<int> PublishBatchAsync(CancellationToken cancellationToken)
+    {
+        await using var scope = scopeFactory.CreateAsyncScope();
+        var messaging = scope.ServiceProvider.GetRequiredService<IMessagingDbContext>();
+        var dbContext = messaging.AsDbContext();
+
+        var now = clock.UtcNow;
+        var leased = await LeaseBatchAsync(dbContext, messaging, now, cancellationToken);
+
+        if (leased.Count == 0)
+        {
+            return 0;
+        }
+
+        foreach (var message in leased)
+        {
+            try
+            {
+                await publisher.PublishAsync(message, cancellationToken);
+
+                message.PublishedAt = clock.UtcNow;
+                message.LastError = null;
+                message.NextAttemptAt = null;
+            }
+            catch (Exception ex)
+            {
+                // Broker kapali ya da kanal koptu. Kayit outbox'ta kalir.
+                message.LastError = Truncate(ex.Message, 2000);
+                message.NextAttemptAt = clock.UtcNow.AddSeconds(BackoffSeconds(message.AttemptCount));
+
+                logger.LogWarning(
+                    "Failed to publish outbox message {EventId} ({EventType}), attempt {AttemptCount}. Retrying at {NextAttemptAt}.",
+                    message.Id, message.EventType, message.AttemptCount, message.NextAttemptAt);
+
+                // Broker toptan kapaliysa kalan mesajlari denemek anlamsiz;
+                // kiralari zaten ileri atilmis durumda, sonraki turda denenecek.
+                break;
+            }
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        var publishedCount = leased.Count(m => m.PublishedAt is not null);
+        if (publishedCount > 0)
+        {
+            logger.LogInformation("Published {PublishedCount} outbox message(s).", publishedCount);
+        }
+
+        return leased.Count;
+    }
+
+    /// <summary>
+    /// Bekleyen kayitlari kiralar. <c>FOR UPDATE SKIP LOCKED</c>, birden fazla
+    /// servis instance'i calistiginda ayni event'in iki kez yayinlanmasini onler.
+    /// </summary>
+    private async Task<List<OutboxMessage>> LeaseBatchAsync(
+        DbContext dbContext,
+        IMessagingDbContext messaging,
+        DateTimeOffset now,
+        CancellationToken cancellationToken)
+    {
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+        var batch = await messaging.OutboxMessages
+            .FromSql(
+                $"""
+                 SELECT * FROM outbox_messages
+                 WHERE published_at IS NULL
+                   AND (next_attempt_at IS NULL OR next_attempt_at <= {now})
+                 ORDER BY occurred_at
+                 LIMIT {_options.BatchSize}
+                 FOR UPDATE SKIP LOCKED
+                 """)
+            .ToListAsync(cancellationToken);
+
+        if (batch.Count == 0)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return batch;
+        }
+
+        foreach (var message in batch)
+        {
+            message.AttemptCount++;
+            // Kira: bu sure icinde baska instance ayni kaydi almaz.
+            message.NextAttemptAt = now.AddSeconds(_options.LeaseSeconds);
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+
+        return batch;
+    }
+
+    /// <summary>Ustel geri cekilme, 5 dakikada tavan yapar.</summary>
+    private static int BackoffSeconds(int attemptCount)
+        => (int)Math.Min(300, Math.Pow(2, Math.Min(attemptCount, 8)));
+
+    private static string Truncate(string value, int maxLength)
+        => value.Length <= maxLength ? value : value[..maxLength];
+}
+
+public sealed class OutboxOptions
+{
+    public const string SectionName = "Outbox";
+
+    public int PollIntervalMilliseconds { get; set; } = 500;
+
+    public int BatchSize { get; set; } = 50;
+
+    /// <summary>Kiralanan kaydin baska instance tarafindan alinamayacagi sure.</summary>
+    public int LeaseSeconds { get; set; } = 60;
+
+    public int StartupDelaySeconds { get; set; } = 2;
+}

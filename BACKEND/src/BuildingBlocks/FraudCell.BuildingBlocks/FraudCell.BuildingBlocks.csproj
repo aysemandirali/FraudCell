@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!--
+    Bu kutuphane KASITLI olarak domain tipi icermez.
+    Icerigi yalnizca teknik cross-cutting parcalardir: API zarfi, correlation,
+    outbox/inbox altyapisi, RabbitMQ transport, JWT dogrulama, saat soyutlamasi.
+
+    Doküman §22 "shared domain entity package" yasagini ihlal etmez; cunku
+    burada Transaction, RiskCase, User gibi hicbir domain kavrami bulunmaz.
+    Servisler kendi domain modellerini kendi projelerinde tutar.
+  -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <OutputType>Library</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+    <PackageReference Include="RabbitMQ.Client" />
+    <PackageReference Include="Serilog.AspNetCore" />
+    <PackageReference Include="Serilog.Sinks.Console" />
+    <PackageReference Include="Serilog.Enrichers.Environment" />
+    <PackageReference Include="Ulid" />
+  </ItemGroup>
+
+</Project>

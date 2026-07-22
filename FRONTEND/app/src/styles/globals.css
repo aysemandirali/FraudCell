@@ -1,0 +1,218 @@
+@import 'tailwindcss';
+
+/* ==========================================================================
+   FraudCell Design System
+   Kaynak: FRONTEND/design/fraudcell/*.jpeg (Paycell mobil uygulama ekranları)
+   Tokenlar doğrudan ekran görüntülerinden örneklenmiştir.
+   ========================================================================== */
+
+@theme {
+  /* --- Marka: Paycell mavi–camgöbeği rampası ------------------------------ */
+  --color-brand-950: #052a58;
+  --color-brand-900: #06356e;
+  --color-brand-800: #0a4a94; /* gradient başlangıcı ("Devam Et" sol ucu) */
+  --color-brand-700: #0b5cb0;
+  --color-brand-600: #0f6fd1;
+  --color-brand-500: #1e88e5;
+  --color-brand-400: #4da3ec;
+  --color-brand-300: #8cc4f3;
+  --color-brand-200: #c2e0f9;
+  --color-brand-100: #e3f2fd; /* ikon tile arkaplanı */
+  --color-brand-50: #f2f9ff;
+
+  /* --- Aksan: camgöbeği (gradient bitişi, aktif sekme, link) -------------- */
+  --color-aqua-700: #0e8fae;
+  --color-aqua-600: #17a9cc;
+  --color-aqua-500: #2fc4e0; /* gradient bitişi */
+  --color-aqua-400: #45d2ea;
+  --color-aqua-300: #7ee0f2;
+  --color-aqua-100: #d9f4fb;
+  --color-aqua-50: #e8f7fc;
+
+  /* --- Turkcell sarısı (logo noktası, Turkcell İşlemleri tile) ------------ */
+  --color-tc-500: #ffc800;
+  --color-tc-100: #fff4cc;
+
+  /* --- Semantik ----------------------------------------------------------- */
+  --color-success-700: #2e7d32;
+  --color-success-600: #3d9140;
+  --color-success-500: #43a047; /* "Yeni" rozeti, onay ikonu */
+  --color-success-100: #e6f4e7;
+
+  --color-warning-700: #b26a00;
+  --color-warning-500: #f5a623;
+  --color-warning-100: #fdf1dc;
+
+  --color-danger-700: #c62828;
+  --color-danger-500: #e53935; /* "Çıkış Yap" */
+  --color-danger-100: #fdeaea;
+
+  --color-critical-700: #8e1414;
+  --color-critical-500: #b71c1c;
+  --color-critical-100: #fbe3e3;
+
+  /* --- Nötr / yüzey -------------------------------------------------------- */
+  --color-ink-900: #14202e; /* başlıklar */
+  --color-ink-700: #34445a; /* gövde metni */
+  --color-ink-500: #5f6b7a; /* ikincil metin */
+  --color-ink-400: #8e98a4; /* placeholder / muted */
+  --color-ink-200: #e4e8ee; /* kenarlık */
+  --color-ink-100: #eef1f5; /* ayırıcı */
+  --color-canvas: #f4f6f9; /* sayfa arkaplanı */
+  --color-surface: #ffffff; /* kart */
+
+  /* --- Tipografi ----------------------------------------------------------- */
+  --font-sans:
+    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    sans-serif;
+  --font-numeric: 'Inter', 'Segoe UI', Roboto, sans-serif;
+
+  /* --- Yarıçap (ekranlardan ölçüldü) --------------------------------------- */
+  --radius-tile: 0.875rem; /* 14px — ikon kutuları */
+  --radius-card: 1rem; /* 16px — kartlar */
+  --radius-sheet: 1.5rem; /* 24px — bottom sheet */
+  --radius-pill: 9999px; /* butonlar & çipler tam pill */
+
+  /* --- Gölge ---------------------------------------------------------------- */
+  --shadow-card: 0 2px 12px rgba(16, 42, 74, 0.06);
+  --shadow-raised: 0 6px 20px rgba(16, 42, 74, 0.1);
+  --shadow-nav: 0 -2px 16px rgba(16, 42, 74, 0.08);
+  --shadow-fab: 0 4px 16px rgba(10, 74, 148, 0.35);
+
+  /* --- Animasyon ------------------------------------------------------------ */
+  --animate-shimmer: shimmer 1.6s linear infinite;
+  --animate-pulse-ring: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-slide-up: slide-up 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-fade-in: fade-in 0.2s ease-out;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes pulse-ring {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(1.06);
+  }
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(16px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ==========================================================================
+   Taban katmanı
+   ========================================================================== */
+
+@layer base {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink-900);
+    font-family: var(--font-sans);
+    font-feature-settings: 'cv02', 'cv03', 'cv04';
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Klavye kullanıcısı için görünür odak halkası; fare tıklamasında gizli. */
+  :focus-visible {
+    outline: 2px solid var(--color-brand-600);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Sayı kolonlarının hizalı görünmesi için (tutar, puan, skor). */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* ==========================================================================
+   Yardımcı sınıflar — tasarımda tekrar eden yüzeyler
+   ========================================================================== */
+
+@utility gradient-brand {
+  /* Birincil CTA: "Devam Et", "Hesap Ekle" */
+  background-image: linear-gradient(90deg, var(--color-brand-800) 0%, var(--color-aqua-500) 100%);
+}
+
+@utility gradient-header {
+  /* Ana sayfa üst bloğu: sol üst koyu mavi → sağ alt camgöbeği */
+  background-image: linear-gradient(
+    135deg,
+    var(--color-brand-900) 0%,
+    var(--color-brand-700) 45%,
+    var(--color-aqua-500) 100%
+  );
+}
+
+@utility gradient-splash {
+  /* Giriş/karşılama ekranı tam sayfa arkaplanı */
+  background-image: linear-gradient(
+    160deg,
+    var(--color-brand-900) 0%,
+    var(--color-brand-700) 40%,
+    var(--color-aqua-500) 100%
+  );
+}
+
+@utility surface-card {
+  background-color: var(--color-surface);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+
+@utility safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@utility safe-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Hareket hassasiyeti olan kullanıcılar için animasyonları kapat. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

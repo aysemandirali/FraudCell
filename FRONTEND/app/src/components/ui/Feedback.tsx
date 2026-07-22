@@ -1,0 +1,121 @@
+import type { ReactNode } from 'react';
+import { AlertCircle, Info, CheckCircle2, TriangleAlert } from 'lucide-react';
+import { cn } from '@/lib/cn';
+
+/* ------------------------------------------------------------- Skeleton -- */
+
+export function Skeleton({ className }: { className?: string }) {
+  return (
+    <div
+      aria-hidden
+      className={cn(
+        'animate-shimmer rounded-md bg-ink-100',
+        'bg-[linear-gradient(90deg,var(--color-ink-100)_25%,var(--color-ink-200)_50%,var(--color-ink-100)_75%)]',
+        'bg-[length:200%_100%]',
+        className,
+      )}
+    />
+  );
+}
+
+/** Liste yüklenirken gösterilen kart iskeletleri. */
+export function SkeletonList({ rows = 3 }: { rows?: number }) {
+  return (
+    <div className="space-y-3" role="status" aria-label="Yükleniyor">
+      {Array.from({ length: rows }, (_, i) => (
+        <div key={i} className="surface-card flex items-center gap-3 p-4">
+          <Skeleton className="size-11 rounded-full" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-4 w-2/5" />
+            <Skeleton className="h-3 w-3/5" />
+          </div>
+          <Skeleton className="h-6 w-16 rounded-pill" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ----------------------------------------------------------- EmptyState -- */
+
+export function EmptyState({
+  icon,
+  title,
+  description,
+  action,
+  className,
+}: {
+  icon?: ReactNode;
+  title: string;
+  description?: string;
+  action?: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={cn('flex flex-col items-center px-6 py-12 text-center', className)}>
+      {icon && (
+        <span className="mb-4 flex size-16 items-center justify-center rounded-full bg-brand-100 text-brand-600 [&>svg]:size-8">
+          {icon}
+        </span>
+      )}
+      <p className="text-[17px] font-semibold text-ink-900">{title}</p>
+      {description && <p className="mt-2 max-w-sm text-sm text-ink-500">{description}</p>}
+      {action && <div className="mt-6">{action}</div>}
+    </div>
+  );
+}
+
+/* --------------------------------------------------------------- Banner -- */
+
+type BannerTone = 'info' | 'success' | 'warning' | 'danger';
+
+const BANNER: Record<BannerTone, { wrap: string; icon: ReactNode }> = {
+  info: {
+    wrap: 'bg-brand-100 text-brand-800',
+    icon: <Info className="size-5 shrink-0 text-brand-600" />,
+  },
+  success: {
+    wrap: 'bg-success-100 text-success-700',
+    icon: <CheckCircle2 className="size-5 shrink-0 text-success-500" />,
+  },
+  warning: {
+    wrap: 'bg-warning-100 text-warning-700',
+    icon: <TriangleAlert className="size-5 shrink-0 text-warning-500" />,
+  },
+  danger: {
+    wrap: 'bg-danger-100 text-danger-700',
+    icon: <AlertCircle className="size-5 shrink-0 text-danger-500" />,
+  },
+};
+
+/**
+ * Bilgi şeridi — tasarımdaki "Yeterli puanın olmadığı için bu kuponu alamazsın."
+ * Servis kapalı uyarılarında da bu kullanılır.
+ */
+export function Banner({
+  tone = 'info',
+  children,
+  action,
+  className,
+}: {
+  tone?: BannerTone;
+  children: ReactNode;
+  action?: ReactNode;
+  className?: string;
+}) {
+  const spec = BANNER[tone];
+  return (
+    <div
+      role={tone === 'danger' ? 'alert' : 'status'}
+      className={cn(
+        'flex items-start gap-3 rounded-card px-4 py-3 text-sm leading-relaxed',
+        spec.wrap,
+        className,
+      )}
+    >
+      {spec.icon}
+      <div className="flex-1">{children}</div>
+      {action}
+    </div>
+  );
+}
