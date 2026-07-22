@@ -1,122 +1,234 @@
 """Sentetik egitim verisi ureticisi (dokuman `00-START-HERE.md` §12 egitim verisi).
 
-Sabit random seed kullanilir; class distribution ve data leakage kontrolu
-egitim script'inde (train.py) raporlanir.
+Tasarim ilkeleri (kritik):
+  1. **Ortusen dagilimlar** — temiz ve fraud islemlerinin ozellik dagilimlari
+     TAMAMEN ayrisMAZ. Temiz islemlerde de risk sinyali (yeni cihaz, gece, yeni
+     alici) gorulur; fraud islemlerin de her sinyali tasimaz. Boylece model
+     "if new_device -> fraud" gibi tek kurali ezberleyemez.
+  2. **Latent (stokastik) etiketleme** — `is_fraud` deterministik bir esik/if ile
+     DEGIL, ozelliklerden turetilen LOJISTIK bir latent olasilik + gurultuden
+     ornekleme ile uretilir. Lojistik link, pozitifleri risk-ozelliklerinin
+     bulundugu bolgede yogunlastirir (ogrenilebilir) ama gurultu ortusme birakir
+     (Bayes hatasi > 0). Boylece suni %100 metrikler olusmaz.
+  3. **Tutarli `is_night`** — gercek `features.py` `is_night`'i SAATTEN turetir
+     (hour < 6 veya hour >= 23). Burada da ayni sekilde turetilir; iki alan asla
+     celismez (egitim/inference uyumu).
+  4. **Musteri + zaman ekseni** — her islem bir `customer_id` ve `occurred_at`
+     tasir; boylece egitim tarafinda musteri-grubu (group holdout) ve zaman bazli
+     bolme yapilabilir (train.py). Bu kolonlar OZELLIK DEGILDIR; yalnizca
+     bolme/denetim icindir.
+
+Sabit random seed kullanilir; class distribution ve leakage kontrolu train.py'de
+raporlanir.
 """
 
 from __future__ import annotations
+
+import datetime as dt
 
 import numpy as np
 import pandas as pd
 
 from app.ml.schema import FEATURE_COLUMNS, FRAUD_TYPE_CLASSES, RANDOM_SEED
 
+# Veri setinin kapsadigi zaman penceresi (zaman bazli holdout icin).
+_WINDOW_DAYS = 120
+_WINDOW_END = dt.datetime(2026, 7, 20, tzinfo=dt.timezone.utc)
+
+_NIGHT_HOURS = [23, 0, 1, 2, 3, 4, 5]
+
+_FRAUD_ARCHETYPES = ["CALINTI_KART", "HESAP_ELE_GECIRME", "PARA_AKLAMA", "SUPHELI_DAVRANIS"]
+# Fraud senaryosu secildiginde turler arasi dagilim (case zorunlu 4 tur).
+_FRAUD_ARCHETYPE_WEIGHTS = [0.38, 0.27, 0.10, 0.25]
+
+
+def _sigmoid(x: float) -> float:
+    return 1.0 / (1.0 + np.exp(-x))
+
+
+def latent_fraud_probability(features: dict[str, float], rng: np.random.Generator) -> float:
+    """Ozelliklerden turetilen LOJISTIK latent fraud olasiligi (deterministik if DEGIL).
+
+    Etiket bu olasiliktan orneklenir; ayni ozellik vektoru bazen fraud bazen temiz
+    cikabilir. Lojistik link + orta duzey gurultu, sinyalsiz bolgede fraud'u nadir
+    tutar (ogrenilebilir), sinirda ise ortusme birakir (durust metrikler).
+    """
+    logit = -3.3  # taban: sinyalsiz islemde ~%4
+    logit += 1.3 if features["is_new_device"] >= 1.0 else 0.0
+    logit += 0.7 if features["is_night"] >= 1.0 else 0.0
+    logit += 1.0 if features["is_foreign_country"] >= 1.0 else 0.0
+    logit += 0.6 if features["is_new_recipient"] >= 1.0 else 0.0
+
+    ratio = features["amount_deviation_ratio"]
+    if ratio >= 6.0:
+        logit += 1.4
+    elif ratio >= 3.0:
+        logit += 0.8
+    elif ratio >= 1.8:
+        logit += 0.3
+
+    if features["transactions_last_10_minutes"] >= 4:
+        logit += 1.2
+    elif features["transactions_last_24_hours"] >= 8:
+        logit += 0.6
+
+    if features["device_age_days"] < 3:
+        logit += 0.6
+
+    logit += float(rng.normal(0.0, 0.5))  # irreducible gurultu -> Bayes hatasi > 0
+    return float(_sigmoid(logit))
+
+
+def _sample_customers(rng: np.random.Generator, n_customers: int) -> list[dict]:
+    """Her musteri icin latent fraud egilimi ve davranis parametreleri uretir."""
+    customers = []
+    for i in range(n_customers):
+        propensity = float(rng.beta(1.5, 6.0))  # cogunlukla dusuk, az sayida yuksek riskli
+        customers.append(
+            {
+                "customer_id": f"cust-{i:05d}",
+                "propensity": propensity,
+                "base_amount_mu": float(rng.uniform(5.4, 7.2)),  # lognormal mean
+                "device_pref": float(rng.uniform(0.03, 0.22)),  # temel yeni-cihaz egilimi
+                "type_pref": rng.choice(["odeme", "transfer", "fatura", "cekim"], p=[0.35, 0.40, 0.15, 0.10]),
+            }
+        )
+    return customers
+
+
+def _bernoulli(rng: np.random.Generator, p: float) -> bool:
+    return bool(rng.random() < p)
+
+
+def _archetype_params(customer: dict, archetype: str) -> dict:
+    """Arketipe gore ORTUSEN dagilim parametreleri (hicbir band sinifi tek basina belirlemez)."""
+    if archetype == "LEGIT":
+        return {
+            "p_new_device": customer["device_pref"], "p_night": 0.12, "p_foreign": 0.10, "p_new_recipient": 0.28,
+            "dev_center": 1.0, "dev_sigma": 0.5, "spike_chance": 0.08, "spike_range": (3.0, 8.0),
+            "last10_lam": 0.2, "last24_lam": 2.0, "device_age_range": (20, 900), "recipient_age_range": (0, 600),
+        }
+    if archetype == "CALINTI_KART":
+        return {
+            "p_new_device": 0.65, "p_night": 0.50, "p_foreign": 0.55, "p_new_recipient": 0.62,
+            "dev_center": 5.0, "dev_sigma": 3.0, "spike_chance": 0.0, "spike_range": (0.0, 0.0),
+            "last10_lam": 2.4, "last24_lam": 6.0, "device_age_range": (0, 6), "recipient_age_range": (0, 6),
+        }
+    if archetype == "HESAP_ELE_GECIRME":
+        return {
+            "p_new_device": 0.60, "p_night": 0.42, "p_foreign": 0.38, "p_new_recipient": 0.58,
+            "dev_center": 3.2, "dev_sigma": 2.0, "spike_chance": 0.0, "spike_range": (0.0, 0.0),
+            "last10_lam": 1.6, "last24_lam": 5.0, "device_age_range": (0, 20), "recipient_age_range": (0, 15),
+        }
+    if archetype == "PARA_AKLAMA":
+        return {
+            "p_new_device": 0.30, "p_night": 0.28, "p_foreign": 0.55, "p_new_recipient": 0.70,
+            "dev_center": 6.0, "dev_sigma": 3.5, "spike_chance": 0.0, "spike_range": (0.0, 0.0),
+            "last10_lam": 0.6, "last24_lam": 4.5, "device_age_range": (20, 400), "recipient_age_range": (0, 8),
+        }
+    # SUPHELI_DAVRANIS — temiz ile en cok ortusen, en belirsiz arketip
+    return {
+        "p_new_device": 0.38, "p_night": 0.32, "p_foreign": 0.24, "p_new_recipient": 0.48,
+        "dev_center": 2.2, "dev_sigma": 1.5, "spike_chance": 0.05, "spike_range": (2.5, 6.0),
+        "last10_lam": 1.0, "last24_lam": 4.0, "device_age_range": (0, 120), "recipient_age_range": (0, 120),
+    }
+
+
+def _sample_features(rng: np.random.Generator, customer: dict, archetype: str, date_base: dt.datetime) -> dict[str, float]:
+    """Arketipe gore ortusen dagilimlardan bir ozellik vektoru + tutarli saat/gece orneler."""
+    p = _archetype_params(customer, archetype)
+
+    # Saat -> is_night (features.py ile birebir tutarli: hour < 6 veya hour >= 23).
+    if _bernoulli(rng, p["p_night"]):
+        hour = int(rng.choice(_NIGHT_HOURS))
+    else:
+        hour = int(rng.integers(6, 23))  # 6..22
+    is_night = hour < 6 or hour >= 23
+
+    is_new_device = _bernoulli(rng, p["p_new_device"])
+    is_foreign = _bernoulli(rng, p["p_foreign"])
+    is_new_recipient = _bernoulli(rng, p["p_new_recipient"])
+
+    amount_dev = float(np.clip(rng.normal(p["dev_center"], p["dev_sigma"]), 0.1, 30.0))
+    if p["spike_chance"] and rng.random() < p["spike_chance"]:
+        amount_dev = float(rng.uniform(*p["spike_range"]))
+
+    amount = float(rng.lognormal(mean=customer["base_amount_mu"], sigma=0.7) * max(amount_dev, 0.3) ** 0.4)
+
+    txn_type = customer["type_pref"] if rng.random() < 0.7 else str(rng.choice(["odeme", "transfer", "fatura", "cekim"]))
+
+    return {
+        "amount": round(amount, 2),
+        "hour_of_day": float(hour),
+        "is_night": 1.0 if is_night else 0.0,
+        "is_foreign_country": 1.0 if is_foreign else 0.0,
+        "is_new_device": 1.0 if is_new_device else 0.0,
+        "is_new_recipient": 1.0 if is_new_recipient else 0.0,
+        "amount_deviation_ratio": round(amount_dev, 3),
+        "transactions_last_10_minutes": float(rng.poisson(p["last10_lam"])),
+        "transactions_last_24_hours": float(rng.poisson(p["last24_lam"])),
+        "device_age_days": float(rng.integers(*p["device_age_range"])),
+        "recipient_age_days": float(rng.integers(*p["recipient_age_range"])),
+        "transaction_type_odeme": 1.0 if txn_type == "odeme" else 0.0,
+        "transaction_type_transfer": 1.0 if txn_type == "transfer" else 0.0,
+        "transaction_type_fatura": 1.0 if txn_type == "fatura" else 0.0,
+        "transaction_type_cekim": 1.0 if txn_type == "cekim" else 0.0,
+    }
+
 
 def generate_dataset(n_samples: int = 10_000, seed: int = RANDOM_SEED) -> pd.DataFrame:
-    """10.000 sentetik islem uretir: meşru + 4 dolandiricilik kategorisi (dokuman §12)."""
+    """n_samples sentetik islem uretir; ortusen dagilimlar + lojistik latent etiketleme.
 
+    Doner: FEATURE_COLUMNS + [fraud_type, is_fraud, customer_id, occurred_at].
+    """
     rng = np.random.default_rng(seed)
 
-    # Sinif dagilimi: cogunluk mesru, geri kalani fraud turleri arasinda paylastirilir.
-    class_weights = {
-        "TEMIZ": 0.78,
-        "CALINTI_KART": 0.09,
-        "HESAP_ELE_GECIRME": 0.06,
-        "SUPHELI_DAVRANIS": 0.05,
-        "PARA_AKLAMA": 0.02,
-    }
-    labels = rng.choice(list(class_weights.keys()), size=n_samples, p=list(class_weights.values()))
+    n_customers = max(50, n_samples // 8)  # ort. ~8 islem/musteri -> group holdout uygulanabilir
+    customers = _sample_customers(rng, n_customers)
 
-    rows = []
-    for label in labels:
-        rows.append(_generate_row(rng, label))
+    window_start = _WINDOW_END - dt.timedelta(days=_WINDOW_DAYS)
+    window_seconds = _WINDOW_DAYS * 24 * 3600
 
-    df = pd.DataFrame(rows, columns=[*FEATURE_COLUMNS, "fraud_type", "is_fraud"])
-    return df
+    rows: list[dict] = []
+    for _ in range(n_samples):
+        customer = customers[int(rng.integers(0, n_customers))]
 
+        offset = int(rng.integers(0, window_seconds))
+        date_base = window_start + dt.timedelta(seconds=offset)
 
-def _generate_row(rng: np.random.Generator, fraud_type: str) -> list[float | str | int]:
-    is_fraud = fraud_type != "TEMIZ"
+        # Arketip secimi: musteri egilimi fraud-senaryo olasiligini yukseltir.
+        p_fraud_scenario = float(np.clip(0.02 + 0.60 * customer["propensity"], 0.02, 0.70))
+        if rng.random() < p_fraud_scenario:
+            archetype = str(rng.choice(_FRAUD_ARCHETYPES, p=_FRAUD_ARCHETYPE_WEIGHTS))
+        else:
+            archetype = "LEGIT"
 
-    if fraud_type == "TEMIZ":
-        amount = float(rng.lognormal(mean=6.0, sigma=0.8))
-        is_night = rng.random() < 0.08
-        is_foreign = rng.random() < 0.03
-        is_new_device = rng.random() < 0.05
-        is_new_recipient = rng.random() < 0.15
-        amount_dev = float(np.clip(rng.normal(1.0, 0.3), 0.1, 3.0))
-        last_10 = rng.poisson(0.2)
-        last_24h = rng.poisson(2.0)
-        device_age = float(rng.integers(1, 800))
-        recipient_age = float(rng.integers(0, 500))
-    elif fraud_type == "CALINTI_KART":
-        amount = float(rng.lognormal(mean=7.2, sigma=0.9))
-        is_night = rng.random() < 0.55
-        is_foreign = rng.random() < 0.45
-        is_new_device = rng.random() < 0.85
-        is_new_recipient = rng.random() < 0.80
-        amount_dev = float(np.clip(rng.normal(6.0, 3.0), 1.5, 20.0))
-        last_10 = rng.poisson(2.5)
-        last_24h = rng.poisson(6.0)
-        device_age = float(rng.integers(0, 3))
-        recipient_age = float(rng.integers(0, 3))
-    elif fraud_type == "HESAP_ELE_GECIRME":
-        amount = float(rng.lognormal(mean=6.8, sigma=0.7))
-        is_night = rng.random() < 0.40
-        is_foreign = rng.random() < 0.30
-        is_new_device = rng.random() < 0.90
-        is_new_recipient = rng.random() < 0.70
-        amount_dev = float(np.clip(rng.normal(3.5, 2.0), 1.2, 15.0))
-        last_10 = rng.poisson(1.5)
-        last_24h = rng.poisson(5.0)
-        device_age = float(rng.integers(0, 2))
-        recipient_age = float(rng.integers(0, 10))
-    elif fraud_type == "PARA_AKLAMA":
-        amount = float(rng.lognormal(mean=8.5, sigma=0.6))
-        is_night = rng.random() < 0.25
-        is_foreign = rng.random() < 0.60
-        is_new_device = rng.random() < 0.30
-        is_new_recipient = rng.random() < 0.85
-        amount_dev = float(np.clip(rng.normal(8.0, 4.0), 2.0, 25.0))
-        last_10 = rng.poisson(0.5)
-        last_24h = rng.poisson(3.5)
-        device_age = float(rng.integers(30, 400))
-        recipient_age = float(rng.integers(0, 5))
-    else:  # SUPHELI_DAVRANIS
-        amount = float(rng.lognormal(mean=6.5, sigma=1.0))
-        is_night = rng.random() < 0.35
-        is_foreign = rng.random() < 0.20
-        is_new_device = rng.random() < 0.40
-        is_new_recipient = rng.random() < 0.50
-        amount_dev = float(np.clip(rng.normal(2.5, 1.5), 1.0, 10.0))
-        last_10 = rng.poisson(1.0)
-        last_24h = rng.poisson(4.0)
-        device_age = float(rng.integers(0, 60))
-        recipient_age = float(rng.integers(0, 60))
+        features = _sample_features(rng, customer, archetype, date_base)
+        occurred_at = date_base.replace(hour=int(features["hour_of_day"]), minute=int(rng.integers(0, 60)))
 
-    hour_of_day = int(rng.integers(23, 24)) if is_night and rng.random() < 0.5 else int(rng.integers(0, 6) if is_night else rng.integers(6, 23))
-    txn_type = rng.choice(["odeme", "transfer", "fatura", "cekim"], p=[0.35, 0.40, 0.15, 0.10])
+        # Lojistik latent olasiliktan STOKASTIK etiketleme.
+        is_fraud = _bernoulli(rng, latent_fraud_probability(features, rng))
 
-    row: list[float | str | int] = [
-        round(amount, 2),
-        hour_of_day,
-        1.0 if is_night else 0.0,
-        1.0 if is_foreign else 0.0,
-        1.0 if is_new_device else 0.0,
-        1.0 if is_new_recipient else 0.0,
-        amount_dev,
-        float(last_10),
-        float(last_24h),
-        device_age,
-        recipient_age,
-        1.0 if txn_type == "odeme" else 0.0,
-        1.0 if txn_type == "transfer" else 0.0,
-        1.0 if txn_type == "fatura" else 0.0,
-        1.0 if txn_type == "cekim" else 0.0,
-        fraud_type,
-        int(is_fraud),
-    ]
-    return row
+        if not is_fraud:
+            fraud_type = "TEMIZ"
+        elif archetype == "LEGIT":
+            # Temiz gorunumlu ama fraud cikan islem -> belirsiz/supheli kategori.
+            fraud_type = "SUPHELI_DAVRANIS"
+        else:
+            fraud_type = archetype
+
+        rows.append(
+            {
+                **features,
+                "fraud_type": fraud_type,
+                "is_fraud": int(is_fraud),
+                "customer_id": customer["customer_id"],
+                "occurred_at": occurred_at.isoformat(),
+            }
+        )
+
+    columns = [*FEATURE_COLUMNS, "fraud_type", "is_fraud", "customer_id", "occurred_at"]
+    return pd.DataFrame(rows, columns=columns)
 
 
-__all__ = ["generate_dataset", "FRAUD_TYPE_CLASSES"]
+__all__ = ["generate_dataset", "latent_fraud_probability", "FRAUD_TYPE_CLASSES"]

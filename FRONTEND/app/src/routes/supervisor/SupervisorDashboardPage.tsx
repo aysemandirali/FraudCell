@@ -27,9 +27,6 @@ import { queryKeys } from '@/shared/api/query-keys';
 import { formatMoney, formatNumber, formatPercent } from '@/shared/lib/format';
 import { riskTone, seriesColor, SLA_TONE } from '@/shared/lib/risk';
 import {
-  BarList,
-  ChartFrame,
-  DonutChart,
   ErrorState,
   PageHeader,
   Skeleton,
@@ -39,6 +36,7 @@ import {
   StatTile,
   ToneBadge,
 } from '@/shared/ui';
+import { BarList, ChartFrame, DonutChart } from '@/shared/ui/charts';
 
 const OPEN_EXCLUDED = ['KAPANDI', 'ONAYLANDI', 'BLOKLANDI'];
 

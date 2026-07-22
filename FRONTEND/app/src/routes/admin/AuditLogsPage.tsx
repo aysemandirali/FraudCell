@@ -1,11 +1,19 @@
 import { useState, type FormEvent } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { ChevronDown, ChevronRight, ChevronUp, ScrollText, Search } from 'lucide-react';
+import { ChevronDown, ChevronRight, ChevronUp, Search } from 'lucide-react';
 import { listAuditLogs } from '@/features/staff/api';
 import { queryKeys } from '@/shared/api/query-keys';
 import { formatDateTime } from '@/shared/lib/format';
-import { Button, EmptyState, ErrorState, Field, SkeletonList, ToneBadge } from '@/shared/ui';
+import {
+  Button,
+  EmptyState,
+  ErrorState,
+  Field,
+  PageHeader,
+  SkeletonList,
+  ToneBadge,
+} from '@/shared/ui';
 
 export function AuditLogsPage({ action, cursor }: { action?: string; cursor?: string }) {
   const navigate = useNavigate();
@@ -23,27 +31,36 @@ export function AuditLogsPage({ action, cursor }: { action?: string; cursor?: st
   };
 
   return (
-    <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-ink-900">Denetim kayıtları</h1>
-          <p className="mt-1 text-sm text-ink-500">Kimlik ve yönetim işlemlerinin değiştirilemez izi.</p>
-        </div>
-        <form onSubmit={submit} className="flex w-full gap-2 sm:w-auto">
-          <Field label="Aksiyon kodu" value={search} onChange={(event) => setSearch(event.target.value)} className="min-w-56" />
-          <Button type="submit" aria-label="Ara" leadingIcon={<Search className="size-4" />}>Ara</Button>
-        </form>
-      </header>
+    <div>
+      <PageHeader
+        title="Denetim kayıtları"
+        description="Kimlik ve yönetim işlemlerinin değiştirilemez izi."
+        actions={
+          <form onSubmit={submit} className="flex gap-2">
+            <Field
+              label="Aksiyon kodu"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              className="min-w-48"
+            />
+            <Button type="submit" aria-label="Ara" leadingIcon={<Search className="size-4" />}>
+              Ara
+            </Button>
+          </form>
+        }
+      />
 
-      <section className="mt-6">
+      <section>
         {logs.isPending ? <SkeletonList rows={7} /> : null}
         {logs.isError ? <ErrorState error={logs.error} onRetry={() => void logs.refetch()} /> : null}
-        {logs.data?.items.length === 0 ? <EmptyState icon={<ScrollText />} title="Denetim kaydı bulunamadı" /> : null}
-        <div className="space-y-2">
+        {logs.data?.items.length === 0 ? (
+          <EmptyState illustration="search" title="Denetim kaydı bulunamadı" />
+        ) : null}
+        <div className="surface-panel divide-y divide-ink-100 overflow-hidden">
           {logs.data?.items.map((entry) => {
             const isExpanded = expanded === entry.id;
             return (
-              <article key={entry.id} className="border-b border-ink-100 bg-surface px-4 py-3">
+              <article key={entry.id} className="px-4 py-3">
                 <button type="button" onClick={() => setExpanded(isExpanded ? null : entry.id)} className="grid w-full grid-cols-[1fr_auto] items-start gap-4 text-left sm:grid-cols-[minmax(12rem,1fr)_minmax(9rem,0.6fr)_minmax(8rem,0.5fr)_auto]">
                   <div className="min-w-0"><p className="truncate font-semibold text-ink-900">{entry.action}</p><p className="mt-1 text-xs text-ink-400">{formatDateTime(entry.occurredAt)}</p></div>
                   <div className="hidden min-w-0 sm:block"><p className="truncate text-sm text-ink-700">{entry.actorRole ?? 'Sistem'}</p><p className="mt-1 truncate text-xs text-ink-400">{entry.actorId ?? entry.sourceService}</p></div>
@@ -79,6 +96,6 @@ export function AuditLogsPage({ action, cursor }: { action?: string; cursor?: st
           </div>
         ) : null}
       </section>
-    </main>
+    </div>
   );
 }

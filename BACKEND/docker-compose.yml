@@ -1,7 +1,7 @@
 name: fraudcell
 
-# Full production-like demo topology. Daily development should use
-# compose.infra.yml through scripts/dev.ps1 (two containers only).
+# Full production-like demo topology. Tum sistemi tek komutla ayaga kaldirmak
+# icin: scripts/start-fraudcell.bat (durdurma: scripts/stop-fraudcell.bat).
 #
 # Veri sahipligi: her servisin KENDI database'i ve KENDI login rolu vardir.
 # Yerel/demo ortaminda bunlar tek bir PostgreSQL instance'i uzerinde barinir;

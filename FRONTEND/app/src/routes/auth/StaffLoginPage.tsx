@@ -54,7 +54,7 @@ export function StaffLoginPage({ redirectTo }: { redirectTo?: string }) {
           <span className="mx-auto flex size-14 items-center justify-center rounded-tile bg-brand-100 text-brand-700">
             <BriefcaseBusiness className="size-7" aria-hidden />
           </span>
-          <h1 id="staff-login-title" className="mt-4 text-2xl font-bold text-ink-900">
+          <h1 id="staff-login-title" className="mt-4 text-h1 text-ink-900">
             Personel girişi
           </h1>
         </div>

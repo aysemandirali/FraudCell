@@ -12,8 +12,6 @@ import { queryKeys } from '@/shared/api/query-keys';
 import { formatDateTime, formatNumber, formatPercent } from '@/shared/lib/format';
 import { seriesColor } from '@/shared/lib/risk';
 import {
-  BarList,
-  ChartFrame,
   EmptyState,
   ErrorState,
   PageHeader,
@@ -21,6 +19,7 @@ import {
   SkeletonList,
   StatTile,
 } from '@/shared/ui';
+import { BarList, ChartFrame } from '@/shared/ui/charts';
 
 const RULE_LABEL: Record<string, string> = {
   CASE_DECISION: 'Vaka kararı',

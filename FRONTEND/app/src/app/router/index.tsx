@@ -1,6 +1,5 @@
-import { createRouter, ErrorComponent } from '@tanstack/react-router';
-import { AlertCircle } from 'lucide-react';
-import { EmptyState } from '@/shared/ui';
+import { createRouter, Link } from '@tanstack/react-router';
+import { EmptyState, ErrorState } from '@/shared/ui';
 import { sessionStore } from '@/features/authentication/session';
 import { routeTree } from './routes';
 
@@ -20,15 +19,27 @@ export const router = createRouter({
   /** Preload edilen veri 10 sn taze sayılır; TanStack Query zaten kendi cache'ini tutuyor. */
   defaultPreloadStaleTime: 10_000,
   defaultNotFoundComponent: () => (
-    <div className="flex min-h-dvh items-center justify-center bg-canvas">
+    <div className="flex min-h-dvh items-center justify-center bg-canvas px-4">
       <EmptyState
-        icon={<AlertCircle />}
+        illustration="search"
         title="Sayfa bulunamadı"
         description="Aradığın sayfa taşınmış ya da hiç var olmamış olabilir."
+        action={
+          <Link
+            to="/"
+            className="gradient-brand inline-flex items-center rounded-pill px-5 py-2.5 text-sm font-semibold text-white shadow-raised"
+          >
+            Ana sayfaya dön
+          </Link>
+        }
       />
     </div>
   ),
-  defaultErrorComponent: ErrorComponent,
+  defaultErrorComponent: ({ error, reset }) => (
+    <div className="flex min-h-dvh items-center justify-center bg-canvas px-4">
+      <ErrorState error={error} onRetry={reset} />
+    </div>
+  ),
 });
 
 /**

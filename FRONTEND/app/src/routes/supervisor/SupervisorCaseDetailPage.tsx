@@ -116,33 +116,44 @@ export function SupervisorCaseDetailPage({ caseId }: { caseId: string }) {
     setPanel(next);
   };
 
-  if (caseQuery.isPending) return <main className="mx-auto max-w-6xl px-4 py-6"><SkeletonList rows={4} /></main>;
-  if (caseQuery.isError || !riskCase) return <main className="mx-auto max-w-6xl px-4 py-6"><ErrorState error={caseQuery.error} onRetry={() => void caseQuery.refetch()} /></main>;
+  if (caseQuery.isPending) return <SkeletonList rows={4} />;
+  if (caseQuery.isError || !riskCase)
+    return <ErrorState error={caseQuery.error} onRetry={() => void caseQuery.refetch()} />;
 
   const tone = riskTone(riskCase.effectiveRisk.riskLevel);
   const activeMutation = assignment.isPending || riskOverride.isPending || fraudOverride.isPending;
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
-      <Link to="/supervisor/cases" search={{}} className="mb-4 inline-flex items-center gap-1 text-sm font-semibold text-brand-700">
+    <div>
+      <Link
+        to="/supervisor/cases"
+        search={{}}
+        className="mb-4 inline-flex items-center gap-1 text-sm font-semibold text-brand-700"
+      >
         <ArrowLeft className="size-4" aria-hidden /> Vakalara dön
       </Link>
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-2xl font-bold text-ink-900">{riskCase.transaction.transactionNo}</h1>
-            <ToneBadge toneClass={tone.chip}>{riskCase.effectiveRisk.riskLevel ? RISK_LEVEL_LABEL[riskCase.effectiveRisk.riskLevel] : 'Belirsiz'}</ToneBadge>
-            <ToneBadge toneClass="bg-ink-100 text-ink-700">{CASE_STATUS_LABEL[riskCase.status]}</ToneBadge>
+            <h1 className="text-h1 text-ink-900">{riskCase.transaction.transactionNo}</h1>
+            <ToneBadge toneClass={tone.chip}>
+              {riskCase.effectiveRisk.riskLevel
+                ? RISK_LEVEL_LABEL[riskCase.effectiveRisk.riskLevel]
+                : 'Belirsiz'}
+            </ToneBadge>
+            <ToneBadge toneClass="bg-ink-100 text-ink-700">
+              {CASE_STATUS_LABEL[riskCase.status]}
+            </ToneBadge>
           </div>
-          <p className="mt-1 text-sm text-ink-500">Vaka {riskCase.caseId}</p>
+          <p className="mt-1 text-caption text-ink-500">Vaka #{riskCase.caseId.slice(0, 8)}</p>
         </div>
         <SlaCountdown sla={riskCase.sla} />
       </header>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-[1.4fr_0.8fr]">
         <section className="space-y-4">
-          <article className="surface-card p-5">
-            <h2 className="text-base font-semibold text-ink-900">İşlem</h2>
+          <article className="surface-panel p-5">
+            <h2 className="text-h3 text-ink-900">İşlem</h2>
             <dl className="mt-4 grid gap-4 sm:grid-cols-2">
               <div><dt className="text-xs text-ink-400">Tutar</dt><dd className="mt-1 text-xl font-bold tabular text-ink-900">{formatMoney(riskCase.transaction.amount, riskCase.transaction.currency)}</dd></div>
               <div><dt className="text-xs text-ink-400">Tür</dt><dd className="mt-1 font-semibold text-ink-800">{TRANSACTION_TYPE_LABEL[riskCase.transaction.transactionType]}</dd></div>
@@ -152,8 +163,8 @@ export function SupervisorCaseDetailPage({ caseId }: { caseId: string }) {
             </dl>
           </article>
 
-          <article className="surface-card p-5">
-            <h2 className="text-base font-semibold text-ink-900">Atama</h2>
+          <article className="surface-panel p-5">
+            <h2 className="text-h3 text-ink-900">Atama</h2>
             <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="font-semibold text-ink-800">
@@ -167,8 +178,8 @@ export function SupervisorCaseDetailPage({ caseId }: { caseId: string }) {
         </section>
 
         <aside className="space-y-4">
-          <article className="surface-card p-5">
-            <h2 className="text-base font-semibold text-ink-900">Risk değerlendirmesi</h2>
+          <article className="surface-panel p-5">
+            <h2 className="text-h3 text-ink-900">Risk değerlendirmesi</h2>
             <div className="mt-4 flex justify-center"><RiskGauge score={riskCase.effectiveRisk.riskScore} level={riskCase.effectiveRisk.riskLevel ?? 'BELIRSIZ'} /></div>
             <dl className="mt-4 space-y-3 text-sm">
               <div className="flex justify-between gap-4"><dt className="text-ink-500">Risk tipi</dt><dd className="text-right font-semibold text-ink-800">{riskCase.effectiveRisk.fraudType ? FRAUD_TYPE_LABEL[riskCase.effectiveRisk.fraudType] : 'Belirsiz'}</dd></div>
@@ -177,8 +188,8 @@ export function SupervisorCaseDetailPage({ caseId }: { caseId: string }) {
           </article>
 
           {canManage ? (
-            <article className="surface-card p-5">
-              <h2 className="text-base font-semibold text-ink-900">Süpervizör işlemleri</h2>
+            <article className="surface-panel p-5">
+              <h2 className="text-h3 text-ink-900">Süpervizör işlemleri</h2>
               <div className="mt-4 grid gap-2">
                 <Button variant="secondary" leadingIcon={<ShieldAlert className="size-4" />} onClick={() => openPanel('risk')}>Risk seviyesini değiştir</Button>
                 <Button variant="secondary" leadingIcon={<ScanSearch className="size-4" />} onClick={() => openPanel('fraud')}>Risk tipini değiştir</Button>
@@ -232,6 +243,6 @@ export function SupervisorCaseDetailPage({ caseId }: { caseId: string }) {
         ) : null}
         <TextAreaField className="mt-4" label="Gerekçe" value={reason} onChange={(event) => setReason(event.target.value)} maxLength={500} />
       </Sheet>
-    </main>
+    </div>
   );
 }

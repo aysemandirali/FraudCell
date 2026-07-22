@@ -1,90 +1,132 @@
 {
-  "generatedAt": "2026-07-22T18:04:58.901909+00:00",
+  "generatedAt": "2026-07-22T23:41:47.162687+00:00",
   "randomSeed": 20260722,
-  "datasetVersion": "synthetic-tr-v1",
-  "datasetChecksum": "797f928fc203caa9d8d87c98972377fb8068605003abf538638686885bef4785",
+  "datasetVersion": "synthetic-tr-v2-overlap",
+  "datasetChecksum": "bb1d814b92d25078ae976ba55219ea8d554042a3fb66d15f2420dfe217c4b4fa",
   "datasetRecordCount": 10000,
+  "fraudPrevalence": 0.1325,
   "classDistribution": {
-    "TEMIZ": 7846,
-    "CALINTI_KART": 921,
-    "HESAP_ELE_GECIRME": 590,
-    "SUPHELI_DAVRANIS": 453,
-    "PARA_AKLAMA": 190
+    "TEMIZ": 8675,
+    "SUPHELI_DAVRANIS": 846,
+    "CALINTI_KART": 294,
+    "HESAP_ELE_GECIRME": 139,
+    "PARA_AKLAMA": 46
   },
+  "splitStrategy": "customer-group-holdout(primary)+time-holdout(audit)",
   "split": {
-    "train": 7000,
-    "validation": 1500,
-    "test": 1500
+    "train": 6955,
+    "validation": 1493,
+    "test": 1552
   },
+  "customerOverlapCount": 0,
   "riskModel": {
-    "version": "risk-1.0.0",
-    "algorithm": "HistGradientBoostingClassifier+CalibratedClassifierCV(isotonic)",
+    "version": "risk-2.0.0",
+    "algorithm": "HistGradientBoostingClassifier+CalibratedClassifierCV(sigmoid)",
+    "calibrationMethod": "sigmoid",
+    "trainFraudCount": 943,
     "artifactPath": "risk_model.joblib",
-    "artifactSha256": "4f4e681b2d9a0568a575436a078ecb7b5f62b38a0f9f53f65270070ba8a5e25e",
+    "artifactSha256": "5cf52e1b543d23ae82b04ada81c4a827409a8d7fc019093994076dc230e39c05",
     "metrics": {
       "validation": {
-        "precision": 1.0,
-        "recall": 0.9938080495356038,
-        "f1": 0.9968944099378882
+        "prAuc": 0.4016848186597731,
+        "precision": 0.7428571428571429,
+        "recall": 0.1368421052631579,
+        "f1": 0.2311111111111111,
+        "falsePositiveRate": 0.006907137375287797,
+        "balancedAccuracy": 0.564967483943935,
+        "brierScore": 0.09468259985039995,
+        "confusionMatrix": {
+          "tn": 1294,
+          "fp": 9,
+          "fn": 164,
+          "tp": 26
+        }
       },
       "test": {
-        "precision": 1.0,
-        "recall": 0.9969040247678018,
-        "f1": 0.9984496124031008
+        "prAuc": 0.45556953633056724,
+        "precision": 0.8043478260869565,
+        "recall": 0.19270833333333334,
+        "f1": 0.31092436974789917,
+        "falsePositiveRate": 0.006617647058823529,
+        "balancedAccuracy": 0.5930453431372549,
+        "brierScore": 0.0883079198072377,
+        "confusionMatrix": {
+          "tn": 1351,
+          "fp": 9,
+          "fn": 155,
+          "tp": 37
+        }
+      },
+      "timeHoldout": {
+        "prAuc": 0.4564668521242415,
+        "precision": 0.7777777777777778,
+        "recall": 0.12138728323699421,
+        "f1": 0.21,
+        "falsePositiveRate": 0.00452147701582517,
+        "balancedAccuracy": 0.5584329031105846,
+        "brierScore": 0.0840597360942892,
+        "confusionMatrix": {
+          "tn": 1321,
+          "fp": 6,
+          "fn": 152,
+          "tp": 21
+        }
       }
     }
   },
   "fraudTypeModel": {
-    "version": "fraud-type-1.0.0",
+    "version": "fraud-type-2.0.0",
     "algorithm": "RandomForestClassifier",
+    "trainedClasses": [
+      "CALINTI_KART",
+      "HESAP_ELE_GECIRME",
+      "PARA_AKLAMA",
+      "SUPHELI_DAVRANIS"
+    ],
+    "note": "TEMIZ karari risk modeline birakilir; bu model yalnizca fraud turunu ayirir.",
     "artifactPath": "fraud_type_model.joblib",
-    "artifactSha256": "10a30d1cb4087dd547e5ec56a093ec6bc85e254b287ff84d2069056ebd3f37a7",
+    "artifactSha256": "4c85ae5e302dd17c8326ee5d4a154c244d39c064d7a10e610473295dfe0359d2",
     "metrics": {
       "test": {
         "CALINTI_KART": {
-          "precision": 0.9256756756756757,
-          "recall": 0.9927536231884058,
-          "f1-score": 0.958041958041958,
-          "support": 138.0
+          "precision": 0.9454545454545454,
+          "recall": 0.9629629629629629,
+          "f1-score": 0.9541284403669725,
+          "support": 54.0
         },
         "HESAP_ELE_GECIRME": {
-          "precision": 0.9506172839506173,
-          "recall": 0.875,
-          "f1-score": 0.9112426035502958,
-          "support": 88.0
+          "precision": 0.9047619047619048,
+          "recall": 0.8636363636363636,
+          "f1-score": 0.8837209302325582,
+          "support": 22.0
         },
         "PARA_AKLAMA": {
           "precision": 1.0,
-          "recall": 1.0,
-          "f1-score": 1.0,
-          "support": 29.0
+          "recall": 0.75,
+          "f1-score": 0.8571428571428571,
+          "support": 4.0
         },
         "SUPHELI_DAVRANIS": {
-          "precision": 1.0,
-          "recall": 0.9264705882352942,
-          "f1-score": 0.9618320610687023,
-          "support": 68.0
-        },
-        "TEMIZ": {
-          "precision": 0.998303647158609,
+          "precision": 0.9911504424778761,
           "recall": 1.0,
-          "f1-score": 0.9991511035653651,
-          "support": 1177.0
+          "f1-score": 0.9955555555555555,
+          "support": 112.0
         },
-        "accuracy": 0.9886666666666667,
+        "accuracy": 0.96875,
         "macro avg": {
-          "precision": 0.9749193213569803,
-          "recall": 0.95884484228474,
-          "f1-score": 0.9660535452452642,
-          "support": 1500.0
+          "precision": 0.9603417231735816,
+          "recall": 0.8941498316498316,
+          "f1-score": 0.9226369458244859,
+          "support": 192.0
         },
         "weighted avg": {
-          "precision": 0.9889339712910535,
-          "recall": 0.9886666666666667,
-          "f1-score": 0.9885363789142151,
-          "support": 1500.0
+          "precision": 0.9685841506084869,
+          "recall": 0.96875,
+          "f1-score": 0.9682061973735752,
+          "support": 192.0
         }
-      }
+      },
+      "macroF1": 0.9226369458244859
     }
   },
   "bundleVersion": "fraudcell-ai-1.0.0",
@@ -104,6 +146,5 @@
     "transaction_type_transfer",
     "transaction_type_fatura",
     "transaction_type_cekim"
-  ],
-  "leakageCheckOverlapCount": 0
+  ]
 }

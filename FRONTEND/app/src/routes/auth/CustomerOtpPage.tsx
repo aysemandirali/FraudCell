@@ -132,7 +132,7 @@ export function CustomerOtpPage({
           <span className="mx-auto flex size-14 items-center justify-center rounded-tile bg-brand-100 text-brand-700">
             {challenge ? <ShieldCheck className="size-7" /> : <Phone className="size-7" />}
           </span>
-          <h1 id="customer-auth-title" className="mt-4 text-2xl font-bold text-ink-900">
+          <h1 id="customer-auth-title" className="mt-4 text-h1 text-ink-900">
             {mode === 'register' ? 'Müşteri kaydı' : 'Müşteri girişi'}
           </h1>
           <p className="mt-2 text-sm text-ink-500">

@@ -20,6 +20,7 @@ from app.messaging.base_consumer import BaseConsumer
 from app.messaging.envelope import EventEnvelope
 from app.messaging.outbox import enqueue
 from app.ml.assignment import rank_candidates
+from app.ml.decision_policy import evaluate_risk
 from app.ml.features import build_feature_vector
 from app.ml.model_registry import ModelNotReadyError, registry
 from app.ml.reason_codes import generate_reason_codes
@@ -61,6 +62,7 @@ class TransactionCreatedConsumer(BaseConsumer):
                 )
 
                 risk_score = registry.predict_risk_score(features)
+                decision_result = evaluate_risk(risk_score)
                 fraud_type = registry.predict_fraud_type(features) if risk_score >= 0.40 else "TEMIZ"
                 reason_codes = generate_reason_codes(features)
 
@@ -75,8 +77,8 @@ class TransactionCreatedConsumer(BaseConsumer):
                     correlation_id=envelope.correlation_id,
                     model_bundle_id=bundle_id,
                     risk_score=risk_score,
-                    risk_level=_map_risk_level(risk_score),
-                    decision=_map_decision(risk_score),
+                    risk_level=decision_result.risk_level,
+                    decision=decision_result.decision,
                     fraud_type=fraud_type,
                     feature_snapshot={**features, "customerId": payload["customerId"], "deviceFingerprintHash": payload["deviceFingerprintHash"], "recipientReference": payload["recipientReference"], "amount": payload["amount"]},
                     reason_codes=reason_codes,
@@ -174,21 +176,3 @@ class TransactionCreatedConsumer(BaseConsumer):
     async def _active_bundle_id(session) -> str | None:  # type: ignore[no-untyped-def]
         result = await session.execute(select(ModelBundle.id).where(ModelBundle.status == "ACTIVE"))
         return result.scalar_one_or_none()
-
-
-def _map_risk_level(score: float) -> str:
-    if score < 0.40:
-        return "DUSUK"
-    if score < 0.70:
-        return "ORTA"
-    if score <= 0.90:
-        return "YUKSEK"
-    return "KRITIK"
-
-
-def _map_decision(score: float) -> str:
-    if score < 0.40:
-        return "ONAY"
-    if score <= 0.90:
-        return "INCELEME"
-    return "BLOK"

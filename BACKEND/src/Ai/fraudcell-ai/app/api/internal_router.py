@@ -13,6 +13,7 @@ from app.api.envelope import ok
 from app.config import settings
 from app.database import SessionFactory
 from app.ml.assignment import rank_candidates
+from app.ml.decision_policy import evaluate_risk
 from app.ml.features import build_feature_vector
 from app.ml.model_registry import ModelNotReadyError, registry
 from app.ml.reason_codes import generate_reason_codes
@@ -58,6 +59,7 @@ async def score_internal(request: InternalScoreRequest, authorization: str | Non
         )
 
         risk_score = registry.predict_risk_score(features)
+        decision_result = evaluate_risk(risk_score)
         fraud_type = registry.predict_fraud_type(features) if risk_score >= 0.40 else "TEMIZ"
         candidates = await rank_candidates(session, fraud_type)
 
@@ -65,8 +67,8 @@ async def score_internal(request: InternalScoreRequest, authorization: str | Non
         "assessmentId": request.assessment_request_id,
         "transactionId": request.transaction_id,
         "riskScore": round(risk_score, 5),
-        "riskLevel": _map_risk_level(risk_score),
-        "decision": _map_decision(risk_score),
+        "riskLevel": decision_result.risk_level,
+        "decision": decision_result.decision,
         "fraudType": fraud_type,
         "modelVersion": registry.metadata["bundleVersion"] if registry.metadata else "unknown",
         "reasonCodes": generate_reason_codes(features),
@@ -79,21 +81,3 @@ async def score_internal(request: InternalScoreRequest, authorization: str | Non
         ],
         "assessedAt": dt.datetime.now(dt.timezone.utc).isoformat(),
     }
-
-
-def _map_risk_level(score: float) -> str:
-    if score < 0.40:
-        return "DUSUK"
-    if score < 0.70:
-        return "ORTA"
-    if score <= 0.90:
-        return "YUKSEK"
-    return "KRITIK"
-
-
-def _map_decision(score: float) -> str:
-    if score < 0.40:
-        return "ONAY"
-    if score <= 0.90:
-        return "INCELEME"
-    return "BLOK"

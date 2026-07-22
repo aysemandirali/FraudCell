@@ -1,48 +1,130 @@
 import { useQuery } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
-import { Medal, Trophy } from 'lucide-react';
+import { useNavigate } from '@tanstack/react-router';
+import { Crown, Medal } from 'lucide-react';
 import { getLeaderboard } from '@/features/gamification/api';
-import type { LeaderboardPeriod } from '@/shared/api/contract';
+import type { LeaderboardItemResponse, LeaderboardPeriod } from '@/shared/api/contract';
 import { queryKeys } from '@/shared/api/query-keys';
 import { formatNumber } from '@/shared/lib/format';
 import { cn } from '@/shared/lib/cn';
-import { EmptyState, ErrorState, SkeletonList } from '@/shared/ui';
+import { Avatar, EmptyState, ErrorState, PageHeader, SkeletonList, Tabs } from '@/shared/ui';
+
+/** İlk üç için podyum sırası: 2 · 1 · 3 (ortada birinci, yükseltilmiş). */
+const PODIUM_ORDER = [1, 0, 2];
+const PODIUM_STYLE = [
+  { ring: 'ring-tc-500', badge: 'bg-tc-500 text-brand-900', height: 'sm:mt-0', icon: Crown },
+  { ring: 'ring-ink-300', badge: 'bg-ink-300 text-ink-800', height: 'sm:mt-6', icon: Medal },
+  { ring: 'ring-warning-500/60', badge: 'bg-warning-500 text-white', height: 'sm:mt-10', icon: Medal },
+];
+
+function Podium({ items }: { items: LeaderboardItemResponse[] }) {
+  const top = items.slice(0, 3);
+  return (
+    <div className="mb-6 grid grid-cols-3 items-end gap-3">
+      {PODIUM_ORDER.map((rankIndex) => {
+        const item = top[rankIndex];
+        if (!item) return <div key={rankIndex} />;
+        const style = PODIUM_STYLE[rankIndex]!;
+        const Icon = style.icon;
+        return (
+          <div
+            key={item.analystId}
+            className={cn(
+              'surface-panel flex flex-col items-center p-4 text-center',
+              style.height,
+            )}
+          >
+            <div className="relative">
+              <Avatar name={item.displayName ?? item.analystId} size="lg" className={cn('ring-2', style.ring)} />
+              <span
+                className={cn(
+                  'absolute -top-1.5 -right-1.5 flex size-6 items-center justify-center rounded-full text-micro font-bold',
+                  style.badge,
+                )}
+              >
+                {item.rank}
+              </span>
+            </div>
+            <Icon className="mt-2 size-4 text-tc-500" aria-hidden />
+            <p className="mt-1 line-clamp-1 text-sm font-semibold text-ink-900">
+              {item.displayName ?? 'Analist'}
+            </p>
+            <p className="text-lg font-bold tabular text-brand-800">{formatNumber(item.points)}</p>
+            <p className="text-micro text-ink-400">{item.decisionCount} karar</p>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 export function LeaderboardPage({ period }: { period: LeaderboardPeriod }) {
+  const navigate = useNavigate();
   const leaderboard = useQuery({
     queryKey: queryKeys.gamification.leaderboard(period),
     queryFn: () => getLeaderboard(period),
   });
 
-  return (
-    <main className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div><h1 className="text-2xl font-bold text-ink-900">Liderlik tablosu</h1><p className="mt-1 text-sm text-ink-500">Analist puanları ve karar hacmi.</p></div>
-        <div className="inline-flex rounded-tile bg-ink-100 p-1" role="group" aria-label="Dönem">
-          {(['daily', 'weekly'] as const).map((value) => (
-            <Link key={value} to="/supervisor/leaderboard" search={{ period: value }} className={cn('rounded-md px-4 py-2 text-sm font-semibold', period === value ? 'bg-white text-brand-700 shadow-card' : 'text-ink-500')}>
-              {value === 'daily' ? 'Günlük' : 'Haftalık'}
-            </Link>
-          ))}
-        </div>
-      </header>
+  const items = leaderboard.data?.items ?? [];
+  const rest = items.slice(3);
 
-      <section className="mt-6" aria-live="polite">
+  return (
+    <div>
+      <PageHeader title="Liderlik tablosu" description="Analist puanları ve karar hacmi." />
+
+      <div className="mb-5">
+        <Tabs
+          items={[
+            { value: 'daily', label: 'Günlük' },
+            { value: 'weekly', label: 'Haftalık' },
+          ]}
+          value={period}
+          onValueChange={(value) =>
+            void navigate({
+              to: '/supervisor/leaderboard',
+              search: { period: value as LeaderboardPeriod },
+            })
+          }
+        />
+      </div>
+
+      <section aria-live="polite">
         {leaderboard.isPending ? <SkeletonList rows={6} /> : null}
-        {leaderboard.isError ? <ErrorState error={leaderboard.error} onRetry={() => void leaderboard.refetch()} /> : null}
-        {leaderboard.data?.items.length === 0 ? <EmptyState icon={<Trophy />} title="Bu dönemde sıralama oluşmadı" /> : null}
-        <div className="divide-y divide-ink-100 bg-surface">
-          {leaderboard.data?.items.map((item) => (
-            <div key={item.analystId} className="grid min-h-20 grid-cols-[3rem_1fr_auto] items-center gap-4 px-4 py-3">
-              <span className={cn('flex size-9 items-center justify-center rounded-full font-bold', item.rank <= 3 ? 'bg-tc-100 text-warning-700' : 'bg-ink-100 text-ink-500')}>
-                {item.rank <= 3 ? <Medal className="size-5" aria-label={`${item.rank}. sıra`} /> : item.rank}
-              </span>
-              <div className="min-w-0"><p className="truncate font-semibold text-ink-900">{item.displayName ?? item.analystId}</p><p className="mt-1 text-xs text-ink-500">{item.level} · {item.decisionCount} karar · {item.badgeCount} rozet</p></div>
-              <p className="font-bold tabular text-brand-800">{formatNumber(item.points)} puan</p>
-            </div>
-          ))}
-        </div>
+        {leaderboard.isError ? (
+          <ErrorState error={leaderboard.error} onRetry={() => void leaderboard.refetch()} />
+        ) : null}
+        {!leaderboard.isPending && !leaderboard.isError && items.length === 0 ? (
+          <EmptyState illustration="reward" title="Bu dönemde sıralama oluşmadı" />
+        ) : null}
+
+        {items.length > 0 ? <Podium items={items} /> : null}
+
+        {rest.length > 0 ? (
+          <div className="surface-panel divide-y divide-ink-100 overflow-hidden">
+            {rest.map((item) => (
+              <div
+                key={item.analystId}
+                className="grid grid-cols-[2.5rem_1fr_auto] items-center gap-4 px-4 py-3"
+              >
+                <span className="flex size-8 items-center justify-center rounded-full bg-canvas font-bold text-ink-500">
+                  {item.rank}
+                </span>
+                <div className="flex min-w-0 items-center gap-3">
+                  <Avatar name={item.displayName ?? item.analystId} size="sm" />
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold text-ink-900">
+                      {item.displayName ?? 'Analist'}
+                    </p>
+                    <p className="mt-0.5 text-xs text-ink-500">
+                      {item.level} · {item.decisionCount} karar · {item.badgeCount} rozet
+                    </p>
+                  </div>
+                </div>
+                <p className="font-bold tabular text-brand-800">{formatNumber(item.points)}</p>
+              </div>
+            ))}
+          </div>
+        ) : null}
       </section>
-    </main>
+    </div>
   );
 }
