@@ -28,6 +28,7 @@ public sealed class OutboxPublisherService(
     ILogger<OutboxPublisherService> logger) : BackgroundService
 {
     private readonly OutboxOptions _options = options.Value;
+    private readonly string _instanceId = $"{Environment.MachineName}:{Environment.ProcessId}";
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -88,12 +89,16 @@ public sealed class OutboxPublisherService(
                 message.PublishedAt = clock.UtcNow;
                 message.LastError = null;
                 message.NextAttemptAt = null;
+                message.LockedUntil = null;
+                message.LockOwner = null;
             }
             catch (Exception ex)
             {
                 // Broker kapali ya da kanal koptu. Kayit outbox'ta kalir.
                 message.LastError = Truncate(ex.Message, 2000);
                 message.NextAttemptAt = clock.UtcNow.AddSeconds(BackoffSeconds(message.AttemptCount));
+                message.LockedUntil = null;
+                message.LockOwner = null;
 
                 logger.LogWarning(
                     "Failed to publish outbox message {EventId} ({EventType}), attempt {AttemptCount}. Retrying at {NextAttemptAt}.",
@@ -134,6 +139,7 @@ public sealed class OutboxPublisherService(
                  SELECT * FROM outbox_messages
                  WHERE published_at IS NULL
                    AND (next_attempt_at IS NULL OR next_attempt_at <= {now})
+                   AND (locked_until IS NULL OR locked_until < {now})
                  ORDER BY occurred_at
                  LIMIT {_options.BatchSize}
                  FOR UPDATE SKIP LOCKED
@@ -149,8 +155,11 @@ public sealed class OutboxPublisherService(
         foreach (var message in batch)
         {
             message.AttemptCount++;
-            // Kira: bu sure icinde baska instance ayni kaydi almaz.
-            message.NextAttemptAt = now.AddSeconds(_options.LeaseSeconds);
+            // Kira: bu sure icinde baska instance ayni kaydi almaz (dokuman §06 §58.4).
+            // NextAttemptAt bu asamada BILEREK dokunulmaz; o yalnizca hata sonrasi
+            // retry backoff'unu ifade eder.
+            message.LockedUntil = now.AddSeconds(_options.LeaseSeconds);
+            message.LockOwner = _instanceId;
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);

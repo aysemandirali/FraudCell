@@ -3,8 +3,8 @@ using System.Text.Json.Serialization;
 namespace FraudCell.BuildingBlocks.Api;
 
 /// <summary>
-/// Dokuman §19'daki standart cevap zarfi. Frontend'in <c>ApiEnvelope&lt;T&gt;</c>
-/// tipiyle birebir eslesir; alan adlari degistirilemez.
+/// Dokuman `07-API-DESIGN.md` §8'deki standart cevap zarfi. Frontend'in
+/// <c>ApiEnvelope&lt;T&gt;</c> tipiyle birebir eslesir; alan adlari degistirilemez.
 /// </summary>
 public sealed record ApiResponse<T>
 {
@@ -20,12 +20,18 @@ public sealed record ApiResponse<T>
     [JsonPropertyOrder(3)]
     public required ApiMeta Meta { get; init; }
 
-    public static ApiResponse<T> Ok(T data, string traceId) => new()
+    // CA1000 (generic tipte static uye olmasin) burada kasitli goz ardi edilir:
+    // "ApiResponse<T>.Ok(...)" cagri yerinde T zaten cikarsanabildigi icin en
+    // okunabilir factory bicimidir; ayri bir non-generic factory sinifi gereksiz
+    // dolayli katman ekler.
+#pragma warning disable CA1000
+    public static ApiResponse<T> Ok(T data, string traceId, PageInfo? page = null, DateTimeOffset? generatedAt = null) => new()
+#pragma warning restore CA1000
     {
         Success = true,
         Data = data,
         Error = null,
-        Meta = new ApiMeta(traceId),
+        Meta = new ApiMeta(traceId, page, generatedAt),
     };
 }
 
@@ -58,4 +64,15 @@ public sealed record ApiError(
     string Message,
     IReadOnlyDictionary<string, object?>? Details = null);
 
-public sealed record ApiMeta(string TraceId);
+/// <summary>
+/// <c>meta.pagination</c> dokuman §8.1'de tanimlanir; yalnizca liste
+/// response'larinda doldurulur. <c>generatedAt</c> yalnizca rapor/dashboard
+/// response'larinda kullanilir (dokuman §53 ornegi).
+/// </summary>
+public sealed record ApiMeta(string TraceId, PageInfo? Pagination = null, DateTimeOffset? GeneratedAt = null);
+
+/// <summary>Cursor/keyset pagination zarfi (dokuman §17).</summary>
+public sealed record PageInfo(string? NextCursor, bool HasMore, int Limit);
+
+/// <summary>Liste endpoint'lerinin <c>data</c> alani icin standart sekil: <c>{ items, page }</c>.</summary>
+public sealed record CursorPage<T>(IReadOnlyList<T> Items, PageInfo Page);

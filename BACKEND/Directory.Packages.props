@@ -13,8 +13,10 @@
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.10" />
     <PackageVersion Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.10" />
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.10" />
-    <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="10.0.10" />
     <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.0.0" />
+    <!-- Microsoft.AspNetCore.OpenApi 10.0.10 transitively pulls a vulnerable
+         Microsoft.OpenApi 2.0.0 (GHSA-v5pm-xwqc-g5wc); pinned to patched line. -->
+    <PackageVersion Include="Microsoft.OpenApi" Version="2.11.0" />
   </ItemGroup>
 
   <ItemGroup Label="Persistence">
@@ -40,9 +42,9 @@
     <PackageVersion Include="Ulid" Version="1.4.1" />
     <PackageVersion Include="FluentValidation" Version="12.1.1" />
     <PackageVersion Include="Serilog.AspNetCore" Version="10.0.0" />
-    <PackageVersion Include="Serilog.Sinks.Console" Version="6.0.0" />
+    <PackageVersion Include="Serilog.Sinks.Console" Version="6.1.1" />
     <PackageVersion Include="Serilog.Enrichers.Environment" Version="3.0.1" />
-    <PackageVersion Include="Scalar.AspNetCore" Version="2.9.4" />
+    <PackageVersion Include="Scalar.AspNetCore" Version="2.10.0" />
   </ItemGroup>
 
   <ItemGroup Label="Test">

@@ -22,7 +22,29 @@ public sealed class InboxMessage
 
     public required string EventType { get; set; }
 
+    public int EventVersion { get; set; } = 1;
+
+    /// <summary>
+    /// Ayni EventId farkli payload ile tekrar gelirse (producer hatasi/saldiri
+    /// senaryosu) tespit icin (dokuman §06 §59.3).
+    /// </summary>
+    public string? PayloadHash { get; set; }
+
+    public InboxStatus Status { get; set; } = InboxStatus.Processed;
+
+    public int AttemptCount { get; set; } = 1;
+
+    public string? LastError { get; set; }
+
     public required DateTimeOffset ProcessedAt { get; set; }
 
     public required string CorrelationId { get; set; }
+}
+
+/// <summary>Dokuman §06 §59.1.</summary>
+public enum InboxStatus
+{
+    Processing,
+    Processed,
+    Failed,
 }

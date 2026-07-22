@@ -52,5 +52,23 @@ public class AppException : Exception
         => new(HttpStatusCode.UnprocessableEntity, code, message, details);
 
     public static AppException Unavailable(string message)
-        => new(HttpStatusCode.ServiceUnavailable, ErrorCodes.DependencyUnavailable, message);
+        => new(HttpStatusCode.ServiceUnavailable, ErrorCodes.ServiceTemporarilyUnavailable, message);
+
+    /// <summary>Kritik state-changing endpoint'te <c>If-Match</c> header'i eksik (dokuman §15.1).</summary>
+    public static AppException PreconditionRequired(string message = "Bu islem icin If-Match header'i zorunludur.")
+        => new((HttpStatusCode)428, ErrorCodes.PreconditionRequired, message);
+
+    /// <summary>
+    /// <c>If-Match</c> header'i mevcut kaynak versiyonuyla eslesmiyor (dokuman §15.2).
+    /// Canonical status 412'dir; genel <see cref="ConcurrencyConflict"/> (409) ile karistirilmaz.
+    /// </summary>
+    public static AppException PreconditionFailed(long expectedVersion, long currentVersion)
+        => new(
+            HttpStatusCode.PreconditionFailed,
+            ErrorCodes.ResourceVersionMismatch,
+            "Kaynak baska bir kullanici veya islem tarafindan guncellendi.",
+            new Dictionary<string, object?> { ["expectedVersion"] = expectedVersion, ["currentVersion"] = currentVersion });
+
+    public static AppException ConcurrencyConflict(string message = "Ayni kaynak uzerinde eszamanli bir islem zaten uygulandi.")
+        => new(HttpStatusCode.Conflict, ErrorCodes.ConcurrencyConflict, message);
 }

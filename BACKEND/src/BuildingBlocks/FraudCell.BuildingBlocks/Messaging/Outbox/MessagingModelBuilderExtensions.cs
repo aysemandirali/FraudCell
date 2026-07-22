@@ -24,6 +24,8 @@ public static class MessagingModelBuilderExtensions
             entity.Property(e => e.CausationId).HasMaxLength(64);
             entity.Property(e => e.Producer).HasMaxLength(50).IsRequired();
             entity.Property(e => e.Payload).HasColumnType("jsonb").IsRequired();
+            entity.Property(e => e.Headers).HasColumnType("jsonb");
+            entity.Property(e => e.LockOwner).HasMaxLength(100);
             entity.Property(e => e.LastError).HasMaxLength(2000);
 
             // Publisher'in tek sorgusu: "yayinlanmamis ve zamani gelmis kayitlar".
@@ -43,6 +45,9 @@ public static class MessagingModelBuilderExtensions
             entity.Property(e => e.EventId).HasMaxLength(64);
             entity.Property(e => e.ConsumerName).HasMaxLength(100);
             entity.Property(e => e.EventType).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.PayloadHash).HasMaxLength(128);
+            entity.Property(e => e.Status).HasConversion<string>().HasMaxLength(20);
+            entity.Property(e => e.LastError).HasMaxLength(2000);
             entity.Property(e => e.CorrelationId).HasMaxLength(64).IsRequired();
 
             // Temizlik worker'i eski kayitlari tarihe gore siler.
