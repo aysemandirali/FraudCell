@@ -46,6 +46,7 @@ builder.Services.AddSingleton<IClock, SystemClock>();
 builder.Services.AddScoped<CorrelationContext>();
 builder.Services.AddSingleton(new ServiceIdentity("identity-service"));
 builder.Services.AddSingleton(JsonDefaults.Create());
+builder.Services.ConfigureHttpJsonOptions(options => JsonDefaults.ApplyTo(options.SerializerOptions));
 
 builder.Services.Configure<JwtSigningOptions>(builder.Configuration.GetSection(JwtSigningOptions.SectionName));
 builder.Services.Configure<OtpOptions>(builder.Configuration.GetSection(OtpOptions.SectionName));
@@ -76,7 +77,7 @@ builder.Services
         options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
         options.Lockout.AllowedForNewUsers = true;
 
-        options.User.RequireUniqueEmail = true;
+        options.User.RequireUniqueEmail = false;
         options.SignIn.RequireConfirmedAccount = false;
     })
     .AddRoles<ApplicationRole>()

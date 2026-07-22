@@ -133,17 +133,20 @@ public sealed class OutboxPublisherService(
     {
         await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
 
+        var tableName = GetOutboxTableName(dbContext);
+        var sql =
+            $$"""
+             SELECT * FROM {{tableName}}
+             WHERE published_at IS NULL
+               AND (next_attempt_at IS NULL OR next_attempt_at <= {0})
+               AND (locked_until IS NULL OR locked_until < {1})
+             ORDER BY occurred_at
+             LIMIT {2}
+             FOR UPDATE SKIP LOCKED
+             """;
+
         var batch = await messaging.OutboxMessages
-            .FromSql(
-                $"""
-                 SELECT * FROM outbox_messages
-                 WHERE published_at IS NULL
-                   AND (next_attempt_at IS NULL OR next_attempt_at <= {now})
-                   AND (locked_until IS NULL OR locked_until < {now})
-                 ORDER BY occurred_at
-                 LIMIT {_options.BatchSize}
-                 FOR UPDATE SKIP LOCKED
-                 """)
+            .FromSqlRaw(sql, now, now, _options.BatchSize)
             .ToListAsync(cancellationToken);
 
         if (batch.Count == 0)
@@ -174,6 +177,23 @@ public sealed class OutboxPublisherService(
 
     private static string Truncate(string value, int maxLength)
         => value.Length <= maxLength ? value : value[..maxLength];
+
+    private static string GetOutboxTableName(DbContext dbContext)
+    {
+        var entityType = dbContext.Model.FindEntityType(typeof(OutboxMessage))
+            ?? throw new InvalidOperationException("OutboxMessage entity is not mapped in this DbContext.");
+
+        var tableName = entityType.GetTableName()
+            ?? throw new InvalidOperationException("OutboxMessage table name is not configured.");
+        var schema = entityType.GetSchema();
+
+        return string.IsNullOrWhiteSpace(schema)
+            ? QuoteIdentifier(tableName)
+            : $"{QuoteIdentifier(schema)}.{QuoteIdentifier(tableName)}";
+    }
+
+    private static string QuoteIdentifier(string identifier)
+        => "\"" + identifier.Replace("\"", "\"\"", StringComparison.Ordinal) + "\"";
 }
 
 public sealed class OutboxOptions

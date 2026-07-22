@@ -55,7 +55,7 @@ public static class ReassignmentEndpoint
         await assignmentService.AssignSpecificAnalystAsync(request.NewAnalystId, now, cancellationToken);
 
         var oldAssignment = await db.CaseAssignments
-            .Where(a => a.CaseId == caseId && a.Status is CaseAssignmentStatus.ASSIGNED or CaseAssignmentStatus.IN_PROGRESS)
+            .Where(a => a.CaseId == caseId && (a.Status == CaseAssignmentStatus.ASSIGNED || a.Status == CaseAssignmentStatus.IN_PROGRESS))
             .SingleOrDefaultAsync(cancellationToken);
 
         if (oldAssignment is not null)

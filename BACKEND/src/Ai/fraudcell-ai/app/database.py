@@ -1,0 +1,27 @@
+"""SQLAlchemy engine ve oturum yonetimi (dokuman 03-TECH-STACK.md SQLAlchemy 2.x).
+
+psycopg3, ayni "postgresql+psycopg://" dialect'i hem sync hem async
+motorlarda destekler; ayri bir "psycopg_async" surucusune gerek yoktur.
+"""
+
+from __future__ import annotations
+
+from collections.abc import AsyncGenerator
+
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.orm import DeclarativeBase
+
+from app.config import settings
+
+
+class Base(DeclarativeBase):
+    """Tum ORM modellerinin ortak temeli; `ai` schema'sinda yasar (dokuman 06 §2/§3)."""
+
+
+engine = create_async_engine(settings.database.dsn, pool_pre_ping=True)
+SessionFactory = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+
+
+async def get_session() -> AsyncGenerator[AsyncSession]:
+    async with SessionFactory() as session:
+        yield session

@@ -78,6 +78,8 @@ public static class SubmitFeedbackEndpoint
             caseId,
             transactionId = riskCase.TransactionId,
             customerId,
+            analystId = riskCase.AssignedAnalystId,
+            finalDecision = riskCase.FinalDecision?.ToString(),
             rating = request.Rating,
             submittedAt = now,
         });
@@ -86,8 +88,14 @@ public static class SubmitFeedbackEndpoint
         {
             await db.SaveChangesAsync(cancellationToken);
         }
-        catch (DbUpdateException) when (await db.CustomerFeedbacks.AsNoTracking().AnyAsync(f => f.CaseId == caseId, cancellationToken))
+        catch (DbUpdateException)
         {
+            var raced = await db.CustomerFeedbacks.AsNoTracking().AnyAsync(f => f.CaseId == caseId, cancellationToken);
+            if (!raced)
+            {
+                throw;
+            }
+
             throw new AppException(System.Net.HttpStatusCode.Conflict, ErrorCodes.FeedbackAlreadySubmitted, "Bu vaka icin zaten geri bildirim verilmis.");
         }
 

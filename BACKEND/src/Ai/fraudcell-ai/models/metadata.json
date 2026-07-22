@@ -1,0 +1,109 @@
+{
+  "generatedAt": "2026-07-22T18:04:58.901909+00:00",
+  "randomSeed": 20260722,
+  "datasetVersion": "synthetic-tr-v1",
+  "datasetChecksum": "797f928fc203caa9d8d87c98972377fb8068605003abf538638686885bef4785",
+  "datasetRecordCount": 10000,
+  "classDistribution": {
+    "TEMIZ": 7846,
+    "CALINTI_KART": 921,
+    "HESAP_ELE_GECIRME": 590,
+    "SUPHELI_DAVRANIS": 453,
+    "PARA_AKLAMA": 190
+  },
+  "split": {
+    "train": 7000,
+    "validation": 1500,
+    "test": 1500
+  },
+  "riskModel": {
+    "version": "risk-1.0.0",
+    "algorithm": "HistGradientBoostingClassifier+CalibratedClassifierCV(isotonic)",
+    "artifactPath": "risk_model.joblib",
+    "artifactSha256": "4f4e681b2d9a0568a575436a078ecb7b5f62b38a0f9f53f65270070ba8a5e25e",
+    "metrics": {
+      "validation": {
+        "precision": 1.0,
+        "recall": 0.9938080495356038,
+        "f1": 0.9968944099378882
+      },
+      "test": {
+        "precision": 1.0,
+        "recall": 0.9969040247678018,
+        "f1": 0.9984496124031008
+      }
+    }
+  },
+  "fraudTypeModel": {
+    "version": "fraud-type-1.0.0",
+    "algorithm": "RandomForestClassifier",
+    "artifactPath": "fraud_type_model.joblib",
+    "artifactSha256": "10a30d1cb4087dd547e5ec56a093ec6bc85e254b287ff84d2069056ebd3f37a7",
+    "metrics": {
+      "test": {
+        "CALINTI_KART": {
+          "precision": 0.9256756756756757,
+          "recall": 0.9927536231884058,
+          "f1-score": 0.958041958041958,
+          "support": 138.0
+        },
+        "HESAP_ELE_GECIRME": {
+          "precision": 0.9506172839506173,
+          "recall": 0.875,
+          "f1-score": 0.9112426035502958,
+          "support": 88.0
+        },
+        "PARA_AKLAMA": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1-score": 1.0,
+          "support": 29.0
+        },
+        "SUPHELI_DAVRANIS": {
+          "precision": 1.0,
+          "recall": 0.9264705882352942,
+          "f1-score": 0.9618320610687023,
+          "support": 68.0
+        },
+        "TEMIZ": {
+          "precision": 0.998303647158609,
+          "recall": 1.0,
+          "f1-score": 0.9991511035653651,
+          "support": 1177.0
+        },
+        "accuracy": 0.9886666666666667,
+        "macro avg": {
+          "precision": 0.9749193213569803,
+          "recall": 0.95884484228474,
+          "f1-score": 0.9660535452452642,
+          "support": 1500.0
+        },
+        "weighted avg": {
+          "precision": 0.9889339712910535,
+          "recall": 0.9886666666666667,
+          "f1-score": 0.9885363789142151,
+          "support": 1500.0
+        }
+      }
+    }
+  },
+  "bundleVersion": "fraudcell-ai-1.0.0",
+  "featureColumns": [
+    "amount",
+    "hour_of_day",
+    "is_night",
+    "is_foreign_country",
+    "is_new_device",
+    "is_new_recipient",
+    "amount_deviation_ratio",
+    "transactions_last_10_minutes",
+    "transactions_last_24_hours",
+    "device_age_days",
+    "recipient_age_days",
+    "transaction_type_odeme",
+    "transaction_type_transfer",
+    "transaction_type_fatura",
+    "transaction_type_cekim"
+  ],
+  "leakageCheckOverlapCount": 0
+}

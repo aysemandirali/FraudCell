@@ -1,0 +1,25 @@
+## Derleme çıktıları — image içine taze publish alınacağı için gereksiz
+**/bin/
+**/obj/
+**/artifacts/
+
+## IDE / OS
+**/.vs/
+**/.vscode/
+**/*.user
+**/*.suo
+
+## Secrets — imaja asla kopyalanmaz (SEC-011)
+.env
+*.env
+!.env.example
+**/keys/
+**/secrets/
+**/*.pem
+**/*.key
+
+## Diger
+**/logs/
+**/*.log
+.git/
+docs/

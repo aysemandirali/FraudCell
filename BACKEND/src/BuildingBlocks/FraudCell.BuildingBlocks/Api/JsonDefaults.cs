@@ -18,17 +18,27 @@ public static class JsonDefaults
         var options = new JsonSerializerOptions(JsonSerializerDefaults.Web)
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            DictionaryKeyPolicy = JsonNamingPolicy.CamelCase,
-            // Frontend "riskScore === null" gibi ayrimlar yaptigi icin
-            // null alanlar cevaptan DUSURULMEZ.
-            DefaultIgnoreCondition = JsonIgnoreCondition.Never,
-            NumberHandling = JsonNumberHandling.Strict,
-            // Turkce karakterler (s, i, g) \uXXXX olarak kacilmasin.
-            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
         };
 
-        options.Converters.Add(new JsonStringEnumConverter(namingPolicy: null, allowIntegerValues: false));
+        ApplyTo(options);
         return options;
+    }
+
+    public static void ApplyTo(JsonSerializerOptions options)
+    {
+        options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        options.DictionaryKeyPolicy = JsonNamingPolicy.CamelCase;
+        // Frontend "riskScore === null" gibi ayrimlar yaptigi icin
+        // null alanlar cevaptan DUSURULMEZ.
+        options.DefaultIgnoreCondition = JsonIgnoreCondition.Never;
+        options.NumberHandling = JsonNumberHandling.Strict;
+        // Turkce karakterler (s, i, g) \uXXXX olarak kacilmasin.
+        options.Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping;
+
+        if (!options.Converters.OfType<JsonStringEnumConverter>().Any())
+        {
+            options.Converters.Add(new JsonStringEnumConverter(namingPolicy: null, allowIntegerValues: false));
+        }
     }
 
     /// <summary>Event zarfi ve payload'lari icin ortak ayarlar.</summary>

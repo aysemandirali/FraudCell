@@ -102,8 +102,11 @@ public static class CreateTransactionEndpoint
 
             httpContext.Response.Headers["Idempotency-Replayed"] = "true";
             httpContext.Response.Headers.Location = $"/api/v1/transactions/{existing.ResourceId}";
+            var cachedResponse = JsonSerializer.Deserialize<CreateTransactionResponse>(existing.ResponseBody!, JsonDefaults.Events)
+                ?? throw new InvalidOperationException("Cached transaction response could not be deserialized.");
+
             return Results.Json(
-                JsonSerializer.Deserialize<object>(existing.ResponseBody!, JsonDefaults.Events),
+                ApiResponse<CreateTransactionResponse>.Ok(cachedResponse, correlation.CorrelationId),
                 statusCode: existing.ResponseStatusCode ?? StatusCodes.Status201Created);
         }
 
@@ -177,10 +180,17 @@ public static class CreateTransactionEndpoint
         {
             await db.SaveChangesAsync(cancellationToken);
         }
-        catch (DbUpdateException) when (await db.IdempotencyRecords.AsNoTracking().AnyAsync(
-            r => r.Scope == "transaction.create" && r.ActorId == customerId && r.IdempotencyKey == idempotencyKey, cancellationToken))
+        catch (DbUpdateException)
         {
             // Paralel istek ayni key ile yaristi; unique constraint ikinci INSERT'i reddetti (dokuman §46.3).
+            var raced = await db.IdempotencyRecords.AsNoTracking().AnyAsync(
+                r => r.Scope == "transaction.create" && r.ActorId == customerId && r.IdempotencyKey == idempotencyKey, cancellationToken);
+
+            if (!raced)
+            {
+                throw;
+            }
+
             throw new AppException(System.Net.HttpStatusCode.Conflict, ErrorCodes.IdempotencyConflict, "Ayni istek paralel olarak zaten isleniyor.");
         }
 
