@@ -16,6 +16,7 @@ public static class ListStaffEndpoint
         app.MapGet("/api/v1/staff", HandleAsync)
            .WithName("ListStaff")
            .WithTags("Staff")
+           .ProducesApi<CursorPage<StaffResponse>>()
            .RequireAuthorization(policy => policy.RequireRole(RoleNames.Admin, RoleNames.Supervisor));
     }
 

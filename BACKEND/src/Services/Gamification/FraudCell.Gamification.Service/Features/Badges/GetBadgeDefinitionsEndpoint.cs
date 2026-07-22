@@ -15,6 +15,7 @@ public static class GetBadgeDefinitionsEndpoint
         app.MapGet("/api/v1/game/badges", HandleAsync)
            .WithName("GetBadgeDefinitions")
            .WithTags("Gamification")
+           .ProducesApi<IReadOnlyList<BadgeDefinitionResponse>>()
            .RequireAuthorization();
     }
 

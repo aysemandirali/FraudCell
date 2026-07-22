@@ -23,6 +23,7 @@ public static class ManualAssignmentEndpoint
         app.MapPut("/api/v1/cases/{caseId}/assignment", HandleAsync)
            .WithName("ManualAssignCase")
            .WithTags("Cases")
+           .ProducesApi<ManualAssignmentResponse>()
            .RequireAuthorization(policy => policy.RequireRole(RoleNames.Supervisor));
     }
 

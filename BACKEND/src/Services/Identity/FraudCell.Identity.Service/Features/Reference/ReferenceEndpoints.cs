@@ -18,14 +18,17 @@ public static class ReferenceEndpoints
     {
         app.MapGet("/api/v1/reference/roles", GetRolesAsync)
            .WithName("GetRoles").WithTags("Reference")
+           .ProducesApi<IReadOnlyList<ReferenceItemResponse>>()
            .RequireAuthorization(policy => policy.RequireRole(RoleNames.Admin));
 
         app.MapGet("/api/v1/reference/specialties", GetSpecialtiesAsync)
            .WithName("GetSpecialties").WithTags("Reference")
+           .ProducesApi<IReadOnlyList<ReferenceItemResponse>>()
            .RequireAuthorization(policy => policy.RequireRole(RoleNames.Admin, RoleNames.Supervisor));
 
         app.MapGet("/api/v1/reference/regions", GetRegionsAsync)
            .WithName("GetRegions").WithTags("Reference")
+           .ProducesApi<IReadOnlyList<ReferenceItemResponse>>()
            .RequireAuthorization(policy => policy.RequireRole(RoleNames.Admin, RoleNames.Supervisor));
     }
 

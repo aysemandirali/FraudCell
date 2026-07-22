@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using FraudCell.BuildingBlocks.Api;
 using FraudCell.Identity.Service.Common;
 using FraudCell.Identity.Service.Domain;
 using FraudCell.Identity.Service.Persistence;
@@ -17,6 +18,7 @@ public static class LogoutEndpoint
         app.MapPost("/api/v1/auth/logout", HandleAsync)
            .WithName("Logout")
            .WithTags("Auth")
+           .ProducesApi<object?>()
            .RequireAuthorization();
     }
 

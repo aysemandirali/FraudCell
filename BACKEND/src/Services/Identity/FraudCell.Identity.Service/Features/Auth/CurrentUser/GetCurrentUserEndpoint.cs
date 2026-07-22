@@ -24,6 +24,7 @@ public static class GetCurrentUserEndpoint
         app.MapGet("/api/v1/auth/me", HandleAsync)
            .WithName("GetCurrentUser")
            .WithTags("Auth")
+           .ProducesApi<CurrentUserResponse>()
            .RequireAuthorization();
     }
 

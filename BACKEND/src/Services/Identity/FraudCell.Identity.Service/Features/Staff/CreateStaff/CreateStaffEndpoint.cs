@@ -33,6 +33,7 @@ public static class CreateStaffEndpoint
         app.MapPost("/api/v1/staff", HandleAsync)
            .WithName("CreateStaff")
            .WithTags("Staff")
+           .ProducesApi<StaffResponse>(StatusCodes.Status201Created)
            .RequireAuthorization(policy => policy.RequireRole(RoleNames.Admin));
     }
 

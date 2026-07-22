@@ -24,6 +24,7 @@ from app.messaging.projection_consumers import (
     StaffProfileUpdatedConsumer,
 )
 from app.messaging.transaction_created_consumer import TransactionCreatedConsumer
+from app.migrate import migrate
 
 logging.basicConfig(level=logging.INFO, format='{"timestamp":"%(asctime)s","level":"%(levelname)s","service":"ai-service","message":"%(message)s"}')
 logger = logging.getLogger(__name__)
@@ -34,6 +35,10 @@ _background_tasks: list[asyncio.Task] = []
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Servis kendi database'inin semasini kendi uygular; baska hicbir servisin
+    # database'ine dokunmaz (dokuman §06: veri sahipligi).
+    await migrate()
+
     try:
         await bootstrap_models()
     except Exception:

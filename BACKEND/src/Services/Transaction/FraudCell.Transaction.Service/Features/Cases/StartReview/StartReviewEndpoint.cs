@@ -19,6 +19,7 @@ public static class StartReviewEndpoint
         app.MapPost("/api/v1/cases/{caseId}/review", HandleAsync)
            .WithName("StartCaseReview")
            .WithTags("Cases")
+           .ProducesApi<StartReviewResponse>()
            .RequireAuthorization(policy => policy.RequireRole(RoleNames.Analyst, RoleNames.Supervisor));
     }
 

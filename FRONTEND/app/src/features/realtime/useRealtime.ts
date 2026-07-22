@@ -1,9 +1,13 @@
 import { useEffect, useRef } from 'react';
 import { useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { env } from '@/shared/config/env';
+import { api } from '@/shared/api/client';
+import type { StreamTicketResponse } from '@/shared/api/contract';
+import { endpoints } from '@/shared/api/endpoints';
 import { queryKeys } from '@/shared/api/query-keys';
 import { useToast } from '@/shared/ui';
 import { useSession } from '@/features/authentication/useSession';
+import { recordLiveNotification } from '@/features/notifications/model';
 import { parseRealtimeEvent, type RealtimeEvent } from './events';
 
 /**
@@ -18,9 +22,9 @@ import { parseRealtimeEvent, type RealtimeEvent } from './events';
  * geçmişine sızar. DESIGN.MD'nin çözümü kısa ömürlü, tek kullanımlık bir
  * "stream ticket" üretmektir.
  *
- * Gateway henüz yazılmadığı için ticket ucu da yok. Bu yüzden bağlantı şu an
- * `withCredentials` ile kurulur (cookie taşınır) ve gerçek ticket akışı Gateway
- * geldiğinde `openStream` içinde tek noktadan eklenir.
+ * Gateway'den JWT ile kısa ömürlü, tek kullanımlık ticket alınır. Native
+ * `EventSource` yalnızca bu ticket'i query string'de taşır; erişim ve refresh
+ * token'ları URL'ye hiçbir zaman yazılmaz.
  */
 
 interface RealtimeContext {
@@ -100,6 +104,42 @@ const HANDLERS: HandlerMap = {
   'points.earned': (_event, { queryClient }) => {
     void queryClient.invalidateQueries({ queryKey: queryKeys.gamification.all });
   },
+
+  'notification.received': (event, { queryClient, toast }) => {
+    const { notificationType, resourceId, title, message } = event.data;
+
+    recordLiveNotification(queryClient, { id: event.id, ...event.data });
+
+    if (notificationType.startsWith('AI_ASSESSMENT') || notificationType === 'SUSPICIOUS_TRANSACTION_DETECTED') {
+      if (resourceId) {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.transactions.detail(resourceId) });
+      }
+      void queryClient.invalidateQueries({ queryKey: queryKeys.transactions.all });
+    }
+
+    if (notificationType === 'CASE_ASSIGNED' || notificationType === 'CASE_DECISION_MADE' || notificationType === 'SLA_BREACHED') {
+      if (resourceId) {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.cases.detail(resourceId) });
+      }
+      void queryClient.invalidateQueries({ queryKey: queryKeys.cases.all });
+    }
+
+    if (notificationType === 'CUSTOMER_VERIFICATION_REQUESTED') {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.pendingVerifications });
+    }
+
+    if (notificationType === 'POINTS_AWARDED' || notificationType === 'BADGE_EARNED') {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.gamification.all });
+    }
+
+    if (notificationType === 'BADGE_EARNED' || notificationType === 'CASE_DECISION_MADE') {
+      toast.success(title, message);
+    } else if (notificationType === 'SLA_BREACHED' || notificationType === 'SUSPICIOUS_TRANSACTION_DETECTED') {
+      toast.warning(title, message);
+    } else {
+      toast.info(title, message);
+    }
+  },
 };
 
 /**
@@ -122,7 +162,7 @@ const RECONNECT_MAX_MS = 30_000;
 export function useRealtime(): void {
   const queryClient = useQueryClient();
   const toast = useToast();
-  const { status } = useSession();
+  const { status, user } = useSession();
 
   // Handler'lar her render'da değişmesin diye ref'te tutuluyor; aksi hâlde
   // effect her render'da bağlantıyı kapatıp yeniden açardı.
@@ -131,17 +171,33 @@ export function useRealtime(): void {
 
   useEffect(() => {
     // Oturum yokken bağlanma; mock modda SSE ucu da yok.
-    if (status !== 'authenticated' || env.isMock) return;
+    if (status !== 'authenticated' || env.isMock || !env.realtimeEnabled) return;
 
     let source: EventSource | null = null;
     let retry = 0;
     let reconnectTimer: number | undefined;
     let closed = false;
 
-    const connect = () => {
+    const scheduleReconnect = () => {
+      if (closed) return;
+      const delay = Math.min(RECONNECT_BASE_MS * 2 ** retry, RECONNECT_MAX_MS);
+      retry += 1;
+      reconnectTimer = window.setTimeout(() => void connect(), delay);
+    };
+
+    const connect = async () => {
       if (closed) return;
 
-      source = new EventSource(env.eventsPath, { withCredentials: true });
+      let ticket: StreamTicketResponse;
+      try {
+        ticket = (await api.post<StreamTicketResponse>(endpoints.realtime.tickets)).data;
+      } catch {
+        scheduleReconnect();
+        return;
+      }
+
+      if (closed) return;
+      source = new EventSource(`${env.eventsPath}?ticket=${encodeURIComponent(ticket.ticket)}`);
 
       source.onopen = () => {
         retry = 0;
@@ -155,22 +211,16 @@ export function useRealtime(): void {
 
       source.onerror = () => {
         source?.close();
-        if (closed) return;
-
-        // EventSource kendi kendine de yeniden bağlanır; kontrolü biz alıyoruz
-        // ki geri çekilme uygulayalım ve kapanışta sızıntı kalmasın.
-        const delay = Math.min(RECONNECT_BASE_MS * 2 ** retry, RECONNECT_MAX_MS);
-        retry += 1;
-        reconnectTimer = window.setTimeout(connect, delay);
+        scheduleReconnect();
       };
     };
 
-    connect();
+    void connect();
 
     return () => {
       closed = true;
       window.clearTimeout(reconnectTimer);
       source?.close();
     };
-  }, [status]);
+  }, [status, user?.id]);
 }

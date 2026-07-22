@@ -62,6 +62,30 @@ if (-not $me.success -or $me.data.role -ne "ADMIN") {
 
 Write-Host "[ok] identity token works"
 
+Write-Step "checking single-use realtime stream ticket"
+$streamTicket = Invoke-RestMethod `
+    -Method Post `
+    -Uri "$gatewayBase/api/v1/events/tickets" `
+    -Headers $headers `
+    -TimeoutSec 20
+
+if (-not $streamTicket.success -or [string]::IsNullOrWhiteSpace($streamTicket.data.ticket)) {
+    throw "Realtime ticket endpoint did not return a ticket."
+}
+
+$streamUrl = "$gatewayBase/api/v1/events?ticket=$($streamTicket.data.ticket)"
+$streamProbe = & curl.exe -sN --max-time 1 $streamUrl
+if (($streamProbe -join "`n") -notmatch ": connected") {
+    throw "Realtime stream did not open with the issued ticket."
+}
+
+$reusedTicketStatus = & curl.exe -s -o NUL -w "%{http_code}" $streamUrl
+if ($reusedTicketStatus -ne "401") {
+    throw "Realtime ticket reuse should return 401, got $reusedTicketStatus."
+}
+
+Write-Host "[ok] realtime stream ticket is short-lived and single-use"
+
 Write-Step "checking staff creation and staff login"
 $staffSuffix = [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()
 $staffEmail = "smoke.analyst.$staffSuffix@fraudcell.local"
@@ -189,13 +213,14 @@ Write-Host "[ok] refresh token rotation"
 
 Write-Step "checking transaction create and idempotency"
 $idempotencyKey = "smoke-$([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds())"
+$highRiskOccurredAt = [DateTimeOffset]::new([DateTime]::UtcNow.Date.AddHours(1), [TimeSpan]::Zero)
 $transactionHeaders = @{
     Authorization = "Bearer $($customerLogin.data.accessToken)"
     "Idempotency-Key" = $idempotencyKey
 }
 
 $transactionBody = @{
-    amount = 125.45
+    amount = 50000.00
     currency = "TRY"
     transactionType = "TRANSFER"
     recipient = @{
@@ -205,10 +230,10 @@ $transactionBody = @{
         fingerprint = "smoke-device-$staffSuffix"
     }
     location = @{
-        city = "Istanbul"
-        countryCode = "TR"
+        city = "New York"
+        countryCode = "US"
     }
-    occurredAt = [DateTimeOffset]::UtcNow.ToString("o")
+    occurredAt = $highRiskOccurredAt.ToString("o")
 } | ConvertTo-Json -Depth 4
 
 $createdTransaction = Invoke-RestMethod `
@@ -256,6 +281,51 @@ if (-not $customerTransactions.success -or $customerTransactions.data.items.Coun
 }
 
 Write-Host "[ok] transaction create and idempotency"
+
+Write-Step "checking transaction -> RabbitMQ -> AI -> risk case flow"
+$assessmentStartedAt = [DateTimeOffset]::UtcNow
+$assessmentDeadline = $assessmentStartedAt.AddSeconds(20)
+
+do {
+    $transactionDetail = Invoke-RestMethod `
+        -Method Get `
+        -Uri "$gatewayBase/api/v1/transactions/$($createdTransaction.data.transactionId)" `
+        -Headers $customerHeaders `
+        -TimeoutSec 20
+
+    if ($transactionDetail.data.assessment.status -eq "COMPLETED") {
+        break
+    }
+
+    if ($transactionDetail.data.assessment.status -in @("FAILED", "TIMED_OUT")) {
+        throw "AI assessment ended with status $($transactionDetail.data.assessment.status)."
+    }
+
+    Start-Sleep -Milliseconds 250
+} while ([DateTimeOffset]::UtcNow -lt $assessmentDeadline)
+
+if ($transactionDetail.data.assessment.status -ne "COMPLETED") {
+    throw "AI assessment did not complete within 20 seconds."
+}
+
+if ($null -eq $transactionDetail.data.assessment.riskScore -or
+    [string]::IsNullOrWhiteSpace($transactionDetail.data.assessment.modelVersion) -or
+    [string]::IsNullOrWhiteSpace($transactionDetail.data.caseId)) {
+    throw "AI assessment did not return a persisted risk score, model version, and risk case."
+}
+
+$riskCase = Invoke-RestMethod `
+    -Method Get `
+    -Uri "$gatewayBase/api/v1/cases/$($transactionDetail.data.caseId)" `
+    -Headers $headers `
+    -TimeoutSec 20
+
+if (-not $riskCase.success -or $riskCase.data.transaction.transactionId -ne $createdTransaction.data.transactionId) {
+    throw "The AI-created risk case could not be read through the gateway."
+}
+
+$assessmentElapsed = [Math]::Round(([DateTimeOffset]::UtcNow - $assessmentStartedAt).TotalMilliseconds)
+Write-Host "[ok] AI assessment and risk case ($assessmentElapsed ms, decision=$($transactionDetail.data.assessment.screeningDecision))"
 
 Write-Step "checking transaction service JWT validation"
 $transactions = Invoke-RestMethod `

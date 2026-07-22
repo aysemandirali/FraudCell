@@ -21,6 +21,7 @@ public static class GetPerformanceEndpoint
         app.MapGet("/api/v1/game/performance/{analystId}", HandleAsync)
            .WithName("GetAnalystPerformance")
            .WithTags("Gamification")
+           .ProducesApi<PerformanceResponse>()
            .RequireAuthorization();
     }
 

@@ -1,0 +1,1393 @@
+{
+    "openapi":  "3.1.1",
+    "info":  {
+                 "title":  "FraudCell.Gamification.Service | v1",
+                 "version":  "1.0.0"
+             },
+    "servers":  [
+                    {
+                        "url":  "http://127.0.0.1:8083/"
+                    }
+                ],
+    "paths":  {
+                  "/api/v1/game/profiles/me":  {
+                                                   "get":  {
+                                                               "tags":  [
+                                                                            "Gamification"
+                                                                        ],
+                                                               "operationId":  "GetMyProfile",
+                                                               "responses":  {
+                                                                                 "200":  {
+                                                                                             "description":  "OK",
+                                                                                             "content":  {
+                                                                                                             "application/json":  {
+                                                                                                                                      "schema":  {
+                                                                                                                                                     "$ref":  "#/components/schemas/ApiResponseOfProfileResponse"
+                                                                                                                                                 }
+                                                                                                                                  }
+                                                                                                         }
+                                                                                         },
+                                                                                 "400":  {
+                                                                                             "description":  "Bad Request",
+                                                                                             "content":  {
+                                                                                                             "application/json":  {
+                                                                                                                                      "schema":  {
+                                                                                                                                                     "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                 }
+                                                                                                                                  }
+                                                                                                         }
+                                                                                         },
+                                                                                 "401":  {
+                                                                                             "description":  "Unauthorized",
+                                                                                             "content":  {
+                                                                                                             "application/json":  {
+                                                                                                                                      "schema":  {
+                                                                                                                                                     "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                 }
+                                                                                                                                  }
+                                                                                                         }
+                                                                                         },
+                                                                                 "403":  {
+                                                                                             "description":  "Forbidden",
+                                                                                             "content":  {
+                                                                                                             "application/json":  {
+                                                                                                                                      "schema":  {
+                                                                                                                                                     "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                 }
+                                                                                                                                  }
+                                                                                                         }
+                                                                                         },
+                                                                                 "404":  {
+                                                                                             "description":  "Not Found",
+                                                                                             "content":  {
+                                                                                                             "application/json":  {
+                                                                                                                                      "schema":  {
+                                                                                                                                                     "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                 }
+                                                                                                                                  }
+                                                                                                         }
+                                                                                         },
+                                                                                 "409":  {
+                                                                                             "description":  "Conflict",
+                                                                                             "content":  {
+                                                                                                             "application/json":  {
+                                                                                                                                      "schema":  {
+                                                                                                                                                     "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                 }
+                                                                                                                                  }
+                                                                                                         }
+                                                                                         },
+                                                                                 "429":  {
+                                                                                             "description":  "Too Many Requests",
+                                                                                             "content":  {
+                                                                                                             "application/json":  {
+                                                                                                                                      "schema":  {
+                                                                                                                                                     "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                 }
+                                                                                                                                  }
+                                                                                                         }
+                                                                                         },
+                                                                                 "500":  {
+                                                                                             "description":  "Internal Server Error",
+                                                                                             "content":  {
+                                                                                                             "application/json":  {
+                                                                                                                                      "schema":  {
+                                                                                                                                                     "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                 }
+                                                                                                                                  }
+                                                                                                         }
+                                                                                         },
+                                                                                 "503":  {
+                                                                                             "description":  "Service Unavailable",
+                                                                                             "content":  {
+                                                                                                             "application/json":  {
+                                                                                                                                      "schema":  {
+                                                                                                                                                     "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                 }
+                                                                                                                                  }
+                                                                                                         }
+                                                                                         }
+                                                                             }
+                                                           }
+                                               },
+                  "/api/v1/game/profiles/{analystId}":  {
+                                                            "get":  {
+                                                                        "tags":  [
+                                                                                     "Gamification"
+                                                                                 ],
+                                                                        "operationId":  "GetAnalystProfile",
+                                                                        "parameters":  [
+                                                                                           {
+                                                                                               "name":  "analystId",
+                                                                                               "in":  "path",
+                                                                                               "required":  true,
+                                                                                               "schema":  {
+                                                                                                              "type":  "string"
+                                                                                                          }
+                                                                                           }
+                                                                                       ],
+                                                                        "responses":  {
+                                                                                          "200":  {
+                                                                                                      "description":  "OK",
+                                                                                                      "content":  {
+                                                                                                                      "application/json":  {
+                                                                                                                                               "schema":  {
+                                                                                                                                                              "$ref":  "#/components/schemas/ApiResponseOfProfileResponse"
+                                                                                                                                                          }
+                                                                                                                                           }
+                                                                                                                  }
+                                                                                                  },
+                                                                                          "400":  {
+                                                                                                      "description":  "Bad Request",
+                                                                                                      "content":  {
+                                                                                                                      "application/json":  {
+                                                                                                                                               "schema":  {
+                                                                                                                                                              "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                          }
+                                                                                                                                           }
+                                                                                                                  }
+                                                                                                  },
+                                                                                          "401":  {
+                                                                                                      "description":  "Unauthorized",
+                                                                                                      "content":  {
+                                                                                                                      "application/json":  {
+                                                                                                                                               "schema":  {
+                                                                                                                                                              "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                          }
+                                                                                                                                           }
+                                                                                                                  }
+                                                                                                  },
+                                                                                          "403":  {
+                                                                                                      "description":  "Forbidden",
+                                                                                                      "content":  {
+                                                                                                                      "application/json":  {
+                                                                                                                                               "schema":  {
+                                                                                                                                                              "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                          }
+                                                                                                                                           }
+                                                                                                                  }
+                                                                                                  },
+                                                                                          "404":  {
+                                                                                                      "description":  "Not Found",
+                                                                                                      "content":  {
+                                                                                                                      "application/json":  {
+                                                                                                                                               "schema":  {
+                                                                                                                                                              "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                          }
+                                                                                                                                           }
+                                                                                                                  }
+                                                                                                  },
+                                                                                          "409":  {
+                                                                                                      "description":  "Conflict",
+                                                                                                      "content":  {
+                                                                                                                      "application/json":  {
+                                                                                                                                               "schema":  {
+                                                                                                                                                              "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                          }
+                                                                                                                                           }
+                                                                                                                  }
+                                                                                                  },
+                                                                                          "429":  {
+                                                                                                      "description":  "Too Many Requests",
+                                                                                                      "content":  {
+                                                                                                                      "application/json":  {
+                                                                                                                                               "schema":  {
+                                                                                                                                                              "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                          }
+                                                                                                                                           }
+                                                                                                                  }
+                                                                                                  },
+                                                                                          "500":  {
+                                                                                                      "description":  "Internal Server Error",
+                                                                                                      "content":  {
+                                                                                                                      "application/json":  {
+                                                                                                                                               "schema":  {
+                                                                                                                                                              "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                          }
+                                                                                                                                           }
+                                                                                                                  }
+                                                                                                  },
+                                                                                          "503":  {
+                                                                                                      "description":  "Service Unavailable",
+                                                                                                      "content":  {
+                                                                                                                      "application/json":  {
+                                                                                                                                               "schema":  {
+                                                                                                                                                              "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                          }
+                                                                                                                                           }
+                                                                                                                  }
+                                                                                                  }
+                                                                                      }
+                                                                    }
+                                                        },
+                  "/api/v1/game/profiles/{analystId}/points":  {
+                                                                   "get":  {
+                                                                               "tags":  [
+                                                                                            "Gamification"
+                                                                                        ],
+                                                                               "operationId":  "GetAnalystPoints",
+                                                                               "parameters":  [
+                                                                                                  {
+                                                                                                      "name":  "analystId",
+                                                                                                      "in":  "path",
+                                                                                                      "required":  true,
+                                                                                                      "schema":  {
+                                                                                                                     "type":  "string"
+                                                                                                                 }
+                                                                                                  },
+                                                                                                  {
+                                                                                                      "name":  "limit",
+                                                                                                      "in":  "query",
+                                                                                                      "schema":  {
+                                                                                                                     "type":  "integer",
+                                                                                                                     "format":  "int32",
+                                                                                                                     "default":  20
+                                                                                                                 }
+                                                                                                  }
+                                                                                              ],
+                                                                               "responses":  {
+                                                                                                 "200":  {
+                                                                                                             "description":  "OK",
+                                                                                                             "content":  {
+                                                                                                                             "application/json":  {
+                                                                                                                                                      "schema":  {
+                                                                                                                                                                     "$ref":  "#/components/schemas/ApiResponseOfIReadOnlyListOfPointLedgerItemResponse"
+                                                                                                                                                                 }
+                                                                                                                                                  }
+                                                                                                                         }
+                                                                                                         },
+                                                                                                 "400":  {
+                                                                                                             "description":  "Bad Request",
+                                                                                                             "content":  {
+                                                                                                                             "application/json":  {
+                                                                                                                                                      "schema":  {
+                                                                                                                                                                     "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                                 }
+                                                                                                                                                  }
+                                                                                                                         }
+                                                                                                         },
+                                                                                                 "401":  {
+                                                                                                             "description":  "Unauthorized",
+                                                                                                             "content":  {
+                                                                                                                             "application/json":  {
+                                                                                                                                                      "schema":  {
+                                                                                                                                                                     "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                                 }
+                                                                                                                                                  }
+                                                                                                                         }
+                                                                                                         },
+                                                                                                 "403":  {
+                                                                                                             "description":  "Forbidden",
+                                                                                                             "content":  {
+                                                                                                                             "application/json":  {
+                                                                                                                                                      "schema":  {
+                                                                                                                                                                     "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                                 }
+                                                                                                                                                  }
+                                                                                                                         }
+                                                                                                         },
+                                                                                                 "404":  {
+                                                                                                             "description":  "Not Found",
+                                                                                                             "content":  {
+                                                                                                                             "application/json":  {
+                                                                                                                                                      "schema":  {
+                                                                                                                                                                     "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                                 }
+                                                                                                                                                  }
+                                                                                                                         }
+                                                                                                         },
+                                                                                                 "409":  {
+                                                                                                             "description":  "Conflict",
+                                                                                                             "content":  {
+                                                                                                                             "application/json":  {
+                                                                                                                                                      "schema":  {
+                                                                                                                                                                     "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                                 }
+                                                                                                                                                  }
+                                                                                                                         }
+                                                                                                         },
+                                                                                                 "429":  {
+                                                                                                             "description":  "Too Many Requests",
+                                                                                                             "content":  {
+                                                                                                                             "application/json":  {
+                                                                                                                                                      "schema":  {
+                                                                                                                                                                     "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                                 }
+                                                                                                                                                  }
+                                                                                                                         }
+                                                                                                         },
+                                                                                                 "500":  {
+                                                                                                             "description":  "Internal Server Error",
+                                                                                                             "content":  {
+                                                                                                                             "application/json":  {
+                                                                                                                                                      "schema":  {
+                                                                                                                                                                     "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                                 }
+                                                                                                                                                  }
+                                                                                                                         }
+                                                                                                         },
+                                                                                                 "503":  {
+                                                                                                             "description":  "Service Unavailable",
+                                                                                                             "content":  {
+                                                                                                                             "application/json":  {
+                                                                                                                                                      "schema":  {
+                                                                                                                                                                     "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                                 }
+                                                                                                                                                  }
+                                                                                                                         }
+                                                                                                         }
+                                                                                             }
+                                                                           }
+                                                               },
+                  "/api/v1/game/profiles/{analystId}/badges":  {
+                                                                   "get":  {
+                                                                               "tags":  [
+                                                                                            "Gamification"
+                                                                                        ],
+                                                                               "operationId":  "GetAnalystBadges",
+                                                                               "parameters":  [
+                                                                                                  {
+                                                                                                      "name":  "analystId",
+                                                                                                      "in":  "path",
+                                                                                                      "required":  true,
+                                                                                                      "schema":  {
+                                                                                                                     "type":  "string"
+                                                                                                                 }
+                                                                                                  }
+                                                                                              ],
+                                                                               "responses":  {
+                                                                                                 "200":  {
+                                                                                                             "description":  "OK",
+                                                                                                             "content":  {
+                                                                                                                             "application/json":  {
+                                                                                                                                                      "schema":  {
+                                                                                                                                                                     "$ref":  "#/components/schemas/ApiResponseOfIReadOnlyListOfBadgeSummaryResponse"
+                                                                                                                                                                 }
+                                                                                                                                                  }
+                                                                                                                         }
+                                                                                                         },
+                                                                                                 "400":  {
+                                                                                                             "description":  "Bad Request",
+                                                                                                             "content":  {
+                                                                                                                             "application/json":  {
+                                                                                                                                                      "schema":  {
+                                                                                                                                                                     "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                                 }
+                                                                                                                                                  }
+                                                                                                                         }
+                                                                                                         },
+                                                                                                 "401":  {
+                                                                                                             "description":  "Unauthorized",
+                                                                                                             "content":  {
+                                                                                                                             "application/json":  {
+                                                                                                                                                      "schema":  {
+                                                                                                                                                                     "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                                 }
+                                                                                                                                                  }
+                                                                                                                         }
+                                                                                                         },
+                                                                                                 "403":  {
+                                                                                                             "description":  "Forbidden",
+                                                                                                             "content":  {
+                                                                                                                             "application/json":  {
+                                                                                                                                                      "schema":  {
+                                                                                                                                                                     "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                                 }
+                                                                                                                                                  }
+                                                                                                                         }
+                                                                                                         },
+                                                                                                 "404":  {
+                                                                                                             "description":  "Not Found",
+                                                                                                             "content":  {
+                                                                                                                             "application/json":  {
+                                                                                                                                                      "schema":  {
+                                                                                                                                                                     "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                                 }
+                                                                                                                                                  }
+                                                                                                                         }
+                                                                                                         },
+                                                                                                 "409":  {
+                                                                                                             "description":  "Conflict",
+                                                                                                             "content":  {
+                                                                                                                             "application/json":  {
+                                                                                                                                                      "schema":  {
+                                                                                                                                                                     "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                                 }
+                                                                                                                                                  }
+                                                                                                                         }
+                                                                                                         },
+                                                                                                 "429":  {
+                                                                                                             "description":  "Too Many Requests",
+                                                                                                             "content":  {
+                                                                                                                             "application/json":  {
+                                                                                                                                                      "schema":  {
+                                                                                                                                                                     "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                                 }
+                                                                                                                                                  }
+                                                                                                                         }
+                                                                                                         },
+                                                                                                 "500":  {
+                                                                                                             "description":  "Internal Server Error",
+                                                                                                             "content":  {
+                                                                                                                             "application/json":  {
+                                                                                                                                                      "schema":  {
+                                                                                                                                                                     "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                                 }
+                                                                                                                                                  }
+                                                                                                                         }
+                                                                                                         },
+                                                                                                 "503":  {
+                                                                                                             "description":  "Service Unavailable",
+                                                                                                             "content":  {
+                                                                                                                             "application/json":  {
+                                                                                                                                                      "schema":  {
+                                                                                                                                                                     "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                                 }
+                                                                                                                                                  }
+                                                                                                                         }
+                                                                                                         }
+                                                                                             }
+                                                                           }
+                                                               },
+                  "/api/v1/game/leaderboard":  {
+                                                   "get":  {
+                                                               "tags":  [
+                                                                            "Gamification"
+                                                                        ],
+                                                               "operationId":  "GetLeaderboard",
+                                                               "parameters":  [
+                                                                                  {
+                                                                                      "name":  "period",
+                                                                                      "in":  "query",
+                                                                                      "schema":  {
+                                                                                                     "type":  "string",
+                                                                                                     "default":  "daily"
+                                                                                                 }
+                                                                                  },
+                                                                                  {
+                                                                                      "name":  "limit",
+                                                                                      "in":  "query",
+                                                                                      "schema":  {
+                                                                                                     "type":  "integer",
+                                                                                                     "format":  "int32",
+                                                                                                     "default":  10
+                                                                                                 }
+                                                                                  }
+                                                                              ],
+                                                               "responses":  {
+                                                                                 "200":  {
+                                                                                             "description":  "OK",
+                                                                                             "content":  {
+                                                                                                             "application/json":  {
+                                                                                                                                      "schema":  {
+                                                                                                                                                     "$ref":  "#/components/schemas/ApiResponseOfLeaderboardResponse"
+                                                                                                                                                 }
+                                                                                                                                  }
+                                                                                                         }
+                                                                                         },
+                                                                                 "400":  {
+                                                                                             "description":  "Bad Request",
+                                                                                             "content":  {
+                                                                                                             "application/json":  {
+                                                                                                                                      "schema":  {
+                                                                                                                                                     "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                 }
+                                                                                                                                  }
+                                                                                                         }
+                                                                                         },
+                                                                                 "401":  {
+                                                                                             "description":  "Unauthorized",
+                                                                                             "content":  {
+                                                                                                             "application/json":  {
+                                                                                                                                      "schema":  {
+                                                                                                                                                     "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                 }
+                                                                                                                                  }
+                                                                                                         }
+                                                                                         },
+                                                                                 "403":  {
+                                                                                             "description":  "Forbidden",
+                                                                                             "content":  {
+                                                                                                             "application/json":  {
+                                                                                                                                      "schema":  {
+                                                                                                                                                     "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                 }
+                                                                                                                                  }
+                                                                                                         }
+                                                                                         },
+                                                                                 "404":  {
+                                                                                             "description":  "Not Found",
+                                                                                             "content":  {
+                                                                                                             "application/json":  {
+                                                                                                                                      "schema":  {
+                                                                                                                                                     "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                 }
+                                                                                                                                  }
+                                                                                                         }
+                                                                                         },
+                                                                                 "409":  {
+                                                                                             "description":  "Conflict",
+                                                                                             "content":  {
+                                                                                                             "application/json":  {
+                                                                                                                                      "schema":  {
+                                                                                                                                                     "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                 }
+                                                                                                                                  }
+                                                                                                         }
+                                                                                         },
+                                                                                 "429":  {
+                                                                                             "description":  "Too Many Requests",
+                                                                                             "content":  {
+                                                                                                             "application/json":  {
+                                                                                                                                      "schema":  {
+                                                                                                                                                     "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                 }
+                                                                                                                                  }
+                                                                                                         }
+                                                                                         },
+                                                                                 "500":  {
+                                                                                             "description":  "Internal Server Error",
+                                                                                             "content":  {
+                                                                                                             "application/json":  {
+                                                                                                                                      "schema":  {
+                                                                                                                                                     "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                 }
+                                                                                                                                  }
+                                                                                                         }
+                                                                                         },
+                                                                                 "503":  {
+                                                                                             "description":  "Service Unavailable",
+                                                                                             "content":  {
+                                                                                                             "application/json":  {
+                                                                                                                                      "schema":  {
+                                                                                                                                                     "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                 }
+                                                                                                                                  }
+                                                                                                         }
+                                                                                         }
+                                                                             }
+                                                           }
+                                               },
+                  "/api/v1/game/badges":  {
+                                              "get":  {
+                                                          "tags":  [
+                                                                       "Gamification"
+                                                                   ],
+                                                          "operationId":  "GetBadgeDefinitions",
+                                                          "responses":  {
+                                                                            "200":  {
+                                                                                        "description":  "OK",
+                                                                                        "content":  {
+                                                                                                        "application/json":  {
+                                                                                                                                 "schema":  {
+                                                                                                                                                "$ref":  "#/components/schemas/ApiResponseOfIReadOnlyListOfBadgeDefinitionResponse"
+                                                                                                                                            }
+                                                                                                                             }
+                                                                                                    }
+                                                                                    },
+                                                                            "400":  {
+                                                                                        "description":  "Bad Request",
+                                                                                        "content":  {
+                                                                                                        "application/json":  {
+                                                                                                                                 "schema":  {
+                                                                                                                                                "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                            }
+                                                                                                                             }
+                                                                                                    }
+                                                                                    },
+                                                                            "401":  {
+                                                                                        "description":  "Unauthorized",
+                                                                                        "content":  {
+                                                                                                        "application/json":  {
+                                                                                                                                 "schema":  {
+                                                                                                                                                "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                            }
+                                                                                                                             }
+                                                                                                    }
+                                                                                    },
+                                                                            "403":  {
+                                                                                        "description":  "Forbidden",
+                                                                                        "content":  {
+                                                                                                        "application/json":  {
+                                                                                                                                 "schema":  {
+                                                                                                                                                "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                            }
+                                                                                                                             }
+                                                                                                    }
+                                                                                    },
+                                                                            "404":  {
+                                                                                        "description":  "Not Found",
+                                                                                        "content":  {
+                                                                                                        "application/json":  {
+                                                                                                                                 "schema":  {
+                                                                                                                                                "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                            }
+                                                                                                                             }
+                                                                                                    }
+                                                                                    },
+                                                                            "409":  {
+                                                                                        "description":  "Conflict",
+                                                                                        "content":  {
+                                                                                                        "application/json":  {
+                                                                                                                                 "schema":  {
+                                                                                                                                                "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                            }
+                                                                                                                             }
+                                                                                                    }
+                                                                                    },
+                                                                            "429":  {
+                                                                                        "description":  "Too Many Requests",
+                                                                                        "content":  {
+                                                                                                        "application/json":  {
+                                                                                                                                 "schema":  {
+                                                                                                                                                "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                            }
+                                                                                                                             }
+                                                                                                    }
+                                                                                    },
+                                                                            "500":  {
+                                                                                        "description":  "Internal Server Error",
+                                                                                        "content":  {
+                                                                                                        "application/json":  {
+                                                                                                                                 "schema":  {
+                                                                                                                                                "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                            }
+                                                                                                                             }
+                                                                                                    }
+                                                                                    },
+                                                                            "503":  {
+                                                                                        "description":  "Service Unavailable",
+                                                                                        "content":  {
+                                                                                                        "application/json":  {
+                                                                                                                                 "schema":  {
+                                                                                                                                                "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                            }
+                                                                                                                             }
+                                                                                                    }
+                                                                                    }
+                                                                        }
+                                                      }
+                                          },
+                  "/api/v1/game/performance/{analystId}":  {
+                                                               "get":  {
+                                                                           "tags":  [
+                                                                                        "Gamification"
+                                                                                    ],
+                                                                           "operationId":  "GetAnalystPerformance",
+                                                                           "parameters":  [
+                                                                                              {
+                                                                                                  "name":  "analystId",
+                                                                                                  "in":  "path",
+                                                                                                  "required":  true,
+                                                                                                  "schema":  {
+                                                                                                                 "type":  "string"
+                                                                                                             }
+                                                                                              }
+                                                                                          ],
+                                                                           "responses":  {
+                                                                                             "200":  {
+                                                                                                         "description":  "OK",
+                                                                                                         "content":  {
+                                                                                                                         "application/json":  {
+                                                                                                                                                  "schema":  {
+                                                                                                                                                                 "$ref":  "#/components/schemas/ApiResponseOfPerformanceResponse"
+                                                                                                                                                             }
+                                                                                                                                              }
+                                                                                                                     }
+                                                                                                     },
+                                                                                             "400":  {
+                                                                                                         "description":  "Bad Request",
+                                                                                                         "content":  {
+                                                                                                                         "application/json":  {
+                                                                                                                                                  "schema":  {
+                                                                                                                                                                 "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                             }
+                                                                                                                                              }
+                                                                                                                     }
+                                                                                                     },
+                                                                                             "401":  {
+                                                                                                         "description":  "Unauthorized",
+                                                                                                         "content":  {
+                                                                                                                         "application/json":  {
+                                                                                                                                                  "schema":  {
+                                                                                                                                                                 "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                             }
+                                                                                                                                              }
+                                                                                                                     }
+                                                                                                     },
+                                                                                             "403":  {
+                                                                                                         "description":  "Forbidden",
+                                                                                                         "content":  {
+                                                                                                                         "application/json":  {
+                                                                                                                                                  "schema":  {
+                                                                                                                                                                 "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                             }
+                                                                                                                                              }
+                                                                                                                     }
+                                                                                                     },
+                                                                                             "404":  {
+                                                                                                         "description":  "Not Found",
+                                                                                                         "content":  {
+                                                                                                                         "application/json":  {
+                                                                                                                                                  "schema":  {
+                                                                                                                                                                 "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                             }
+                                                                                                                                              }
+                                                                                                                     }
+                                                                                                     },
+                                                                                             "409":  {
+                                                                                                         "description":  "Conflict",
+                                                                                                         "content":  {
+                                                                                                                         "application/json":  {
+                                                                                                                                                  "schema":  {
+                                                                                                                                                                 "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                             }
+                                                                                                                                              }
+                                                                                                                     }
+                                                                                                     },
+                                                                                             "429":  {
+                                                                                                         "description":  "Too Many Requests",
+                                                                                                         "content":  {
+                                                                                                                         "application/json":  {
+                                                                                                                                                  "schema":  {
+                                                                                                                                                                 "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                             }
+                                                                                                                                              }
+                                                                                                                     }
+                                                                                                     },
+                                                                                             "500":  {
+                                                                                                         "description":  "Internal Server Error",
+                                                                                                         "content":  {
+                                                                                                                         "application/json":  {
+                                                                                                                                                  "schema":  {
+                                                                                                                                                                 "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                             }
+                                                                                                                                              }
+                                                                                                                     }
+                                                                                                     },
+                                                                                             "503":  {
+                                                                                                         "description":  "Service Unavailable",
+                                                                                                         "content":  {
+                                                                                                                         "application/json":  {
+                                                                                                                                                  "schema":  {
+                                                                                                                                                                 "$ref":  "#/components/schemas/ApiResponse"
+                                                                                                                                                             }
+                                                                                                                                              }
+                                                                                                                     }
+                                                                                                     }
+                                                                                         }
+                                                                       }
+                                                           }
+              },
+    "components":  {
+                       "schemas":  {
+                                       "ApiError":  {
+                                                        "required":  [
+                                                                         "code",
+                                                                         "message"
+                                                                     ],
+                                                        "type":  "object",
+                                                        "properties":  {
+                                                                           "code":  {
+                                                                                        "type":  "string"
+                                                                                    },
+                                                                           "message":  {
+                                                                                           "type":  "string"
+                                                                                       },
+                                                                           "details":  {
+                                                                                           "type":  [
+                                                                                                        "null",
+                                                                                                        "object"
+                                                                                                    ]
+                                                                                       }
+                                                                       }
+                                                    },
+                                       "ApiMeta":  {
+                                                       "required":  [
+                                                                        "traceId"
+                                                                    ],
+                                                       "type":  "object",
+                                                       "properties":  {
+                                                                          "traceId":  {
+                                                                                          "type":  "string"
+                                                                                      },
+                                                                          "pagination":  {
+                                                                                             "oneOf":  [
+                                                                                                           {
+                                                                                                               "type":  "null"
+                                                                                                           },
+                                                                                                           {
+                                                                                                               "$ref":  "#/components/schemas/PageInfo"
+                                                                                                           }
+                                                                                                       ]
+                                                                                         },
+                                                                          "generatedAt":  {
+                                                                                              "type":  [
+                                                                                                           "null",
+                                                                                                           "string"
+                                                                                                       ],
+                                                                                              "format":  "date-time"
+                                                                                          }
+                                                                      }
+                                                   },
+                                       "ApiResponse":  {
+                                                           "required":  [
+                                                                            "success",
+                                                                            "meta"
+                                                                        ],
+                                                           "type":  "object",
+                                                           "properties":  {
+                                                                              "success":  {
+                                                                                              "type":  "boolean"
+                                                                                          },
+                                                                              "data":  {
+
+                                                                                       },
+                                                                              "error":  {
+                                                                                            "oneOf":  [
+                                                                                                          {
+                                                                                                              "type":  "null"
+                                                                                                          },
+                                                                                                          {
+                                                                                                              "$ref":  "#/components/schemas/ApiError"
+                                                                                                          }
+                                                                                                      ]
+                                                                                        },
+                                                                              "meta":  {
+                                                                                           "$ref":  "#/components/schemas/ApiMeta"
+                                                                                       }
+                                                                          }
+                                                       },
+                                       "ApiResponseOfIReadOnlyListOfBadgeDefinitionResponse":  {
+                                                                                                   "required":  [
+                                                                                                                    "success",
+                                                                                                                    "meta"
+                                                                                                                ],
+                                                                                                   "type":  "object",
+                                                                                                   "properties":  {
+                                                                                                                      "success":  {
+                                                                                                                                      "type":  "boolean"
+                                                                                                                                  },
+                                                                                                                      "data":  {
+                                                                                                                                   "type":  [
+                                                                                                                                                "null",
+                                                                                                                                                "array"
+                                                                                                                                            ],
+                                                                                                                                   "items":  {
+                                                                                                                                                 "$ref":  "#/components/schemas/BadgeDefinitionResponse"
+                                                                                                                                             }
+                                                                                                                               },
+                                                                                                                      "error":  {
+                                                                                                                                    "oneOf":  [
+                                                                                                                                                  {
+                                                                                                                                                      "type":  "null"
+                                                                                                                                                  },
+                                                                                                                                                  {
+                                                                                                                                                      "$ref":  "#/components/schemas/ApiError"
+                                                                                                                                                  }
+                                                                                                                                              ]
+                                                                                                                                },
+                                                                                                                      "meta":  {
+                                                                                                                                   "$ref":  "#/components/schemas/ApiMeta"
+                                                                                                                               }
+                                                                                                                  }
+                                                                                               },
+                                       "ApiResponseOfIReadOnlyListOfBadgeSummaryResponse":  {
+                                                                                                "required":  [
+                                                                                                                 "success",
+                                                                                                                 "meta"
+                                                                                                             ],
+                                                                                                "type":  "object",
+                                                                                                "properties":  {
+                                                                                                                   "success":  {
+                                                                                                                                   "type":  "boolean"
+                                                                                                                               },
+                                                                                                                   "data":  {
+                                                                                                                                "type":  [
+                                                                                                                                             "null",
+                                                                                                                                             "array"
+                                                                                                                                         ],
+                                                                                                                                "items":  {
+                                                                                                                                              "$ref":  "#/components/schemas/BadgeSummaryResponse"
+                                                                                                                                          }
+                                                                                                                            },
+                                                                                                                   "error":  {
+                                                                                                                                 "oneOf":  [
+                                                                                                                                               {
+                                                                                                                                                   "type":  "null"
+                                                                                                                                               },
+                                                                                                                                               {
+                                                                                                                                                   "$ref":  "#/components/schemas/ApiError"
+                                                                                                                                               }
+                                                                                                                                           ]
+                                                                                                                             },
+                                                                                                                   "meta":  {
+                                                                                                                                "$ref":  "#/components/schemas/ApiMeta"
+                                                                                                                            }
+                                                                                                               }
+                                                                                            },
+                                       "ApiResponseOfIReadOnlyListOfPointLedgerItemResponse":  {
+                                                                                                   "required":  [
+                                                                                                                    "success",
+                                                                                                                    "meta"
+                                                                                                                ],
+                                                                                                   "type":  "object",
+                                                                                                   "properties":  {
+                                                                                                                      "success":  {
+                                                                                                                                      "type":  "boolean"
+                                                                                                                                  },
+                                                                                                                      "data":  {
+                                                                                                                                   "type":  [
+                                                                                                                                                "null",
+                                                                                                                                                "array"
+                                                                                                                                            ],
+                                                                                                                                   "items":  {
+                                                                                                                                                 "$ref":  "#/components/schemas/PointLedgerItemResponse"
+                                                                                                                                             }
+                                                                                                                               },
+                                                                                                                      "error":  {
+                                                                                                                                    "oneOf":  [
+                                                                                                                                                  {
+                                                                                                                                                      "type":  "null"
+                                                                                                                                                  },
+                                                                                                                                                  {
+                                                                                                                                                      "$ref":  "#/components/schemas/ApiError"
+                                                                                                                                                  }
+                                                                                                                                              ]
+                                                                                                                                },
+                                                                                                                      "meta":  {
+                                                                                                                                   "$ref":  "#/components/schemas/ApiMeta"
+                                                                                                                               }
+                                                                                                                  }
+                                                                                               },
+                                       "ApiResponseOfLeaderboardResponse":  {
+                                                                                "required":  [
+                                                                                                 "success",
+                                                                                                 "meta"
+                                                                                             ],
+                                                                                "type":  "object",
+                                                                                "properties":  {
+                                                                                                   "success":  {
+                                                                                                                   "type":  "boolean"
+                                                                                                               },
+                                                                                                   "data":  {
+                                                                                                                "oneOf":  [
+                                                                                                                              {
+                                                                                                                                  "type":  "null"
+                                                                                                                              },
+                                                                                                                              {
+                                                                                                                                  "$ref":  "#/components/schemas/LeaderboardResponse"
+                                                                                                                              }
+                                                                                                                          ]
+                                                                                                            },
+                                                                                                   "error":  {
+                                                                                                                 "oneOf":  [
+                                                                                                                               {
+                                                                                                                                   "type":  "null"
+                                                                                                                               },
+                                                                                                                               {
+                                                                                                                                   "$ref":  "#/components/schemas/ApiError"
+                                                                                                                               }
+                                                                                                                           ]
+                                                                                                             },
+                                                                                                   "meta":  {
+                                                                                                                "$ref":  "#/components/schemas/ApiMeta"
+                                                                                                            }
+                                                                                               }
+                                                                            },
+                                       "ApiResponseOfPerformanceResponse":  {
+                                                                                "required":  [
+                                                                                                 "success",
+                                                                                                 "meta"
+                                                                                             ],
+                                                                                "type":  "object",
+                                                                                "properties":  {
+                                                                                                   "success":  {
+                                                                                                                   "type":  "boolean"
+                                                                                                               },
+                                                                                                   "data":  {
+                                                                                                                "oneOf":  [
+                                                                                                                              {
+                                                                                                                                  "type":  "null"
+                                                                                                                              },
+                                                                                                                              {
+                                                                                                                                  "$ref":  "#/components/schemas/PerformanceResponse"
+                                                                                                                              }
+                                                                                                                          ]
+                                                                                                            },
+                                                                                                   "error":  {
+                                                                                                                 "oneOf":  [
+                                                                                                                               {
+                                                                                                                                   "type":  "null"
+                                                                                                                               },
+                                                                                                                               {
+                                                                                                                                   "$ref":  "#/components/schemas/ApiError"
+                                                                                                                               }
+                                                                                                                           ]
+                                                                                                             },
+                                                                                                   "meta":  {
+                                                                                                                "$ref":  "#/components/schemas/ApiMeta"
+                                                                                                            }
+                                                                                               }
+                                                                            },
+                                       "ApiResponseOfProfileResponse":  {
+                                                                            "required":  [
+                                                                                             "success",
+                                                                                             "meta"
+                                                                                         ],
+                                                                            "type":  "object",
+                                                                            "properties":  {
+                                                                                               "success":  {
+                                                                                                               "type":  "boolean"
+                                                                                                           },
+                                                                                               "data":  {
+                                                                                                            "oneOf":  [
+                                                                                                                          {
+                                                                                                                              "type":  "null"
+                                                                                                                          },
+                                                                                                                          {
+                                                                                                                              "$ref":  "#/components/schemas/ProfileResponse"
+                                                                                                                          }
+                                                                                                                      ]
+                                                                                                        },
+                                                                                               "error":  {
+                                                                                                             "oneOf":  [
+                                                                                                                           {
+                                                                                                                               "type":  "null"
+                                                                                                                           },
+                                                                                                                           {
+                                                                                                                               "$ref":  "#/components/schemas/ApiError"
+                                                                                                                           }
+                                                                                                                       ]
+                                                                                                         },
+                                                                                               "meta":  {
+                                                                                                            "$ref":  "#/components/schemas/ApiMeta"
+                                                                                                        }
+                                                                                           }
+                                                                        },
+                                       "BadgeDefinitionResponse":  {
+                                                                       "required":  [
+                                                                                        "code",
+                                                                                        "displayName",
+                                                                                        "description"
+                                                                                    ],
+                                                                       "type":  "object",
+                                                                       "properties":  {
+                                                                                          "code":  {
+                                                                                                       "type":  "string"
+                                                                                                   },
+                                                                                          "displayName":  {
+                                                                                                              "type":  "string"
+                                                                                                          },
+                                                                                          "description":  {
+                                                                                                              "type":  "string"
+                                                                                                          }
+                                                                                      }
+                                                                   },
+                                       "BadgeSummaryResponse":  {
+                                                                    "required":  [
+                                                                                     "code",
+                                                                                     "displayName",
+                                                                                     "earnedAt"
+                                                                                 ],
+                                                                    "type":  "object",
+                                                                    "properties":  {
+                                                                                       "code":  {
+                                                                                                    "type":  "string"
+                                                                                                },
+                                                                                       "displayName":  {
+                                                                                                           "type":  "string"
+                                                                                                       },
+                                                                                       "earnedAt":  {
+                                                                                                        "type":  "string",
+                                                                                                        "format":  "date-time"
+                                                                                                    }
+                                                                                   }
+                                                                },
+                                       "FraudTypeStatResponse":  {
+                                                                     "required":  [
+                                                                                      "fraudType",
+                                                                                      "decisionCount",
+                                                                                      "confirmedFraudCount",
+                                                                                      "accuracyRate"
+                                                                                  ],
+                                                                     "type":  "object",
+                                                                     "properties":  {
+                                                                                        "fraudType":  {
+                                                                                                          "type":  "string"
+                                                                                                      },
+                                                                                        "decisionCount":  {
+                                                                                                              "type":  "integer",
+                                                                                                              "format":  "int32"
+                                                                                                          },
+                                                                                        "confirmedFraudCount":  {
+                                                                                                                    "type":  "integer",
+                                                                                                                    "format":  "int32"
+                                                                                                                },
+                                                                                        "accuracyRate":  {
+                                                                                                             "type":  "number",
+                                                                                                             "format":  "double"
+                                                                                                         }
+                                                                                    }
+                                                                 },
+                                       "LeaderboardItemResponse":  {
+                                                                       "required":  [
+                                                                                        "rank",
+                                                                                        "analystId",
+                                                                                        "displayName",
+                                                                                        "points",
+                                                                                        "level",
+                                                                                        "decisionCount",
+                                                                                        "badgeCount"
+                                                                                    ],
+                                                                       "type":  "object",
+                                                                       "properties":  {
+                                                                                          "rank":  {
+                                                                                                       "type":  "integer",
+                                                                                                       "format":  "int32"
+                                                                                                   },
+                                                                                          "analystId":  {
+                                                                                                            "type":  "string"
+                                                                                                        },
+                                                                                          "displayName":  {
+                                                                                                              "type":  [
+                                                                                                                           "null",
+                                                                                                                           "string"
+                                                                                                                       ]
+                                                                                                          },
+                                                                                          "points":  {
+                                                                                                         "type":  "integer",
+                                                                                                         "format":  "int64"
+                                                                                                     },
+                                                                                          "level":  {
+                                                                                                        "type":  "string"
+                                                                                                    },
+                                                                                          "decisionCount":  {
+                                                                                                                "type":  "integer",
+                                                                                                                "format":  "int32"
+                                                                                                            },
+                                                                                          "badgeCount":  {
+                                                                                                             "type":  "integer",
+                                                                                                             "format":  "int32"
+                                                                                                         }
+                                                                                      }
+                                                                   },
+                                       "LeaderboardResponse":  {
+                                                                   "required":  [
+                                                                                    "period",
+                                                                                    "periodStart",
+                                                                                    "periodEnd",
+                                                                                    "items"
+                                                                                ],
+                                                                   "type":  "object",
+                                                                   "properties":  {
+                                                                                      "period":  {
+                                                                                                     "type":  "string"
+                                                                                                 },
+                                                                                      "periodStart":  {
+                                                                                                          "type":  "string",
+                                                                                                          "format":  "date-time"
+                                                                                                      },
+                                                                                      "periodEnd":  {
+                                                                                                        "type":  "string",
+                                                                                                        "format":  "date-time"
+                                                                                                    },
+                                                                                      "items":  {
+                                                                                                    "type":  "array",
+                                                                                                    "items":  {
+                                                                                                                  "$ref":  "#/components/schemas/LeaderboardItemResponse"
+                                                                                                              }
+                                                                                                }
+                                                                                  }
+                                                               },
+                                       "PageInfo":  {
+                                                        "required":  [
+                                                                         "nextCursor",
+                                                                         "hasMore",
+                                                                         "limit"
+                                                                     ],
+                                                        "type":  "object",
+                                                        "properties":  {
+                                                                           "nextCursor":  {
+                                                                                              "type":  [
+                                                                                                           "null",
+                                                                                                           "string"
+                                                                                                       ]
+                                                                                          },
+                                                                           "hasMore":  {
+                                                                                           "type":  "boolean"
+                                                                                       },
+                                                                           "limit":  {
+                                                                                         "type":  "integer",
+                                                                                         "format":  "int32"
+                                                                                     }
+                                                                       }
+                                                    },
+                                       "PerformanceResponse":  {
+                                                                   "required":  [
+                                                                                    "analystId",
+                                                                                    "totalDecisions",
+                                                                                    "correctDecisions",
+                                                                                    "falsePositiveCount",
+                                                                                    "slaCompliantCount",
+                                                                                    "slaBreachCount",
+                                                                                    "averageDecisionSeconds",
+                                                                                    "accuracyRate",
+                                                                                    "fraudTypeBreakdown"
+                                                                                ],
+                                                                   "type":  "object",
+                                                                   "properties":  {
+                                                                                      "analystId":  {
+                                                                                                        "type":  "string"
+                                                                                                    },
+                                                                                      "totalDecisions":  {
+                                                                                                             "type":  "integer",
+                                                                                                             "format":  "int32"
+                                                                                                         },
+                                                                                      "correctDecisions":  {
+                                                                                                               "type":  "integer",
+                                                                                                               "format":  "int32"
+                                                                                                           },
+                                                                                      "falsePositiveCount":  {
+                                                                                                                 "type":  "integer",
+                                                                                                                 "format":  "int32"
+                                                                                                             },
+                                                                                      "slaCompliantCount":  {
+                                                                                                                "type":  "integer",
+                                                                                                                "format":  "int32"
+                                                                                                            },
+                                                                                      "slaBreachCount":  {
+                                                                                                             "type":  "integer",
+                                                                                                             "format":  "int32"
+                                                                                                         },
+                                                                                      "averageDecisionSeconds":  {
+                                                                                                                     "type":  [
+                                                                                                                                  "null",
+                                                                                                                                  "number"
+                                                                                                                              ],
+                                                                                                                     "format":  "double"
+                                                                                                                 },
+                                                                                      "accuracyRate":  {
+                                                                                                           "type":  "number",
+                                                                                                           "format":  "double"
+                                                                                                       },
+                                                                                      "fraudTypeBreakdown":  {
+                                                                                                                 "type":  "array",
+                                                                                                                 "items":  {
+                                                                                                                               "$ref":  "#/components/schemas/FraudTypeStatResponse"
+                                                                                                                           }
+                                                                                                             }
+                                                                                  }
+                                                               },
+                                       "PointLedgerItemResponse":  {
+                                                                       "required":  [
+                                                                                        "ledgerId",
+                                                                                        "caseId",
+                                                                                        "ruleCode",
+                                                                                        "points",
+                                                                                        "description",
+                                                                                        "occurredAt"
+                                                                                    ],
+                                                                       "type":  "object",
+                                                                       "properties":  {
+                                                                                          "ledgerId":  {
+                                                                                                           "type":  "string"
+                                                                                                       },
+                                                                                          "caseId":  {
+                                                                                                         "type":  [
+                                                                                                                      "null",
+                                                                                                                      "string"
+                                                                                                                  ]
+                                                                                                     },
+                                                                                          "ruleCode":  {
+                                                                                                           "type":  "string"
+                                                                                                       },
+                                                                                          "points":  {
+                                                                                                         "type":  "integer",
+                                                                                                         "format":  "int32"
+                                                                                                     },
+                                                                                          "description":  {
+                                                                                                              "type":  "string"
+                                                                                                          },
+                                                                                          "occurredAt":  {
+                                                                                                             "type":  "string",
+                                                                                                             "format":  "date-time"
+                                                                                                         }
+                                                                                      }
+                                                                   },
+                                       "ProfileResponse":  {
+                                                               "required":  [
+                                                                                "analystId",
+                                                                                "displayName",
+                                                                                "totalPoints",
+                                                                                "level",
+                                                                                "dailyRank",
+                                                                                "weeklyRank",
+                                                                                "totalDecisions",
+                                                                                "averageDecisionSeconds",
+                                                                                "accuracyRate",
+                                                                                "badges"
+                                                                            ],
+                                                               "type":  "object",
+                                                               "properties":  {
+                                                                                  "analystId":  {
+                                                                                                    "type":  "string"
+                                                                                                },
+                                                                                  "displayName":  {
+                                                                                                      "type":  [
+                                                                                                                   "null",
+                                                                                                                   "string"
+                                                                                                               ]
+                                                                                                  },
+                                                                                  "totalPoints":  {
+                                                                                                      "type":  "integer",
+                                                                                                      "format":  "int64"
+                                                                                                  },
+                                                                                  "level":  {
+                                                                                                "type":  "string"
+                                                                                            },
+                                                                                  "dailyRank":  {
+                                                                                                    "type":  [
+                                                                                                                 "null",
+                                                                                                                 "integer"
+                                                                                                             ],
+                                                                                                    "format":  "int32"
+                                                                                                },
+                                                                                  "weeklyRank":  {
+                                                                                                     "type":  [
+                                                                                                                  "null",
+                                                                                                                  "integer"
+                                                                                                              ],
+                                                                                                     "format":  "int32"
+                                                                                                 },
+                                                                                  "totalDecisions":  {
+                                                                                                         "type":  "integer",
+                                                                                                         "format":  "int32"
+                                                                                                     },
+                                                                                  "averageDecisionSeconds":  {
+                                                                                                                 "type":  [
+                                                                                                                              "null",
+                                                                                                                              "number"
+                                                                                                                          ],
+                                                                                                                 "format":  "double"
+                                                                                                             },
+                                                                                  "accuracyRate":  {
+                                                                                                       "type":  "number",
+                                                                                                       "format":  "double"
+                                                                                                   },
+                                                                                  "badges":  {
+                                                                                                 "type":  "array",
+                                                                                                 "items":  {
+                                                                                                               "$ref":  "#/components/schemas/BadgeSummaryResponse"
+                                                                                                           }
+                                                                                             }
+                                                                              }
+                                                           }
+                                   }
+                   },
+    "tags":  [
+                 {
+                     "name":  "Gamification"
+                 }
+             ]
+}

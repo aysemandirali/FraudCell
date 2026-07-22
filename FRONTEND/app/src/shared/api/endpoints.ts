@@ -1,9 +1,9 @@
 /**
  * Backend yollarının tek kaydı.
  *
- * OpenAPI'den tip üretemediğimiz için (contracts/api boş) yolları elle
- * yazıyoruz. Elle yazılan yolların en büyük riski sessiz drift'tir; bu yüzden
- * hepsi TEK dosyada toplanır ve feature'lar string literal yazmaz.
+ * OpenAPI snapshot'ları response/body tiplerini üretir. Fonksiyon içeren URL
+ * yolları burada tek yerde tutulur ve contract kontrolüyle drift'e karşı
+ * doğrulanır; feature'lar string literal yazmaz.
  *
  * `API_PREFIX` client tarafında eklenir — buradaki yollar prefix'siz.
  * Tümü BACKEND'deki `Map{Get,Post,Put,Patch,Delete}("/api/v1/...")` çağrılarıyla
@@ -108,21 +108,51 @@ export const endpoints = {
     /** GET — müşterinin cevap bekleyen doğrulama istekleri. */
     pendingVerifications: '/customer/verifications/pending',
   },
+
+  realtime: {
+    tickets: '/events/tickets',
+    stream: '/events',
+  },
+
+  /* -------------------------------------------------------- oyunlaştırma -- */
+  gamification: {
+    /** GET — aktif rozet tanımları. */
+    badges: '/game/badges',
+    /** GET — oturumdaki analistin profili. */
+    myProfile: '/game/profiles/me',
+    profile: (analystId: string) => `/game/profiles/${analystId}`,
+    points: (analystId: string) => `/game/profiles/${analystId}/points`,
+    earnedBadges: (analystId: string) => `/game/profiles/${analystId}/badges`,
+    performance: (analystId: string) => `/game/performance/${analystId}`,
+    leaderboard: '/game/leaderboard',
+  },
+
+  /* ------------------------------------------------------------------ AI -- */
+  ai: {
+    models: {
+      active: '/ai/models/active',
+      byVersion: (modelVersion: string) => `/ai/models/${modelVersion}`,
+    },
+    metrics: {
+      overview: '/ai/metrics/overview',
+      categories: '/ai/metrics/categories',
+      decisionAgreement: '/ai/metrics/decision-agreement',
+    },
+    prediction: (assessmentId: string) => `/ai/predictions/${assessmentId}`,
+    predictionExplanation: (assessmentId: string) => `/ai/predictions/${assessmentId}/explanation`,
+    explanationByTransaction: (transactionId: string) =>
+      `/ai/predictions/by-transaction/${transactionId}/explanation`,
+  },
 } as const;
 
 /**
- * ⚠️ Backend'i HENÜZ YAZILMAMIŞ uçlar — yalnızca MSW karşılar.
+ * Persist edilen bildirim ve demo sistem yönetimi için henüz backend'i olmayan
+ * uçlar. Canlı bildirimler bu listeden bağımsız olarak Gateway SSE ile gelir.
  *
  * `endpoints` ile aynı nesnede tutulmaz ki gerçek sözleşme ile varsayım
  * karışmasın. Servis yazıldığında buradan `endpoints`e taşınır.
  */
 export const pendingEndpoints = {
-  gamification: {
-    me: '/gamification/me',
-    points: '/gamification/me/points',
-    badges: '/gamification/me/badges',
-    leaderboard: '/gamification/leaderboard',
-  },
   notifications: {
     root: '/notifications',
     read: (notificationId: string) => `/notifications/${notificationId}/read`,
@@ -130,9 +160,6 @@ export const pendingEndpoints = {
   },
   dashboard: {
     root: '/dashboard',
-  },
-  ai: {
-    metrics: '/ai/metrics',
   },
   system: {
     health: '/system/health',

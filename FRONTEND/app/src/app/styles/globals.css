@@ -1,9 +1,23 @@
 @import 'tailwindcss';
 
+/*
+  Inter değişken font — self-host.
+  CDN yerine paketten gelir: demo sırasında ağ yoksa da tipografi bozulmaz ve
+  harici istek beklenmez. `wght.css` yalnızca ağırlık eksenini yükler; tarayıcı
+  unicode-range sayesinde sadece kullanılan alt kümeyi indirir (latin + latin-ext,
+  Türkçe karakterler latin-ext'te).
+*/
+@import '@fontsource-variable/inter/wght.css';
+
 /* ==========================================================================
    FraudCell Design System
    Kaynak: FRONTEND/design/fraudcell/*.jpeg (Paycell mobil uygulama ekranları)
    Tokenlar doğrudan ekran görüntülerinden örneklenmiştir.
+
+   İki yüz, tek aile:
+     • Müşteri  — Paycell mobil dilinin devamı (gradient, pill, tile, açık zemin)
+     • Konsol   — operasyon kokpiti (koyu lacivert kenar çubuğu, yoğun veri)
+   Renk/uzay/hareket token'ları ORTAKTIR; ayrışma yüzey ve yoğunlukta olur.
    ========================================================================== */
 
 @theme {
@@ -61,11 +75,66 @@
   --color-canvas: #f4f6f9; /* sayfa arkaplanı */
   --color-surface: #ffffff; /* kart */
 
-  /* --- Tipografi ----------------------------------------------------------- */
+  /* --- Konsol yüzeyleri (koyu kenar çubuğu) --------------------------------
+     Yalnızca operasyon konsolunun kenar çubuğu ve üst barı bu ölçeği kullanır.
+     İçerik alanı açık kalır: grafikler ve risk renkleri açık zeminde okunur. */
+  --color-console-bg: #04204a; /* kenar çubuğu tabanı */
+  --color-console-surface: #0a2f63; /* çubuk içi yükseltilmiş yüzey */
+  --color-console-hover: #0d3a78;
+  --color-console-border: #14406f; /* çubuk içi ayırıcı */
+  --color-console-text: #e8f1fb; /* çubuk üstü birincil metin */
+  --color-console-muted: #8fb2d8; /* çubuk üstü ikincil metin */
+
+  /* --- Grafik serisi -------------------------------------------------------
+     Kategorik seriler için. Risk paleti (yeşil→kırmızı) ile KASITLI olarak
+     çakışmaz: bir grafikte hem "kategori rengi" hem "risk rengi" görünürse
+     izleyici ikisini karıştırır. Risk grafikleri risk.ts'teki chartFill'i
+     kullanır, kategori grafikleri bu ölçeği. */
+  --color-chart-1: #0a4a94;
+  --color-chart-2: #2fc4e0;
+  --color-chart-3: #6c5ce7;
+  --color-chart-4: #00a3a3;
+  --color-chart-5: #f5a623;
+  --color-chart-6: #8cc4f3;
+  --color-chart-grid: #e9edf3; /* eksen çizgileri */
+
+  /* --- Tipografi -----------------------------------------------------------
+     Ölçek adlandırılmıştır: ekranlar `text-h1` yazar, `text-2xl font-bold`
+     değil. Böylece başlık hiyerarşisi tek yerden değişir. */
   --font-sans:
-    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
-    sans-serif;
-  --font-numeric: 'Inter', 'Segoe UI', Roboto, sans-serif;
+    'Inter Variable', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  --font-numeric: 'Inter Variable', 'Inter', 'Segoe UI', Roboto, sans-serif;
+
+  --text-display: 2.25rem; /* 36px — auth kahraman başlığı */
+  --text-display--line-height: 1.15;
+  --text-display--letter-spacing: -0.022em;
+  --text-display--font-weight: 700;
+
+  --text-h1: 1.625rem; /* 26px — sayfa başlığı */
+  --text-h1--line-height: 1.25;
+  --text-h1--letter-spacing: -0.018em;
+  --text-h1--font-weight: 700;
+
+  --text-h2: 1.25rem; /* 20px — bölüm başlığı */
+  --text-h2--line-height: 1.3;
+  --text-h2--letter-spacing: -0.012em;
+  --text-h2--font-weight: 700;
+
+  --text-h3: 1rem; /* 16px — kart başlığı */
+  --text-h3--line-height: 1.4;
+  --text-h3--letter-spacing: -0.006em;
+  --text-h3--font-weight: 600;
+
+  --text-body: 0.9375rem; /* 15px — gövde */
+  --text-body--line-height: 1.6;
+
+  --text-caption: 0.8125rem; /* 13px — ikincil/yardımcı */
+  --text-caption--line-height: 1.45;
+
+  --text-micro: 0.6875rem; /* 11px — rozet, alt nav etiketi */
+  --text-micro--line-height: 1.3;
+  --text-micro--letter-spacing: 0.01em;
 
   /* --- Yarıçap (ekranlardan ölçüldü) --------------------------------------- */
   --radius-tile: 0.875rem; /* 14px — ikon kutuları */
@@ -78,12 +147,18 @@
   --shadow-raised: 0 6px 20px rgba(16, 42, 74, 0.1);
   --shadow-nav: 0 -2px 16px rgba(16, 42, 74, 0.08);
   --shadow-fab: 0 4px 16px rgba(10, 74, 148, 0.35);
+  /* Modal, drawer, dropdown — sayfadan kopan katman. */
+  --shadow-overlay: 0 24px 48px -12px rgba(5, 42, 88, 0.28);
+  /* Kenarlık yerine kullanılan 1px iç çizgi; kartı büyütmez. */
+  --shadow-hairline: inset 0 0 0 1px rgba(16, 42, 74, 0.07);
 
   /* --- Animasyon ------------------------------------------------------------ */
   --animate-shimmer: shimmer 1.6s linear infinite;
   --animate-pulse-ring: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   --animate-slide-up: slide-up 0.28s cubic-bezier(0.16, 1, 0.3, 1);
   --animate-fade-in: fade-in 0.2s ease-out;
+  --animate-scale-in: scale-in 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-sweep: sweep 1.1s cubic-bezier(0.25, 1, 0.4, 1) forwards;
 }
 
 @keyframes shimmer {
@@ -127,6 +202,27 @@
   }
 }
 
+@keyframes scale-in {
+  from {
+    transform: scale(0.96);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Halka/çubuk göstergelerinin dolum animasyonu (RiskGauge, seviye halkası). */
+@keyframes sweep {
+  from {
+    stroke-dashoffset: var(--sweep-from, 0);
+  }
+  to {
+    stroke-dashoffset: var(--sweep-to, 0);
+  }
+}
+
 /* ==========================================================================
    Taban katmanı
    ========================================================================== */
@@ -144,7 +240,11 @@
     background-color: var(--color-canvas);
     color: var(--color-ink-900);
     font-family: var(--font-sans);
-    font-feature-settings: 'cv02', 'cv03', 'cv04';
+    /* cv02–cv04: tek katlı a/g/l — Inter'i Paycell'in geometrik grotesk'ine
+       yaklaştırır. ss03: Türkçe'de sık geçen 'ğ/ş' formlarını yumuşatır. */
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'ss03';
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
@@ -156,9 +256,31 @@
     border-radius: 4px;
   }
 
+  /* Koyu kenar çubuğunda mavi halka kaybolur; beyaza çeviriyoruz. */
+  .on-console :focus-visible {
+    outline-color: var(--color-tc-500);
+  }
+
   /* Sayı kolonlarının hizalı görünmesi için (tutar, puan, skor). */
   .tabular {
     font-variant-numeric: tabular-nums;
+  }
+
+  /* Konsolda yoğun tablolar yatay kayar; ince ve sessiz bir kaydırma çubuğu. */
+  .scroll-slim {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-ink-200) transparent;
+  }
+  .scroll-slim::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .scroll-slim::-webkit-scrollbar-thumb {
+    background-color: var(--color-ink-200);
+    border-radius: 9999px;
+  }
+  .scroll-slim::-webkit-scrollbar-track {
+    background: transparent;
   }
 }
 
@@ -191,10 +313,55 @@
   );
 }
 
+@utility gradient-console {
+  /* Operasyon konsolu kenar çubuğu — hero gradientinin koyu, sakin akrabası.
+     Kokpit hissi verir ama içerik alanı açık kaldığı için göz yorulmaz. */
+  background-image: linear-gradient(180deg, var(--color-console-bg) 0%, #061a3c 100%);
+}
+
 @utility surface-card {
   background-color: var(--color-surface);
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-card);
+}
+
+@utility surface-panel {
+  /* Konsolun veri panelleri: kartla aynı zemin, kenarlık yerine iç çizgi.
+     Yan yana dizilen panellerde 1px kenarlıkların çift görünmesini önler. */
+  background-color: var(--color-surface);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-hairline);
+}
+
+@utility text-gradient-brand {
+  background-image: linear-gradient(90deg, var(--color-brand-800) 0%, var(--color-aqua-500) 100%);
+  background-clip: text;
+  color: transparent;
+}
+
+@utility hero-mesh {
+  /* Gradient hero'nun üzerine binen yumuşak ışık — düz gradienti "basılı"
+     görünmekten çıkarır. Referans ekranlardaki derinlik hissi buradan gelir. */
+  background-image:
+    radial-gradient(60% 80% at 85% 5%, rgba(47, 196, 224, 0.45) 0%, transparent 60%),
+    radial-gradient(50% 70% at 5% 95%, rgba(255, 200, 0, 0.16) 0%, transparent 65%);
+}
+
+@utility focus-ring {
+  outline: 2px solid var(--color-brand-600);
+  outline-offset: 2px;
+}
+
+@utility skeleton-sheen {
+  /* Yükleniyor iskeletlerinin parlaması — @keyframes shimmer'ı kullanır. */
+  background-image: linear-gradient(
+    90deg,
+    var(--color-ink-100) 25%,
+    var(--color-ink-200) 37%,
+    var(--color-ink-100) 63%
+  );
+  background-size: 400% 100%;
+  animation: var(--animate-shimmer);
 }
 
 @utility safe-bottom {

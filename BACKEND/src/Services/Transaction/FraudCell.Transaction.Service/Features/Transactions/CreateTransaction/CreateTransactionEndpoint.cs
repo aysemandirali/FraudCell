@@ -56,6 +56,7 @@ public static class CreateTransactionEndpoint
         app.MapPost("/api/v1/transactions", HandleAsync)
            .WithName("CreateTransaction")
            .WithTags("Transactions")
+           .ProducesApi<CreateTransactionResponse>(StatusCodes.Status201Created)
            .RequireAuthorization(policy => policy.RequireRole(RoleNames.Customer));
     }
 

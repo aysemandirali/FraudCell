@@ -3,6 +3,7 @@ import { AlertCircle, Info, CheckCircle2, RefreshCw, TriangleAlert } from 'lucid
 import { cn } from '@/shared/lib/cn';
 import { messageFor } from '@/shared/api/errors';
 import { Button } from './Button';
+import { Illustration, type IllustrationName } from './Illustration';
 
 /**
  * DESIGN.MD kural 4: query kullanan her ekran loading/error/empty durumlarını
@@ -11,10 +12,17 @@ import { Button } from './Button';
 
 /* ------------------------------------------------------------- Skeleton -- */
 
-export function Skeleton({ className }: { className?: string }) {
+export function Skeleton({
+  className,
+  style,
+}: {
+  className?: string;
+  style?: React.CSSProperties;
+}) {
   return (
     <div
       aria-hidden
+      style={style}
       className={cn(
         'animate-shimmer rounded-md bg-ink-100',
         'bg-[linear-gradient(90deg,var(--color-ink-100)_25%,var(--color-ink-200)_50%,var(--color-ink-100)_75%)]',
@@ -43,16 +51,48 @@ export function SkeletonList({ rows = 3 }: { rows?: number }) {
   );
 }
 
+/** İstatistik kartı ızgarası yüklenirken. */
+export function SkeletonCards({ count = 4 }: { count?: number }) {
+  return (
+    <div
+      className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
+      role="status"
+      aria-label="Yükleniyor"
+    >
+      {Array.from({ length: count }, (_, i) => (
+        <div key={i} className="surface-panel space-y-3 p-4">
+          <Skeleton className="h-3 w-20" />
+          <Skeleton className="h-8 w-16" />
+          <Skeleton className="h-3 w-24" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** Grafik paneli yüklenirken — başlık + gövde bloğu. */
+export function SkeletonChart({ height = 240 }: { height?: number }) {
+  return (
+    <div className="surface-panel p-5" role="status" aria-label="Yükleniyor">
+      <Skeleton className="mb-4 h-4 w-32" />
+      <Skeleton className="w-full rounded-card" style={{ height }} />
+    </div>
+  );
+}
+
 /* ----------------------------------------------------------- EmptyState -- */
 
 export function EmptyState({
   icon,
+  illustration,
   title,
   description,
   action,
   className,
 }: {
   icon?: ReactNode;
+  /** İllüstrasyon adı — `icon`'a tercih edilir; daha sıcak boş durumlar için. */
+  illustration?: IllustrationName;
   title: string;
   description?: string;
   action?: ReactNode;
@@ -60,11 +100,13 @@ export function EmptyState({
 }) {
   return (
     <div className={cn('flex flex-col items-center px-6 py-12 text-center', className)}>
-      {icon && (
+      {illustration ? (
+        <Illustration name={illustration} className="mb-5" />
+      ) : icon ? (
         <span className="mb-4 flex size-16 items-center justify-center rounded-full bg-brand-100 text-brand-600 [&>svg]:size-8">
           {icon}
         </span>
-      )}
+      ) : null}
       <p className="text-[17px] font-semibold text-ink-900">{title}</p>
       {description && <p className="mt-2 max-w-sm text-sm text-ink-500">{description}</p>}
       {action && <div className="mt-6">{action}</div>}

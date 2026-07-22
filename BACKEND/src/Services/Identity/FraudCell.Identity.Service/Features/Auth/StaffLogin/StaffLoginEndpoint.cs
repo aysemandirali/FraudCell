@@ -34,6 +34,7 @@ public static class StaffLoginEndpoint
         app.MapPost("/api/v1/auth/staff/login", HandleAsync)
            .WithName("LoginStaff")
            .WithTags("Auth")
+           .ProducesApi<StaffLoginResponse>()
            .AllowAnonymous();
     }
 

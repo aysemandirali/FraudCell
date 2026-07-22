@@ -17,17 +17,19 @@ function readMode(): ApiMode {
 
 export const env = {
   /**
-   * Varsayılan `mock`. Backend'de yalnızca Identity ve Transaction servisleri
-   * yazıldığı için `live` modda gamification/bildirim/AI ekranları veri
-   * bulamaz; bu servisler yazılana kadar demo `mock` ile çalışır.
+   * Varsayılan `mock`. `live` mod tüm servis ve SSE akışlarına Gateway
+   * üzerinden gider.
    */
   apiMode: readMode(),
 
   /** Göreli kalması kasıtlı — origin ayrımı yok, CORS yok. */
   apiBaseUrl: import.meta.env.VITE_API_BASE_URL ?? '',
 
-  /** SSE bağlantı yolu (Gateway `/events/**`). */
-  eventsPath: '/events/stream',
+  /** Kısa ömürlü stream ticket ile açılan Gateway SSE yolu. */
+  eventsPath: '/api/v1/events',
+
+  /** Mock modda kapalı, canlı scriptlerde açık. */
+  realtimeEnabled: import.meta.env.VITE_REALTIME_ENABLED === 'true',
 
   get isMock(): boolean {
     return this.apiMode === 'mock';

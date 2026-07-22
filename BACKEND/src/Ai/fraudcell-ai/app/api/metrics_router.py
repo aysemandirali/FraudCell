@@ -16,11 +16,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.envelope import ok
 from app.database import get_session
 from app.models.ai import ModelBundle, Prediction, PredictionFeedback
+from app.schemas.public import (
+    ApiEnvelope,
+    CategoryAccuracyResponse,
+    DecisionAgreementResponse,
+    MetricsOverviewResponse,
+)
 
 router = APIRouter(prefix="/api/v1/ai/metrics", tags=["AI Metrics"])
 
 
-@router.get("/overview")
+@router.get("/overview", response_model=ApiEnvelope[MetricsOverviewResponse])
 async def get_overview(
     session: AsyncSession = Depends(get_session),
     from_: dt.datetime | None = Query(default=None, alias="from"),
@@ -54,7 +60,7 @@ async def get_overview(
     }, generated_at=dt.datetime.now(dt.timezone.utc).isoformat())
 
 
-@router.get("/categories")
+@router.get("/categories", response_model=ApiEnvelope[CategoryAccuracyResponse])
 async def get_category_accuracy(
     session: AsyncSession = Depends(get_session),
     from_: dt.datetime | None = Query(default=None, alias="from"),
@@ -86,7 +92,7 @@ async def get_category_accuracy(
     return ok({"items": items})
 
 
-@router.get("/decision-agreement")
+@router.get("/decision-agreement", response_model=ApiEnvelope[DecisionAgreementResponse])
 async def get_decision_agreement(session: AsyncSession = Depends(get_session)) -> dict:
     rows = (await session.execute(select(PredictionFeedback))).scalars().all()
     total = len(rows)

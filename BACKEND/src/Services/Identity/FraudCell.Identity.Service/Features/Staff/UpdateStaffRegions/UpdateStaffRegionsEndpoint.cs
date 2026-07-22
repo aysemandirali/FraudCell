@@ -21,6 +21,7 @@ public static class UpdateStaffRegionsEndpoint
         app.MapPut("/api/v1/staff/{staffId}/regions", HandleAsync)
            .WithName("UpdateStaffRegions")
            .WithTags("Staff")
+           .ProducesApi<StaffResponse>()
            .RequireAuthorization(policy => policy.RequireRole(RoleNames.Admin));
     }
 

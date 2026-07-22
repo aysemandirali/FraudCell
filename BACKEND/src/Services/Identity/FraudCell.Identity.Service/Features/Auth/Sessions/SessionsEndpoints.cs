@@ -27,9 +27,12 @@ public static class SessionsEndpoints
 {
     public static void MapSessions(this IEndpointRouteBuilder app)
     {
-        app.MapGet("/api/v1/auth/sessions", ListAsync).WithName("GetSessions").WithTags("Auth").RequireAuthorization();
-        app.MapDelete("/api/v1/auth/sessions/{sessionId}", RevokeOneAsync).WithName("RevokeSession").WithTags("Auth").RequireAuthorization();
-        app.MapDelete("/api/v1/auth/sessions", RevokeAllAsync).WithName("RevokeAllSessions").WithTags("Auth").RequireAuthorization();
+        app.MapGet("/api/v1/auth/sessions", ListAsync).WithName("GetSessions").WithTags("Auth")
+           .ProducesApi<IReadOnlyList<SessionResponse>>().RequireAuthorization();
+        app.MapDelete("/api/v1/auth/sessions/{sessionId}", RevokeOneAsync).WithName("RevokeSession").WithTags("Auth")
+           .ProducesApi<object?>().RequireAuthorization();
+        app.MapDelete("/api/v1/auth/sessions", RevokeAllAsync).WithName("RevokeAllSessions").WithTags("Auth")
+           .ProducesApi<object?>().RequireAuthorization();
     }
 
     private static async Task<IResult> ListAsync(

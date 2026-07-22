@@ -1,199 +1,129 @@
-# Backend Completion Plan
+# FraudCell Tamamlama Durumu ve Sonraki Fazlar
 
-Bu dokuman, `docs/00-START-HERE.md` ile baslayan hedef mimariyi mevcut repo
-durumuyla eslestiren calisma planidir. Amac backend'i frontend'in gercek API ile
-calisabilecegi, demo edilebilir ve docs ile uyumlu hale getirmektir.
+Güncelleme: 23 Temmuz 2026
 
-## Mevcut Durum
+Bu belge çalışan full-stack baseline ile gerçek production hazırlığını ayırır.
+Demo akışının tamamlanmış olması; secret yönetimi, gözlemlenebilirlik, yük ve
+recovery testlerinin de tamamlandığı anlamına gelmez.
 
-Calisan Docker parcasi:
+## Mevcut Baseline
 
-- Edge Gateway: Docker'da calisiyor, public API girisi `http://localhost:8080`.
-- Identity Service: Docker'da calisiyor, health endpointleri mevcut.
-- Transaction Service: Docker'da calisiyor, health endpointleri mevcut.
-- Gamification Service: Docker'da calisiyor, health endpointleri mevcut.
-- PostgreSQL: Identity, Transaction ve Gamification icin ayri DB containerlari mevcut.
-- RabbitMQ: Docker'da calisiyor.
-- Local scriptler: `scripts/start-backend.bat`, `scripts/status.bat`, `scripts/rebuild-backend.bat` mevcut.
+- Edge Gateway tek public giriş ve production SPA host'udur.
+- Identity: staff login, müşteri OTP, refresh/logout, session, staff ve audit.
+- Transaction: transaction, AI sonucu, vaka, ETag, atama, karar ve doğrulama.
+- AI: model bootstrap, RabbitMQ consumer, prediction, metrik ve outbox.
+- Gamification: profil, puan, rozet, performans ve leaderboard.
+- Realtime: 30 saniyelik tek kullanımlık ticket ile kullanıcıya özel SSE.
+- Frontend: CUSTOMER, ANALYST, SUPERVISOR ve ADMIN akışlarında geçici route yok.
+- Contract: dört servis için izlenen OpenAPI snapshot ve üretilen frontend tipi.
 
-Docs'a gore eksik kalan final parcasi:
+## Tamamlanan Fazlar
 
-- Python/FastAPI AI Service kodu var, fakat Docker Compose'a servis olarak bagli
-  degil.
-- AI icin ayri PostgreSQL containeri ve compose health kontrolu yok.
-- Uctan uca transaction -> AI -> case -> gamification -> notification akisi
-  otomatik olarak dogrulanmiyor.
-- Gateway uzerinden smoke otomasyonu var; auth, OTP, refresh ve transaction
-  idempotency kontrol ediliyor.
-- Notification/SSE relay henuz gateway uzerinden yok.
+### Faz 0: Host ve Docker Koruması
 
-## Faz 0 - Docker Tabanini Stabilize Et
+Durum: Tamamlandı.
 
-Durum: Tamamlandi.
+- WSL için 8 GiB RAM, 6 CPU ve 4 GiB swap şablonu.
+- Windows pagefile kontrol/uygulama scripti.
+- Seri Docker build ve container başına CPU/RAM/PID limitleri.
+- Güvenli build-cache bakımı; otomatik volume prune yok.
 
-Kontrol:
+### Faz 1: Çalıştırma Modları
 
-- `docker compose up -d --build` calisiyor.
-- Identity, Transaction ve Gamification `Healthy` donuyor.
-- PostgreSQL volume mount sorunu giderildi.
-- Outbox SQL schema sorunu giderildi.
-- EF SQL log gurultusu azaltildi.
-- Baslatma/durdurma/status scriptleri eklendi.
+Durum: Tamamlandı.
 
-## Faz 1 - Backend Kontratini ve Smoke Kontrolunu Sabitle
+- Mock: backend ve Docker gerektirmez.
+- Local: PostgreSQL/RabbitMQ dahil tamamen Docker'sız.
+- Hybrid: günlük önerilen, yalnız PostgreSQL + RabbitMQ Docker'da.
+- Docker: frontend dahil 7 container, tek host portu.
+- Eski `.env` dosyaları mevcut değerleri koruyarak eksik anahtarlarla yükseltilir.
 
-Durum: Tamamlandi.
+### Faz 2: Kimlik ve Sözleşme
 
-Yapilacaklar:
+Durum: Tamamlandı.
 
-- Endpoint envanterini docs ile eslestir.
-- Frontend icin gecici servis portlarini ve final gateway portunu netlestir.
-- Development admin girisini smoke testine ekle.
-- Identity tokeninin Transaction ve Gamification tarafinda dogrulandigini kontrol et.
-- Faz kapatma kriterini tek komuta indir: `scripts/smoke-backend.bat`.
+- Gerçek staff/customer girişleri ve session yenileme/iptal.
+- Response schema'ları ve OpenAPI drift kontrolü.
+- Staff yönetimi ve append-only audit ekranı.
 
-Kapanis kriteri:
+### Faz 3: Transaction, AI ve Vaka
 
-- `scripts/start-backend.bat` servisleri ayaga kaldirir.
-- `scripts/smoke-backend.bat` health, admin login, `/auth/me`, Transaction auth
-  ve Gamification auth kontrollerini basariyla gecer.
+Durum: Tamamlandı.
 
-## Faz 2 - Edge Gateway Ekle
+- Idempotent transaction create.
+- RabbitMQ transaction -> AI prediction -> risk case zinciri.
+- Analist inceleme/karar, müşteri doğrulama ve supervisor override/atama.
+- Taze database başlangıcında AI şema oluşturma ve model bootstrap.
 
-Durum: Tamamlandi.
+### Faz 4: Realtime ve Gamification
 
-Yapilacaklar:
+Durum: Tamamlandı.
 
-- `FraudCell.Edge.Gateway` ASP.NET Core/YARP projesi olustur.
-- Gateway'i `FraudCell.sln` icine ekle.
-- Dockerfile ekle.
-- Compose'a `edge-gateway` servisini ekle.
-- Sadece gateway public port acsin: `127.0.0.1:8080:8080`.
-- Route'lar:
-  - `/api/v1/auth/*` -> Identity
-  - `/api/v1/staff/*` -> Identity
-  - `/api/v1/reference/*` -> Identity
-  - `/api/v1/audit-logs*` -> Identity
-  - `/api/v1/transactions*` -> Transaction
-  - `/api/v1/cases*` -> Transaction
-  - `/api/v1/customer/verifications*` -> Transaction
-  - `/api/v1/game/*` -> Gamification
-  - `/api/v1/ai/*` -> AI eklendikten sonra AI
-- JWT validation, correlation id, forwarded headers ve rate limit ekle.
-- Gateway hazir olunca smoke scriptini `8080` uzerinden calisacak sekilde genislet.
+- Kısa ömürlü, tek kullanımlık SSE ticket.
+- Kullanıcıya özel bounded channel ve reconnect.
+- Canlı bildirim cache'i, vaka invalidation ve toast.
+- Puan, performans, rozet ve leaderboard ekranları.
 
-Kapanis kriteri:
+### Faz 5: Frontend Tamamlama ve Performans
 
-- Frontend `VITE_GATEWAY_URL=http://localhost:8080` ile gercek API'ye baglanabilir.
-- Servis portlari final modda disari acik olmak zorunda kalmaz.
+Durum: Tamamlandı.
 
-## Faz 3 - Identity/Auth Akisini Sertlestir
+- Müşteri bildirim/doğrulama/profil ekranları.
+- Supervisor dashboard/vaka/atama kuyruğu/detay ekranları.
+- Admin personel ve audit ekranları.
+- Route-level code splitting; ana uygulama chunk'ı yaklaşık 423 kB.
+- Masaüstü ve mobil gerçek backend E2E akışları.
 
-Durum: Tamamlandi.
+### Faz 6: Kalite Kapısı ve Dokümantasyon
 
-Yapilacaklar:
+Durum: Tamamlandı.
 
-- Staff login, refresh, logout, `/auth/me` akisini test et.
-- Customer OTP register/login akisini test et.
-- Role bazli yetkileri smoke testine ekle.
-- Admin staff create/update/role/specialty/region akisini dogrula.
-- Audit eventlerinin kaydedildigini kontrol et.
+- Tek komut full-stack baseline.
+- Python Ruff, Mypy ve Pytest.
+- Frontend Vitest, typecheck, build ve Playwright.
+- CI'da .NET, AI, frontend ve compose config işleri.
+- Yerel çalışma ve kaynak rehberleri.
 
-Kapanis kriteri:
+## Açık Production Fazları
 
-- Frontend login/register/session ekranlari gercek backend ile yazilabilir.
+### Faz 7: Kalıcı Şema ve Test Derinliği
 
-## Faz 4 - Transaction ve Case Core Akisini Bitir
+Öncelik: Yüksek.
 
-Durum: Devam ediyor.
+- AI `metadata.create_all` başlangıcını versioned Alembic migration'a geçir.
+- Identity/Transaction/Gamification için gerçek database entegrasyon testleri ekle.
+- Consumer idempotency, ETag conflict ve refresh-token reuse testlerini genişlet.
+- Kalıcı notification inbox/read API'si ekle; mevcut SSE cache oturum ömrü kadardır.
 
-Tamamlananlar:
+Kapanış: Taze ve bir önceki sürüm database'lerinden upgrade testleri CI'da geçer.
 
-- Customer token ile transaction create smoke testi eklendi.
-- `Idempotency-Key` replay davranisi gateway uzerinden dogrulandi.
-- Transaction Service JWT validation gateway uzerinden dogrulandi.
+### Faz 8: Gözlemlenebilirlik ve Recovery
 
-Yapilacaklar:
+Öncelik: Yüksek.
 
-- Farkli payload ile ayni `Idempotency-Key` conflict davranisini test et.
-- Case list/detail/history endpointlerini dogrula.
-- Start review, verification request/response, decision akisini dogrula.
-- Kritik mutate endpointlerde ETag/If-Match davranisini test et.
+- OpenTelemetry trace/metric export ve correlation dashboard'ları.
+- RabbitMQ, AI ve Gamification down/up outbox recovery testleri.
+- DLQ gözlemleme ve kontrollü replay aracı.
+- SLO, alert ve log saklama politikaları.
 
-Kapanis kriteri:
+Kapanış: Tek servis arızasında veri kaybı olmadan toparlanma kanıtlanır.
 
-- AI olmasa bile transaction/case ekranlari frontend tarafinda gercek API ile
-  gelistirilebilir.
+### Faz 9: Yük, Güvenlik ve Dağıtım
 
-## Faz 5 - AI Service'i Docker Sistemine Bagla
+Öncelik: Production öncesi zorunlu.
 
-Durum: Bekliyor.
+- k6 benzeri araçla login, transaction, case list ve SSE yük profili.
+- Secret manager, TLS, anahtar rotasyonu ve production seed kapatma.
+- Dependency/container image taraması ve SBOM.
+- Staging deployment, backup/restore ve rollback provası.
 
-Yapilacaklar:
+Kapanış: Hedef yükte SLO sağlanır; security ve recovery checklist kapanır.
 
-- AI Service icin Dockerfile ekle.
-- AI icin PostgreSQL container ve volume ekle.
-- Compose'a `ai-service` ve `ai-db` ekle.
-- AI health endpointlerini compose healthcheck'e bagla.
-- Model bootstrap ve migration akisini container icinde dogrula.
-- RabbitMQ consume: transaction created.
-- RabbitMQ publish: AI assessment completed/failed.
-- Transaction Service'in AI sonucunu alip case urettigini dogrula.
+## Kalite Komutu
 
-Kapanis kriteri:
+```powershell
+.\scripts\test-fullstack.ps1 -Mode hybrid -KeepRunning
+.\scripts\test-fullstack.ps1 -Mode docker -KeepRunning
+```
 
-- Transaction create sonrasinda AI assessment ve case olusumu otomatik ilerler.
-
-## Faz 6 - Gamification Event Zincirini Bitir
-
-Durum: Bekliyor.
-
-Yapilacaklar:
-
-- Case decision eventinden points/profile update akisini dogrula.
-- Badge ve leaderboard hesaplarini test et.
-- Duplicate event idempotency testi ekle.
-- Gamification down/up recovery senaryosunu dogrula.
-
-Kapanis kriteri:
-
-- Analyst kararindan sonra gamification ekranlari gercek veriyle beslenir.
-
-## Faz 7 - Notification/SSE
-
-Durum: Bekliyor.
-
-Yapilacaklar:
-
-- Gateway uzerinden notification stream endpointi ekle.
-- Event consumer ile user notification eventlerini gateway'e tasima modelini kur.
-- Frontend icin SSE kontratini sabitle.
-
-Kapanis kriteri:
-
-- Frontend canli bildirimleri gateway uzerinden alabilir.
-
-## Faz 8 - Final Demo ve Recovery Testleri
-
-Durum: Bekliyor.
-
-Yapilacaklar:
-
-- Tek komut demo flow scripti ekle.
-- AI down/up recovery testi.
-- RabbitMQ down/up outbox recovery testi.
-- Gamification down/up recovery testi.
-- OpenAPI/export veya endpoint matrix dokumanini guncelle.
-- Frontend `.env` live mode ayarlarini dogrula.
-
-Kapanis kriteri:
-
-- Backend tek komutla ayaga kalkar, smoke testten gecer ve docs'taki final
-  demo senaryolari calisir.
-
-## Frontend'e Ne Zaman Baslanmali?
-
-- Mock frontend: hemen baslanabilir.
-- Gercek auth frontend: Faz 2 + Faz 3 bittikten sonra.
-- Transaction/case frontend: Faz 4 bittikten sonra.
-- AI/gamification ekranlari: Faz 5 + Faz 6 bittikten sonra.
+Windows host'ta tam Docker testinden önce pagefile açık olmalıdır.

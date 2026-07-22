@@ -107,6 +107,13 @@ export const CONTROL_STATUS_LABEL: Record<ControlStatus, string> = {
 export const ASSESSMENT_STATUSES = ['PENDING', 'COMPLETED', 'TIMED_OUT', 'FAILED'] as const;
 export type AssessmentStatus = (typeof ASSESSMENT_STATUSES)[number];
 
+export const ASSESSMENT_STATUS_LABEL: Record<AssessmentStatus, string> = {
+  PENDING: 'Değerlendiriliyor',
+  COMPLETED: 'Tamamlandı',
+  TIMED_OUT: 'Manuel incelemede',
+  FAILED: 'Değerlendirme başarısız',
+};
+
 export const RISK_LEVELS = ['DUSUK', 'ORTA', 'YUKSEK', 'KRITIK'] as const;
 export type RiskLevel = (typeof RISK_LEVELS)[number];
 

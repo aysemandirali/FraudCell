@@ -18,6 +18,7 @@ public static class GetCaseHistoryEndpoint
         app.MapGet("/api/v1/cases/{caseId}/history", HandleAsync)
            .WithName("GetCaseHistory")
            .WithTags("Cases")
+           .ProducesApi<IReadOnlyList<CaseTransitionResponse>>()
            .RequireAuthorization(policy => policy.RequireRole(RoleNames.Analyst, RoleNames.Supervisor, RoleNames.Admin));
     }
 

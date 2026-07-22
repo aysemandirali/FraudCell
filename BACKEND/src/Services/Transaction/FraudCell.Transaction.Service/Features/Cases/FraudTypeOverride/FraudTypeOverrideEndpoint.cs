@@ -23,6 +23,7 @@ public static class FraudTypeOverrideEndpoint
         app.MapPatch("/api/v1/cases/{caseId}/fraud-type", HandleAsync)
            .WithName("OverrideFraudType")
            .WithTags("Cases")
+           .ProducesApi<FraudTypeOverrideResponse>()
            .RequireAuthorization(policy => policy.RequireRole(RoleNames.Analyst, RoleNames.Supervisor));
     }
 

@@ -18,6 +18,7 @@ public static class UpdateStaffRoleEndpoint
         app.MapPut("/api/v1/staff/{staffId}/role", HandleAsync)
            .WithName("UpdateStaffRole")
            .WithTags("Staff")
+           .ProducesApi<StaffResponse>()
            .RequireAuthorization(policy => policy.RequireRole(RoleNames.Admin));
     }
 

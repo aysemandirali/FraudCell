@@ -1,4 +1,6 @@
+import { useEffect } from 'react';
 import { Outlet } from '@tanstack/react-router';
+import { useQueryClient } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
 import { useSession } from '@/features/authentication/useSession';
 import { useRealtime } from '@/features/realtime/useRealtime';
@@ -16,7 +18,12 @@ import { useRealtime } from '@/features/realtime/useRealtime';
  */
 export function RootLayout() {
   const { status } = useSession();
+  const queryClient = useQueryClient();
   useRealtime();
+
+  useEffect(() => {
+    if (status === 'anonymous') queryClient.clear();
+  }, [queryClient, status]);
 
   if (status === 'loading') {
     return (

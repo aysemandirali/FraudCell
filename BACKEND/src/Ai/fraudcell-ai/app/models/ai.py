@@ -107,6 +107,9 @@ class Prediction(Base):
     fraud_type: Mapped[str] = mapped_column(String(40))
     feature_snapshot: Mapped[dict] = mapped_column(JSON)
     reason_codes: Mapped[list] = mapped_column(JSON)
+    # Gemini aciklama anlatisi (lazy uretilir + cache'lenir; skorlamayi etkilemez).
+    explanation: Mapped[str | None] = mapped_column(Text, nullable=True)
+    explanation_generated_at: Mapped[dt.datetime | None] = mapped_column(nullable=True)
     predicted_at: Mapped[dt.datetime] = mapped_column()
     created_at: Mapped[dt.datetime] = mapped_column()
 

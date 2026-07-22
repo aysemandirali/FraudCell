@@ -21,10 +21,12 @@ public static class NotesEndpoints
     {
         app.MapGet("/api/v1/cases/{caseId}/notes", ListAsync)
            .WithName("GetCaseNotes").WithTags("Cases")
+           .ProducesApi<IReadOnlyList<NoteResponse>>()
            .RequireAuthorization(policy => policy.RequireRole(RoleNames.Analyst, RoleNames.Supervisor));
 
         app.MapPost("/api/v1/cases/{caseId}/notes", AddAsync)
            .WithName("AddCaseNote").WithTags("Cases")
+           .ProducesApi<NoteResponse>(StatusCodes.Status201Created)
            .RequireAuthorization(policy => policy.RequireRole(RoleNames.Analyst, RoleNames.Supervisor));
     }
 

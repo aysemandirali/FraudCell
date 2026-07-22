@@ -1,154 +1,248 @@
 name: fraudcell
 
-# =============================================================================
-# FraudCell — Backend Docker Compose
-# =============================================================================
-# Bu dosya docs/11-FINAL-DELIVERY-PLAYBOOK.md §27-34 ve docs/03-TECH-STACK.md
-# §39-40'ta kilitlenen kararlarin, BUGUN repository'de gercekten var olan
-# servisler icin uygulanmis halidir.
+# Full production-like demo topology. Daily development should use
+# compose.infra.yml through scripts/dev.ps1 (two containers only).
 #
-# ONEMLI — mimari dokumanla fark:
-#   Nihai mimaride 5 uzun-sureli servis (Edge/YARP Gateway, Identity, Transaction,
-#   AI, Gamification) + 4 PostgreSQL bulunmasi planlaniyor. Su an Docker'da
-#   Edge Gateway + 3 ASP.NET Core servisi (Identity, Transaction, Gamification)
-#   + 3 veritabani + RabbitMQ ayaga kalkar.
-#
-#   Python/FastAPI AI Service kodu repository'de var, fakat henuz Docker Compose'a
-#   bagli degil. AI fazinda ai-service + ai-db eklenecektir.
-#
-# Kullanim:
-#   cp .env.example .env      (zaten .env mevcutsa atlayin)
-#   docker compose up -d --build
-#   docker compose ps
-#   docker compose logs -f transaction-service
-#   docker compose down            # container'lari durdurur, veri volume'lari kalir
-#   docker compose down -v         # veri volume'larini da siler (demo reset)
+# Veri sahipligi: her servisin KENDI database'i ve KENDI login rolu vardir.
+# Yerel/demo ortaminda bunlar tek bir PostgreSQL instance'i uzerinde barinir;
+# izolasyon PostgreSQL rol/CONNECT yetkileriyle zorlanir (docker/postgres/init-*.sh).
+x-application-security: &application-security
+  cap_drop:
+    - ALL
+  security_opt:
+    - no-new-privileges:true
+  pids_limit: 256
+  stop_grace_period: 30s
+  restart: on-failure:5
 
 networks:
   fraudcell-app:
     name: fraudcell-app
-  identity-data:
-    name: identity-data
-  transaction-data:
-    name: transaction-data
-  gamification-data:
-    name: gamification-data
+  fraudcell-data:
+    internal: true
 
 volumes:
-  identity-db-data:
-  transaction-db-data:
-  gamification-db-data:
+  postgres-data:
   rabbitmq-data:
   identity-keys:
 
 services:
-  # ---------------------------------------------------------------------------
-  # Veritabanlari — her servisin kendi PostgreSQL container'i (database-per-service)
-  # ---------------------------------------------------------------------------
-  identity-db:
+  postgres:
     image: postgres:18.4
     environment:
-      POSTGRES_DB: fraudcell_identity
-      POSTGRES_USER: identity_app
-      POSTGRES_PASSWORD: ${IDENTITY_DB_PASSWORD:?IDENTITY_DB_PASSWORD .env icinde tanimli olmali}
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:?POSTGRES_ADMIN_PASSWORD must be set in BACKEND/.env}
+      IDENTITY_DB_PASSWORD: ${IDENTITY_DB_PASSWORD:?IDENTITY_DB_PASSWORD must be set in BACKEND/.env}
+      TRANSACTION_DB_PASSWORD: ${TRANSACTION_DB_PASSWORD:?TRANSACTION_DB_PASSWORD must be set in BACKEND/.env}
+      GAMIFICATION_DB_PASSWORD: ${GAMIFICATION_DB_PASSWORD:?GAMIFICATION_DB_PASSWORD must be set in BACKEND/.env}
+      AI_DB_PASSWORD: ${AI_DB_PASSWORD:?AI_DB_PASSWORD must be set in BACKEND/.env}
     volumes:
-      - identity-db-data:/var/lib/postgresql
+      - postgres-data:/var/lib/postgresql
+      - ./docker/postgres/init-multiple-databases.sh:/docker-entrypoint-initdb.d/10-fraudcell-databases.sh:ro
     networks:
-      - identity-data
+      - fraudcell-data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U identity_app -d fraudcell_identity"]
-      interval: 5s
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 20s
       timeout: 5s
       retries: 10
-    deploy:
-      resources:
-        limits:
-          cpus: "0.50"
-          memory: 512M
+      start_period: 20s
+    cpus: 1.00
+    mem_limit: 512m
+    mem_reservation: 192m
+    pids_limit: 256
+    stop_grace_period: 20s
     restart: on-failure:5
 
-  transaction-db:
-    image: postgres:18.4
-    environment:
-      POSTGRES_DB: fraudcell_transaction
-      POSTGRES_USER: transaction_app
-      POSTGRES_PASSWORD: ${TRANSACTION_DB_PASSWORD:?TRANSACTION_DB_PASSWORD .env icinde tanimli olmali}
-    volumes:
-      - transaction-db-data:/var/lib/postgresql
-    networks:
-      - transaction-data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U transaction_app -d fraudcell_transaction"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-    deploy:
-      resources:
-        limits:
-          cpus: "0.50"
-          memory: 512M
-    restart: on-failure:5
-
-  gamification-db:
-    image: postgres:18.4
-    environment:
-      POSTGRES_DB: fraudcell_gamification
-      POSTGRES_USER: gamification_app
-      POSTGRES_PASSWORD: ${GAMIFICATION_DB_PASSWORD:?GAMIFICATION_DB_PASSWORD .env icinde tanimli olmali}
-    volumes:
-      - gamification-db-data:/var/lib/postgresql
-    networks:
-      - gamification-data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U gamification_app -d fraudcell_gamification"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-    deploy:
-      resources:
-        limits:
-          cpus: "0.50"
-          memory: 512M
-    restart: on-failure:5
-
-  # ---------------------------------------------------------------------------
-  # Mesajlasma
-  # ---------------------------------------------------------------------------
   rabbitmq:
-    image: rabbitmq:4.3-management
+    image: rabbitmq:4.3
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-fraudcell}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?RABBITMQ_PASSWORD .env icinde tanimli olmali}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?RABBITMQ_PASSWORD must be set in BACKEND/.env}
       RABBITMQ_DEFAULT_VHOST: /
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
     networks:
       - fraudcell-app
-    ports:
-      # Management UI yalnizca localhost'a acik (dokuman: debug/dev kolayligi icin).
-      - "127.0.0.1:15672:15672"
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
-      interval: 10s
-      timeout: 5s
+      interval: 20s
+      timeout: 10s
       retries: 10
-    deploy:
-      resources:
-        limits:
-          cpus: "0.75"
-          memory: 768M
+      start_period: 30s
+    cpus: 0.50
+    mem_limit: 384m
+    mem_reservation: 160m
+    pids_limit: 256
+    stop_grace_period: 30s
     restart: on-failure:5
 
-  # ---------------------------------------------------------------------------
-  # Edge Gateway - tek public API girisi
-  # ---------------------------------------------------------------------------
-  edge-gateway:
+  identity-service:
+    <<: *application-security
     build:
       context: .
-      dockerfile: src/Services/Edge/FraudCell.Edge.Gateway/Dockerfile
+      dockerfile: src/Services/Identity/FraudCell.Identity.Service/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+      ConnectionStrings__IdentityDb: Host=postgres;Port=5432;Database=fraudcell_identity;Username=identity_app;Password=${IDENTITY_DB_PASSWORD};Minimum Pool Size=0;Maximum Pool Size=15
+      RabbitMq__Host: rabbitmq
+      RabbitMq__UserName: ${RABBITMQ_USER:-fraudcell}
+      RabbitMq__Password: ${RABBITMQ_PASSWORD}
+      Jwt__PrivateKeyPath: /keys/identity/private.pem
+      Jwt__PublicKeyPath: /keys/identity/public.pem
+      Seed__AdminEmail: ${SEED_ADMIN_EMAIL:-admin@fraudcell.local}
+      Seed__AdminPassword: ${SEED_ADMIN_PASSWORD:-ChangeMe123!}
+      Logging__LogLevel__Microsoft.EntityFrameworkCore.Database.Command: Warning
+      Serilog__MinimumLevel__Override__Microsoft.EntityFrameworkCore.Database.Command: Warning
+      Outbox__PollIntervalMilliseconds: 2000
+    volumes:
+      - identity-keys:/keys/identity
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - fraudcell-app
+      - fraudcell-data
+    cpus: 0.40
+    mem_limit: 384m
+    mem_reservation: 128m
+
+  transaction-service:
+    <<: *application-security
+    build:
+      context: .
+      dockerfile: src/Services/Transaction/FraudCell.Transaction.Service/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+      ConnectionStrings__TransactionDb: Host=postgres;Port=5432;Database=fraudcell_transaction;Username=transaction_app;Password=${TRANSACTION_DB_PASSWORD};Minimum Pool Size=0;Maximum Pool Size=15
+      RabbitMq__Host: rabbitmq
+      RabbitMq__UserName: ${RABBITMQ_USER:-fraudcell}
+      RabbitMq__Password: ${RABBITMQ_PASSWORD}
+      Jwt__PublicKeyPath: /keys/identity/public.pem
+      Logging__LogLevel__Microsoft.EntityFrameworkCore.Database.Command: Warning
+      Serilog__MinimumLevel__Override__Microsoft.EntityFrameworkCore.Database.Command: Warning
+      Outbox__PollIntervalMilliseconds: 2000
+    volumes:
+      - identity-keys:/keys/identity:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      identity-service:
+        condition: service_healthy
+    networks:
+      - fraudcell-app
+      - fraudcell-data
+    cpus: 0.60
+    mem_limit: 512m
+    mem_reservation: 160m
+
+  # Tek seferlik semа gorevleri icin manuel arac. Normal `docker compose up`
+  # sirasinda BASLAMAZ; ai-service kendi migration'ini startup'ta uygular
+  # (Identity/Transaction/Gamification ile ayni desen).
+  #   docker compose --profile migration run --rm ai-migrate
+  ai-migrate:
+    profiles: ["migration"]
+    image: fraudcell-ai-service:latest
+    build:
+      context: .
+      dockerfile: src/Ai/fraudcell-ai/Dockerfile
+    command: ["python", "-m", "app.migrate"]
+    environment: &ai-environment
+      AI_DB_HOST: postgres
+      AI_DB_PORT: 5432
+      AI_DB_NAME: fraudcell_ai
+      AI_DB_USER: ai_app
+      AI_DB_PASSWORD: ${AI_DB_PASSWORD}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER_NAME: ${RABBITMQ_USER:-fraudcell}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      INTERNAL_API_TOKEN: ${AI_INTERNAL_API_TOKEN:-local-development-only}
+      # Yalnizca aciklama anlatisi icin (skorlamayi ETKILEMEZ). Bos ise ozellik
+      # sessizce deterministik ozete duser.
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - fraudcell-data
+    cpus: 0.50
+    mem_limit: 512m
+    pids_limit: 128
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: "no"
+
+  ai-service:
+    <<: *application-security
+    image: fraudcell-ai-service:latest
+    build:
+      context: .
+      dockerfile: src/Ai/fraudcell-ai/Dockerfile
+    environment: *ai-environment
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - fraudcell-app
+      - fraudcell-data
+    cpus: 1.25
+    mem_limit: 1024m
+    mem_reservation: 384m
+
+  gamification-service:
+    <<: *application-security
+    build:
+      context: .
+      dockerfile: src/Services/Gamification/FraudCell.Gamification.Service/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+      ConnectionStrings__GamificationDb: Host=postgres;Port=5432;Database=fraudcell_gamification;Username=gamification_app;Password=${GAMIFICATION_DB_PASSWORD};Minimum Pool Size=0;Maximum Pool Size=15
+      RabbitMq__Host: rabbitmq
+      RabbitMq__UserName: ${RABBITMQ_USER:-fraudcell}
+      RabbitMq__Password: ${RABBITMQ_PASSWORD}
+      Jwt__PublicKeyPath: /keys/identity/public.pem
+      Logging__LogLevel__Microsoft.EntityFrameworkCore.Database.Command: Warning
+      Serilog__MinimumLevel__Override__Microsoft.EntityFrameworkCore.Database.Command: Warning
+      Outbox__PollIntervalMilliseconds: 2000
+    volumes:
+      - identity-keys:/keys/identity:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      identity-service:
+        condition: service_healthy
+    networks:
+      - fraudcell-app
+      - fraudcell-data
+    cpus: 0.40
+    mem_limit: 384m
+    mem_reservation: 128m
+
+  # Tek giris noktasi. Frontend SPA'i da wwwroot'tan servis eder, bu yuzden
+  # ayri bir frontend/nginx container'i yoktur.
+  edge-gateway:
+    <<: *application-security
+    build:
+      context: ..
+      dockerfile: BACKEND/src/Services/Edge/FraudCell.Edge.Gateway/Dockerfile
     environment:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
       Jwt__PublicKeyPath: /keys/identity/public.pem
+      RabbitMq__Host: rabbitmq
+      RabbitMq__UserName: ${RABBITMQ_USER:-fraudcell}
+      RabbitMq__Password: ${RABBITMQ_PASSWORD}
       ReverseProxy__Clusters__identity__Destinations__identity-service__Address: http://identity-service:8080/
       ReverseProxy__Clusters__transaction__Destinations__transaction-service__Address: http://transaction-service:8080/
       ReverseProxy__Clusters__gamification__Destinations__gamification-service__Address: http://gamification-service:8080/
@@ -164,123 +258,14 @@ services:
         condition: service_healthy
       gamification-service:
         condition: service_healthy
+      ai-service:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     networks:
       - fraudcell-app
     ports:
       - "127.0.0.1:8080:8080"
-    deploy:
-      resources:
-        limits:
-          cpus: "0.50"
-          memory: 512M
-    restart: on-failure:5
-
-  # ---------------------------------------------------------------------------
-  # Identity Service — kullanici, rol, JWT, refresh token, audit
-  # ---------------------------------------------------------------------------
-  identity-service:
-    build:
-      context: .
-      dockerfile: src/Services/Identity/FraudCell.Identity.Service/Dockerfile
-    environment:
-      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
-      ConnectionStrings__IdentityDb: Host=identity-db;Port=5432;Database=fraudcell_identity;Username=identity_app;Password=${IDENTITY_DB_PASSWORD}
-      RabbitMq__Host: rabbitmq
-      RabbitMq__UserName: ${RABBITMQ_USER:-fraudcell}
-      RabbitMq__Password: ${RABBITMQ_PASSWORD}
-      Jwt__PrivateKeyPath: /keys/identity/private.pem
-      Jwt__PublicKeyPath: /keys/identity/public.pem
-      Logging__LogLevel__Microsoft.EntityFrameworkCore.Database.Command: Warning
-      Serilog__MinimumLevel__Override__Microsoft.EntityFrameworkCore.Database.Command: Warning
-      Outbox__PollIntervalMilliseconds: 2000
-    volumes:
-      # RSA anahtar cifti burada uretilir (Development ortaminda RsaKeyProvider
-      # otomatik uretir) ve diger servislerle bu volume uzerinden paylasilir.
-      - identity-keys:/keys/identity
-    depends_on:
-      identity-db:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-    networks:
-      - fraudcell-app
-      - identity-data
-    deploy:
-      resources:
-        limits:
-          cpus: "0.50"
-          memory: 512M
-    restart: on-failure:5
-
-  # ---------------------------------------------------------------------------
-  # Transaction Service — islem, risk vakasi, state machine, SLA, atama
-  # ---------------------------------------------------------------------------
-  transaction-service:
-    build:
-      context: .
-      dockerfile: src/Services/Transaction/FraudCell.Transaction.Service/Dockerfile
-    environment:
-      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
-      ConnectionStrings__TransactionDb: Host=transaction-db;Port=5432;Database=fraudcell_transaction;Username=transaction_app;Password=${TRANSACTION_DB_PASSWORD}
-      RabbitMq__Host: rabbitmq
-      RabbitMq__UserName: ${RABBITMQ_USER:-fraudcell}
-      RabbitMq__Password: ${RABBITMQ_PASSWORD}
-      Jwt__PublicKeyPath: /keys/identity/public.pem
-      Logging__LogLevel__Microsoft.EntityFrameworkCore.Database.Command: Warning
-      Serilog__MinimumLevel__Override__Microsoft.EntityFrameworkCore.Database.Command: Warning
-      Outbox__PollIntervalMilliseconds: 2000
-    volumes:
-      # Yalnizca public key — bu servis token uretemez, yalnizca dogrular.
-      - identity-keys:/keys/identity:ro
-    depends_on:
-      transaction-db:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-      identity-service:
-        condition: service_started
-    networks:
-      - fraudcell-app
-      - transaction-data
-    deploy:
-      resources:
-        limits:
-          cpus: "0.75"
-          memory: 768M
-    restart: on-failure:5
-
-  # ---------------------------------------------------------------------------
-  # Gamification Service — puan, rozet, seviye, leaderboard
-  # ---------------------------------------------------------------------------
-  gamification-service:
-    build:
-      context: .
-      dockerfile: src/Services/Gamification/FraudCell.Gamification.Service/Dockerfile
-    environment:
-      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
-      ConnectionStrings__GamificationDb: Host=gamification-db;Port=5432;Database=fraudcell_gamification;Username=gamification_app;Password=${GAMIFICATION_DB_PASSWORD}
-      RabbitMq__Host: rabbitmq
-      RabbitMq__UserName: ${RABBITMQ_USER:-fraudcell}
-      RabbitMq__Password: ${RABBITMQ_PASSWORD}
-      Jwt__PublicKeyPath: /keys/identity/public.pem
-      Logging__LogLevel__Microsoft.EntityFrameworkCore.Database.Command: Warning
-      Serilog__MinimumLevel__Override__Microsoft.EntityFrameworkCore.Database.Command: Warning
-      Outbox__PollIntervalMilliseconds: 2000
-    volumes:
-      - identity-keys:/keys/identity:ro
-    depends_on:
-      gamification-db:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-      identity-service:
-        condition: service_started
-    networks:
-      - fraudcell-app
-      - gamification-data
-    deploy:
-      resources:
-        limits:
-          cpus: "0.50"
-          memory: 512M
-    restart: on-failure:5
+    cpus: 0.40
+    mem_limit: 256m
+    mem_reservation: 96m

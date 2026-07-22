@@ -1,0 +1,1129 @@
+{
+    "openapi":  "3.1.0",
+    "info":  {
+                 "title":  "FraudCell AI Service",
+                 "version":  "1.0.0"
+             },
+    "paths":  {
+                  "/health/live":  {
+                                       "get":  {
+                                                   "tags":  [
+                                                                "Health"
+                                                            ],
+                                                   "summary":  "Live",
+                                                   "operationId":  "live_health_live_get",
+                                                   "responses":  {
+                                                                     "200":  {
+                                                                                 "description":  "Successful Response",
+                                                                                 "content":  {
+                                                                                                 "application/json":  {
+                                                                                                                          "schema":  {
+                                                                                                                                         "$ref":  "#/components/schemas/HealthLiveResponse"
+                                                                                                                                     }
+                                                                                                                      }
+                                                                                             }
+                                                                             }
+                                                                 }
+                                               }
+                                   },
+                  "/health/ready":  {
+                                        "get":  {
+                                                    "tags":  [
+                                                                 "Health"
+                                                             ],
+                                                    "summary":  "Ready",
+                                                    "operationId":  "ready_health_ready_get",
+                                                    "responses":  {
+                                                                      "200":  {
+                                                                                  "description":  "Successful Response",
+                                                                                  "content":  {
+                                                                                                  "application/json":  {
+                                                                                                                           "schema":  {
+                                                                                                                                          "$ref":  "#/components/schemas/HealthReadyResponse"
+                                                                                                                                      }
+                                                                                                                       }
+                                                                                              }
+                                                                              }
+                                                                  }
+                                                }
+                                    },
+                  "/api/v1/ai/models/active":  {
+                                                   "get":  {
+                                                               "tags":  [
+                                                                            "AI Models"
+                                                                        ],
+                                                               "summary":  "Get Active Bundle",
+                                                               "operationId":  "get_active_bundle_api_v1_ai_models_active_get",
+                                                               "responses":  {
+                                                                                 "200":  {
+                                                                                             "description":  "Successful Response",
+                                                                                             "content":  {
+                                                                                                             "application/json":  {
+                                                                                                                                      "schema":  {
+                                                                                                                                                     "$ref":  "#/components/schemas/ApiEnvelope_ActiveModelResponse_"
+                                                                                                                                                 }
+                                                                                                                                  }
+                                                                                                         }
+                                                                                         }
+                                                                             }
+                                                           }
+                                               },
+                  "/api/v1/ai/models/{model_version}":  {
+                                                            "get":  {
+                                                                        "tags":  [
+                                                                                     "AI Models"
+                                                                                 ],
+                                                                        "summary":  "Get Model Version",
+                                                                        "operationId":  "get_model_version_api_v1_ai_models__model_version__get",
+                                                                        "parameters":  [
+                                                                                           {
+                                                                                               "name":  "model_version",
+                                                                                               "in":  "path",
+                                                                                               "required":  true,
+                                                                                               "schema":  {
+                                                                                                              "type":  "string",
+                                                                                                              "title":  "Model Version"
+                                                                                                          }
+                                                                                           }
+                                                                                       ],
+                                                                        "responses":  {
+                                                                                          "200":  {
+                                                                                                      "description":  "Successful Response",
+                                                                                                      "content":  {
+                                                                                                                      "application/json":  {
+                                                                                                                                               "schema":  {
+                                                                                                                                                              "$ref":  "#/components/schemas/ApiEnvelope_ModelVersionResponse_"
+                                                                                                                                                          }
+                                                                                                                                           }
+                                                                                                                  }
+                                                                                                  },
+                                                                                          "422":  {
+                                                                                                      "description":  "Validation Error",
+                                                                                                      "content":  {
+                                                                                                                      "application/json":  {
+                                                                                                                                               "schema":  {
+                                                                                                                                                              "$ref":  "#/components/schemas/HTTPValidationError"
+                                                                                                                                                          }
+                                                                                                                                           }
+                                                                                                                  }
+                                                                                                  }
+                                                                                      }
+                                                                    }
+                                                        },
+                  "/api/v1/ai/metrics/overview":  {
+                                                      "get":  {
+                                                                  "tags":  [
+                                                                               "AI Metrics"
+                                                                           ],
+                                                                  "summary":  "Get Overview",
+                                                                  "operationId":  "get_overview_api_v1_ai_metrics_overview_get",
+                                                                  "parameters":  [
+                                                                                     {
+                                                                                         "name":  "from",
+                                                                                         "in":  "query",
+                                                                                         "required":  false,
+                                                                                         "schema":  {
+                                                                                                        "anyOf":  [
+                                                                                                                      {
+                                                                                                                          "type":  "string",
+                                                                                                                          "format":  "date-time"
+                                                                                                                      },
+                                                                                                                      {
+                                                                                                                          "type":  "null"
+                                                                                                                      }
+                                                                                                                  ],
+                                                                                                        "title":  "From"
+                                                                                                    }
+                                                                                     },
+                                                                                     {
+                                                                                         "name":  "to",
+                                                                                         "in":  "query",
+                                                                                         "required":  false,
+                                                                                         "schema":  {
+                                                                                                        "anyOf":  [
+                                                                                                                      {
+                                                                                                                          "type":  "string",
+                                                                                                                          "format":  "date-time"
+                                                                                                                      },
+                                                                                                                      {
+                                                                                                                          "type":  "null"
+                                                                                                                      }
+                                                                                                                  ],
+                                                                                                        "title":  "To"
+                                                                                                    }
+                                                                                     }
+                                                                                 ],
+                                                                  "responses":  {
+                                                                                    "200":  {
+                                                                                                "description":  "Successful Response",
+                                                                                                "content":  {
+                                                                                                                "application/json":  {
+                                                                                                                                         "schema":  {
+                                                                                                                                                        "$ref":  "#/components/schemas/ApiEnvelope_MetricsOverviewResponse_"
+                                                                                                                                                    }
+                                                                                                                                     }
+                                                                                                            }
+                                                                                            },
+                                                                                    "422":  {
+                                                                                                "description":  "Validation Error",
+                                                                                                "content":  {
+                                                                                                                "application/json":  {
+                                                                                                                                         "schema":  {
+                                                                                                                                                        "$ref":  "#/components/schemas/HTTPValidationError"
+                                                                                                                                                    }
+                                                                                                                                     }
+                                                                                                            }
+                                                                                            }
+                                                                                }
+                                                              }
+                                                  },
+                  "/api/v1/ai/metrics/categories":  {
+                                                        "get":  {
+                                                                    "tags":  [
+                                                                                 "AI Metrics"
+                                                                             ],
+                                                                    "summary":  "Get Category Accuracy",
+                                                                    "operationId":  "get_category_accuracy_api_v1_ai_metrics_categories_get",
+                                                                    "parameters":  [
+                                                                                       {
+                                                                                           "name":  "from",
+                                                                                           "in":  "query",
+                                                                                           "required":  false,
+                                                                                           "schema":  {
+                                                                                                          "anyOf":  [
+                                                                                                                        {
+                                                                                                                            "type":  "string",
+                                                                                                                            "format":  "date-time"
+                                                                                                                        },
+                                                                                                                        {
+                                                                                                                            "type":  "null"
+                                                                                                                        }
+                                                                                                                    ],
+                                                                                                          "title":  "From"
+                                                                                                      }
+                                                                                       },
+                                                                                       {
+                                                                                           "name":  "to",
+                                                                                           "in":  "query",
+                                                                                           "required":  false,
+                                                                                           "schema":  {
+                                                                                                          "anyOf":  [
+                                                                                                                        {
+                                                                                                                            "type":  "string",
+                                                                                                                            "format":  "date-time"
+                                                                                                                        },
+                                                                                                                        {
+                                                                                                                            "type":  "null"
+                                                                                                                        }
+                                                                                                                    ],
+                                                                                                          "title":  "To"
+                                                                                                      }
+                                                                                       }
+                                                                                   ],
+                                                                    "responses":  {
+                                                                                      "200":  {
+                                                                                                  "description":  "Successful Response",
+                                                                                                  "content":  {
+                                                                                                                  "application/json":  {
+                                                                                                                                           "schema":  {
+                                                                                                                                                          "$ref":  "#/components/schemas/ApiEnvelope_CategoryAccuracyResponse_"
+                                                                                                                                                      }
+                                                                                                                                       }
+                                                                                                              }
+                                                                                              },
+                                                                                      "422":  {
+                                                                                                  "description":  "Validation Error",
+                                                                                                  "content":  {
+                                                                                                                  "application/json":  {
+                                                                                                                                           "schema":  {
+                                                                                                                                                          "$ref":  "#/components/schemas/HTTPValidationError"
+                                                                                                                                                      }
+                                                                                                                                       }
+                                                                                                              }
+                                                                                              }
+                                                                                  }
+                                                                }
+                                                    },
+                  "/api/v1/ai/metrics/decision-agreement":  {
+                                                                "get":  {
+                                                                            "tags":  [
+                                                                                         "AI Metrics"
+                                                                                     ],
+                                                                            "summary":  "Get Decision Agreement",
+                                                                            "operationId":  "get_decision_agreement_api_v1_ai_metrics_decision_agreement_get",
+                                                                            "responses":  {
+                                                                                              "200":  {
+                                                                                                          "description":  "Successful Response",
+                                                                                                          "content":  {
+                                                                                                                          "application/json":  {
+                                                                                                                                                   "schema":  {
+                                                                                                                                                                  "$ref":  "#/components/schemas/ApiEnvelope_DecisionAgreementResponse_"
+                                                                                                                                                              }
+                                                                                                                                               }
+                                                                                                                      }
+                                                                                                      }
+                                                                                          }
+                                                                        }
+                                                            },
+                  "/api/v1/ai/predictions/{assessment_id}":  {
+                                                                 "get":  {
+                                                                             "tags":  [
+                                                                                          "AI Predictions"
+                                                                                      ],
+                                                                             "summary":  "Get Prediction",
+                                                                             "operationId":  "get_prediction_api_v1_ai_predictions__assessment_id__get",
+                                                                             "parameters":  [
+                                                                                                {
+                                                                                                    "name":  "assessment_id",
+                                                                                                    "in":  "path",
+                                                                                                    "required":  true,
+                                                                                                    "schema":  {
+                                                                                                                   "type":  "string",
+                                                                                                                   "title":  "Assessment Id"
+                                                                                                               }
+                                                                                                }
+                                                                                            ],
+                                                                             "responses":  {
+                                                                                               "200":  {
+                                                                                                           "description":  "Successful Response",
+                                                                                                           "content":  {
+                                                                                                                           "application/json":  {
+                                                                                                                                                    "schema":  {
+                                                                                                                                                                   "$ref":  "#/components/schemas/ApiEnvelope_PredictionResponse_"
+                                                                                                                                                               }
+                                                                                                                                                }
+                                                                                                                       }
+                                                                                                       },
+                                                                                               "422":  {
+                                                                                                           "description":  "Validation Error",
+                                                                                                           "content":  {
+                                                                                                                           "application/json":  {
+                                                                                                                                                    "schema":  {
+                                                                                                                                                                   "$ref":  "#/components/schemas/HTTPValidationError"
+                                                                                                                                                               }
+                                                                                                                                                }
+                                                                                                                       }
+                                                                                                       }
+                                                                                           }
+                                                                         }
+                                                             },
+                  "/internal/v1/models/health":  {
+                                                     "get":  {
+                                                                 "tags":  [
+                                                                              "Internal"
+                                                                          ],
+                                                                 "summary":  "Models Health",
+                                                                 "operationId":  "models_health_internal_v1_models_health_get",
+                                                                 "parameters":  [
+                                                                                    {
+                                                                                        "name":  "authorization",
+                                                                                        "in":  "header",
+                                                                                        "required":  false,
+                                                                                        "schema":  {
+                                                                                                       "anyOf":  [
+                                                                                                                     {
+                                                                                                                         "type":  "string"
+                                                                                                                     },
+                                                                                                                     {
+                                                                                                                         "type":  "null"
+                                                                                                                     }
+                                                                                                                 ],
+                                                                                                       "title":  "Authorization"
+                                                                                                   }
+                                                                                    }
+                                                                                ],
+                                                                 "responses":  {
+                                                                                   "200":  {
+                                                                                               "description":  "Successful Response",
+                                                                                               "content":  {
+                                                                                                               "application/json":  {
+                                                                                                                                        "schema":  {
+                                                                                                                                                       "type":  "object",
+                                                                                                                                                       "additionalProperties":  true,
+                                                                                                                                                       "title":  "Response Models Health Internal V1 Models Health Get"
+                                                                                                                                                   }
+                                                                                                                                    }
+                                                                                                           }
+                                                                                           },
+                                                                                   "422":  {
+                                                                                               "description":  "Validation Error",
+                                                                                               "content":  {
+                                                                                                               "application/json":  {
+                                                                                                                                        "schema":  {
+                                                                                                                                                       "$ref":  "#/components/schemas/HTTPValidationError"
+                                                                                                                                                   }
+                                                                                                                                    }
+                                                                                                           }
+                                                                                           }
+                                                                               }
+                                                             }
+                                                 },
+                  "/internal/v1/assessments/score":  {
+                                                         "post":  {
+                                                                      "tags":  [
+                                                                                   "Internal"
+                                                                               ],
+                                                                      "summary":  "Score Internal",
+                                                                      "description":  "Diagnostic/contract-test amaclidir; ana transaction akisi HTTP\u0027ye bagli DEGILDIR (dokuman §58).",
+                                                                      "operationId":  "score_internal_internal_v1_assessments_score_post",
+                                                                      "parameters":  [
+                                                                                         {
+                                                                                             "name":  "authorization",
+                                                                                             "in":  "header",
+                                                                                             "required":  false,
+                                                                                             "schema":  {
+                                                                                                            "anyOf":  [
+                                                                                                                          {
+                                                                                                                              "type":  "string"
+                                                                                                                          },
+                                                                                                                          {
+                                                                                                                              "type":  "null"
+                                                                                                                          }
+                                                                                                                      ],
+                                                                                                            "title":  "Authorization"
+                                                                                                        }
+                                                                                         }
+                                                                                     ],
+                                                                      "requestBody":  {
+                                                                                          "required":  true,
+                                                                                          "content":  {
+                                                                                                          "application/json":  {
+                                                                                                                                   "schema":  {
+                                                                                                                                                  "$ref":  "#/components/schemas/InternalScoreRequest"
+                                                                                                                                              }
+                                                                                                                               }
+                                                                                                      }
+                                                                                      },
+                                                                      "responses":  {
+                                                                                        "200":  {
+                                                                                                    "description":  "Successful Response",
+                                                                                                    "content":  {
+                                                                                                                    "application/json":  {
+                                                                                                                                             "schema":  {
+                                                                                                                                                            "type":  "object",
+                                                                                                                                                            "additionalProperties":  true,
+                                                                                                                                                            "title":  "Response Score Internal Internal V1 Assessments Score Post"
+                                                                                                                                                        }
+                                                                                                                                         }
+                                                                                                                }
+                                                                                                },
+                                                                                        "422":  {
+                                                                                                    "description":  "Validation Error",
+                                                                                                    "content":  {
+                                                                                                                    "application/json":  {
+                                                                                                                                             "schema":  {
+                                                                                                                                                            "$ref":  "#/components/schemas/HTTPValidationError"
+                                                                                                                                                        }
+                                                                                                                                         }
+                                                                                                                }
+                                                                                                }
+                                                                                    }
+                                                                  }
+                                                     }
+              },
+    "components":  {
+                       "schemas":  {
+                                       "ActiveModelResponse":  {
+                                                                   "properties":  {
+                                                                                      "bundleVersion":  {
+                                                                                                            "type":  "string",
+                                                                                                            "title":  "Bundleversion"
+                                                                                                        },
+                                                                                      "riskModel":  {
+                                                                                                        "$ref":  "#/components/schemas/RiskModelResponse"
+                                                                                                    },
+                                                                                      "fraudTypeModel":  {
+                                                                                                             "$ref":  "#/components/schemas/FraudTypeModelResponse"
+                                                                                                         },
+                                                                                      "activatedAt":  {
+                                                                                                          "anyOf":  [
+                                                                                                                        {
+                                                                                                                            "type":  "string"
+                                                                                                                        },
+                                                                                                                        {
+                                                                                                                            "type":  "null"
+                                                                                                                        }
+                                                                                                                    ],
+                                                                                                          "title":  "Activatedat"
+                                                                                                      }
+                                                                                  },
+                                                                   "type":  "object",
+                                                                   "required":  [
+                                                                                    "bundleVersion",
+                                                                                    "riskModel",
+                                                                                    "fraudTypeModel",
+                                                                                    "activatedAt"
+                                                                                ],
+                                                                   "title":  "ActiveModelResponse"
+                                                               },
+                                       "ApiEnvelope_ActiveModelResponse_":  {
+                                                                                "properties":  {
+                                                                                                   "success":  {
+                                                                                                                   "type":  "boolean",
+                                                                                                                   "const":  true,
+                                                                                                                   "title":  "Success"
+                                                                                                               },
+                                                                                                   "data":  {
+                                                                                                                "$ref":  "#/components/schemas/ActiveModelResponse"
+                                                                                                            },
+                                                                                                   "error":  {
+                                                                                                                 "type":  "null",
+                                                                                                                 "title":  "Error"
+                                                                                                             },
+                                                                                                   "meta":  {
+                                                                                                                "$ref":  "#/components/schemas/ApiMeta"
+                                                                                                            }
+                                                                                               },
+                                                                                "type":  "object",
+                                                                                "required":  [
+                                                                                                 "success",
+                                                                                                 "data",
+                                                                                                 "meta"
+                                                                                             ],
+                                                                                "title":  "ApiEnvelope[ActiveModelResponse]"
+                                                                            },
+                                       "ApiEnvelope_CategoryAccuracyResponse_":  {
+                                                                                     "properties":  {
+                                                                                                        "success":  {
+                                                                                                                        "type":  "boolean",
+                                                                                                                        "const":  true,
+                                                                                                                        "title":  "Success"
+                                                                                                                    },
+                                                                                                        "data":  {
+                                                                                                                     "$ref":  "#/components/schemas/CategoryAccuracyResponse"
+                                                                                                                 },
+                                                                                                        "error":  {
+                                                                                                                      "type":  "null",
+                                                                                                                      "title":  "Error"
+                                                                                                                  },
+                                                                                                        "meta":  {
+                                                                                                                     "$ref":  "#/components/schemas/ApiMeta"
+                                                                                                                 }
+                                                                                                    },
+                                                                                     "type":  "object",
+                                                                                     "required":  [
+                                                                                                      "success",
+                                                                                                      "data",
+                                                                                                      "meta"
+                                                                                                  ],
+                                                                                     "title":  "ApiEnvelope[CategoryAccuracyResponse]"
+                                                                                 },
+                                       "ApiEnvelope_DecisionAgreementResponse_":  {
+                                                                                      "properties":  {
+                                                                                                         "success":  {
+                                                                                                                         "type":  "boolean",
+                                                                                                                         "const":  true,
+                                                                                                                         "title":  "Success"
+                                                                                                                     },
+                                                                                                         "data":  {
+                                                                                                                      "$ref":  "#/components/schemas/DecisionAgreementResponse"
+                                                                                                                  },
+                                                                                                         "error":  {
+                                                                                                                       "type":  "null",
+                                                                                                                       "title":  "Error"
+                                                                                                                   },
+                                                                                                         "meta":  {
+                                                                                                                      "$ref":  "#/components/schemas/ApiMeta"
+                                                                                                                  }
+                                                                                                     },
+                                                                                      "type":  "object",
+                                                                                      "required":  [
+                                                                                                       "success",
+                                                                                                       "data",
+                                                                                                       "meta"
+                                                                                                   ],
+                                                                                      "title":  "ApiEnvelope[DecisionAgreementResponse]"
+                                                                                  },
+                                       "ApiEnvelope_MetricsOverviewResponse_":  {
+                                                                                    "properties":  {
+                                                                                                       "success":  {
+                                                                                                                       "type":  "boolean",
+                                                                                                                       "const":  true,
+                                                                                                                       "title":  "Success"
+                                                                                                                   },
+                                                                                                       "data":  {
+                                                                                                                    "$ref":  "#/components/schemas/MetricsOverviewResponse"
+                                                                                                                },
+                                                                                                       "error":  {
+                                                                                                                     "type":  "null",
+                                                                                                                     "title":  "Error"
+                                                                                                                 },
+                                                                                                       "meta":  {
+                                                                                                                    "$ref":  "#/components/schemas/ApiMeta"
+                                                                                                                }
+                                                                                                   },
+                                                                                    "type":  "object",
+                                                                                    "required":  [
+                                                                                                     "success",
+                                                                                                     "data",
+                                                                                                     "meta"
+                                                                                                 ],
+                                                                                    "title":  "ApiEnvelope[MetricsOverviewResponse]"
+                                                                                },
+                                       "ApiEnvelope_ModelVersionResponse_":  {
+                                                                                 "properties":  {
+                                                                                                    "success":  {
+                                                                                                                    "type":  "boolean",
+                                                                                                                    "const":  true,
+                                                                                                                    "title":  "Success"
+                                                                                                                },
+                                                                                                    "data":  {
+                                                                                                                 "$ref":  "#/components/schemas/ModelVersionResponse"
+                                                                                                             },
+                                                                                                    "error":  {
+                                                                                                                  "type":  "null",
+                                                                                                                  "title":  "Error"
+                                                                                                              },
+                                                                                                    "meta":  {
+                                                                                                                 "$ref":  "#/components/schemas/ApiMeta"
+                                                                                                             }
+                                                                                                },
+                                                                                 "type":  "object",
+                                                                                 "required":  [
+                                                                                                  "success",
+                                                                                                  "data",
+                                                                                                  "meta"
+                                                                                              ],
+                                                                                 "title":  "ApiEnvelope[ModelVersionResponse]"
+                                                                             },
+                                       "ApiEnvelope_PredictionResponse_":  {
+                                                                               "properties":  {
+                                                                                                  "success":  {
+                                                                                                                  "type":  "boolean",
+                                                                                                                  "const":  true,
+                                                                                                                  "title":  "Success"
+                                                                                                              },
+                                                                                                  "data":  {
+                                                                                                               "$ref":  "#/components/schemas/PredictionResponse"
+                                                                                                           },
+                                                                                                  "error":  {
+                                                                                                                "type":  "null",
+                                                                                                                "title":  "Error"
+                                                                                                            },
+                                                                                                  "meta":  {
+                                                                                                               "$ref":  "#/components/schemas/ApiMeta"
+                                                                                                           }
+                                                                                              },
+                                                                               "type":  "object",
+                                                                               "required":  [
+                                                                                                "success",
+                                                                                                "data",
+                                                                                                "meta"
+                                                                                            ],
+                                                                               "title":  "ApiEnvelope[PredictionResponse]"
+                                                                           },
+                                       "ApiMeta":  {
+                                                       "properties":  {
+                                                                          "traceId":  {
+                                                                                          "type":  "string",
+                                                                                          "title":  "Traceid"
+                                                                                      },
+                                                                          "generatedAt":  {
+                                                                                              "anyOf":  [
+                                                                                                            {
+                                                                                                                "type":  "string"
+                                                                                                            },
+                                                                                                            {
+                                                                                                                "type":  "null"
+                                                                                                            }
+                                                                                                        ],
+                                                                                              "title":  "Generatedat"
+                                                                                          }
+                                                                      },
+                                                       "type":  "object",
+                                                       "required":  [
+                                                                        "traceId"
+                                                                    ],
+                                                       "title":  "ApiMeta"
+                                                   },
+                                       "CategoryAccuracyItemResponse":  {
+                                                                            "properties":  {
+                                                                                               "fraudType":  {
+                                                                                                                 "type":  "string",
+                                                                                                                 "title":  "Fraudtype"
+                                                                                                             },
+                                                                                               "sampleCount":  {
+                                                                                                                   "type":  "integer",
+                                                                                                                   "title":  "Samplecount"
+                                                                                                               },
+                                                                                               "accuracy":  {
+                                                                                                                "anyOf":  [
+                                                                                                                              {
+                                                                                                                                  "type":  "number"
+                                                                                                                              },
+                                                                                                                              {
+                                                                                                                                  "type":  "null"
+                                                                                                                              }
+                                                                                                                          ],
+                                                                                                                "title":  "Accuracy"
+                                                                                                            }
+                                                                                           },
+                                                                            "type":  "object",
+                                                                            "required":  [
+                                                                                             "fraudType",
+                                                                                             "sampleCount",
+                                                                                             "accuracy"
+                                                                                         ],
+                                                                            "title":  "CategoryAccuracyItemResponse"
+                                                                        },
+                                       "CategoryAccuracyResponse":  {
+                                                                        "properties":  {
+                                                                                           "items":  {
+                                                                                                         "items":  {
+                                                                                                                       "$ref":  "#/components/schemas/CategoryAccuracyItemResponse"
+                                                                                                                   },
+                                                                                                         "type":  "array",
+                                                                                                         "title":  "Items"
+                                                                                                     }
+                                                                                       },
+                                                                        "type":  "object",
+                                                                        "required":  [
+                                                                                         "items"
+                                                                                     ],
+                                                                        "title":  "CategoryAccuracyResponse"
+                                                                    },
+                                       "DecisionAgreementResponse":  {
+                                                                         "properties":  {
+                                                                                            "sampleCount":  {
+                                                                                                                "type":  "integer",
+                                                                                                                "title":  "Samplecount"
+                                                                                                            },
+                                                                                            "decisionAgreementRate":  {
+                                                                                                                          "anyOf":  [
+                                                                                                                                        {
+                                                                                                                                            "type":  "number"
+                                                                                                                                        },
+                                                                                                                                        {
+                                                                                                                                            "type":  "null"
+                                                                                                                                        }
+                                                                                                                                    ],
+                                                                                                                          "title":  "Decisionagreementrate"
+                                                                                                                      }
+                                                                                        },
+                                                                         "type":  "object",
+                                                                         "required":  [
+                                                                                          "sampleCount",
+                                                                                          "decisionAgreementRate"
+                                                                                      ],
+                                                                         "title":  "DecisionAgreementResponse"
+                                                                     },
+                                       "FraudTypeModelResponse":  {
+                                                                      "properties":  {
+                                                                                         "version":  {
+                                                                                                         "anyOf":  [
+                                                                                                                       {
+                                                                                                                           "type":  "string"
+                                                                                                                       },
+                                                                                                                       {
+                                                                                                                           "type":  "null"
+                                                                                                                       }
+                                                                                                                   ],
+                                                                                                         "title":  "Version"
+                                                                                                     },
+                                                                                         "algorithm":  {
+                                                                                                           "anyOf":  [
+                                                                                                                         {
+                                                                                                                             "type":  "string"
+                                                                                                                         },
+                                                                                                                         {
+                                                                                                                             "type":  "null"
+                                                                                                                         }
+                                                                                                                     ],
+                                                                                                           "title":  "Algorithm"
+                                                                                                       }
+                                                                                     },
+                                                                      "type":  "object",
+                                                                      "required":  [
+                                                                                       "version",
+                                                                                       "algorithm"
+                                                                                   ],
+                                                                      "title":  "FraudTypeModelResponse"
+                                                                  },
+                                       "HTTPValidationError":  {
+                                                                   "properties":  {
+                                                                                      "detail":  {
+                                                                                                     "items":  {
+                                                                                                                   "$ref":  "#/components/schemas/ValidationError"
+                                                                                                               },
+                                                                                                     "type":  "array",
+                                                                                                     "title":  "Detail"
+                                                                                                 }
+                                                                                  },
+                                                                   "type":  "object",
+                                                                   "title":  "HTTPValidationError"
+                                                               },
+                                       "HealthLiveResponse":  {
+                                                                  "properties":  {
+                                                                                     "status":  {
+                                                                                                    "type":  "string",
+                                                                                                    "title":  "Status"
+                                                                                                }
+                                                                                 },
+                                                                  "type":  "object",
+                                                                  "required":  [
+                                                                                   "status"
+                                                                               ],
+                                                                  "title":  "HealthLiveResponse"
+                                                              },
+                                       "HealthReadyResponse":  {
+                                                                   "properties":  {
+                                                                                      "status":  {
+                                                                                                     "type":  "string",
+                                                                                                     "title":  "Status"
+                                                                                                 },
+                                                                                      "checks":  {
+                                                                                                     "additionalProperties":  {
+                                                                                                                                  "type":  "string"
+                                                                                                                              },
+                                                                                                     "type":  "object",
+                                                                                                     "title":  "Checks"
+                                                                                                 }
+                                                                                  },
+                                                                   "type":  "object",
+                                                                   "required":  [
+                                                                                    "status",
+                                                                                    "checks"
+                                                                                ],
+                                                                   "title":  "HealthReadyResponse"
+                                                               },
+                                       "InternalScoreRequest":  {
+                                                                    "properties":  {
+                                                                                       "assessmentRequestId":  {
+                                                                                                                   "type":  "string",
+                                                                                                                   "title":  "Assessmentrequestid"
+                                                                                                               },
+                                                                                       "transactionId":  {
+                                                                                                             "type":  "string",
+                                                                                                             "title":  "Transactionid"
+                                                                                                         },
+                                                                                       "amount":  {
+                                                                                                      "type":  "number",
+                                                                                                      "title":  "Amount"
+                                                                                                  },
+                                                                                       "currency":  {
+                                                                                                        "type":  "string",
+                                                                                                        "title":  "Currency",
+                                                                                                        "default":  "TRY"
+                                                                                                    },
+                                                                                       "transactionType":  {
+                                                                                                               "type":  "string",
+                                                                                                               "title":  "Transactiontype"
+                                                                                                           },
+                                                                                       "city":  {
+                                                                                                    "type":  "string",
+                                                                                                    "title":  "City"
+                                                                                                },
+                                                                                       "countryCode":  {
+                                                                                                           "type":  "string",
+                                                                                                           "title":  "Countrycode"
+                                                                                                       },
+                                                                                       "occurredAt":  {
+                                                                                                          "type":  "string",
+                                                                                                          "format":  "date-time",
+                                                                                                          "title":  "Occurredat"
+                                                                                                      }
+                                                                                   },
+                                                                    "type":  "object",
+                                                                    "required":  [
+                                                                                     "assessmentRequestId",
+                                                                                     "transactionId",
+                                                                                     "amount",
+                                                                                     "transactionType",
+                                                                                     "city",
+                                                                                     "countryCode",
+                                                                                     "occurredAt"
+                                                                                 ],
+                                                                    "title":  "InternalScoreRequest"
+                                                                },
+                                       "MetricsOverviewResponse":  {
+                                                                       "properties":  {
+                                                                                          "sampleCount":  {
+                                                                                                              "type":  "integer",
+                                                                                                              "title":  "Samplecount"
+                                                                                                          },
+                                                                                          "fraudTypeAccuracy":  {
+                                                                                                                    "anyOf":  [
+                                                                                                                                  {
+                                                                                                                                      "type":  "number"
+                                                                                                                                  },
+                                                                                                                                  {
+                                                                                                                                      "type":  "null"
+                                                                                                                                  }
+                                                                                                                              ],
+                                                                                                                    "title":  "Fraudtypeaccuracy"
+                                                                                                                },
+                                                                                          "decisionAgreementRate":  {
+                                                                                                                        "anyOf":  [
+                                                                                                                                      {
+                                                                                                                                          "type":  "number"
+                                                                                                                                      },
+                                                                                                                                      {
+                                                                                                                                          "type":  "null"
+                                                                                                                                      }
+                                                                                                                                  ],
+                                                                                                                        "title":  "Decisionagreementrate"
+                                                                                                                    },
+                                                                                          "falsePositiveRate":  {
+                                                                                                                    "anyOf":  [
+                                                                                                                                  {
+                                                                                                                                      "type":  "number"
+                                                                                                                                  },
+                                                                                                                                  {
+                                                                                                                                      "type":  "null"
+                                                                                                                                  }
+                                                                                                                              ],
+                                                                                                                    "title":  "Falsepositiverate"
+                                                                                                                },
+                                                                                          "totalPredictions":  {
+                                                                                                                   "type":  "integer",
+                                                                                                                   "title":  "Totalpredictions"
+                                                                                                               },
+                                                                                          "modelBundleVersion":  {
+                                                                                                                     "anyOf":  [
+                                                                                                                                   {
+                                                                                                                                       "type":  "string"
+                                                                                                                                   },
+                                                                                                                                   {
+                                                                                                                                       "type":  "null"
+                                                                                                                                   }
+                                                                                                                               ],
+                                                                                                                     "title":  "Modelbundleversion"
+                                                                                                                 },
+                                                                                          "calculatedAt":  {
+                                                                                                               "type":  "string",
+                                                                                                               "title":  "Calculatedat"
+                                                                                                           }
+                                                                                      },
+                                                                       "type":  "object",
+                                                                       "required":  [
+                                                                                        "sampleCount",
+                                                                                        "fraudTypeAccuracy",
+                                                                                        "decisionAgreementRate",
+                                                                                        "falsePositiveRate",
+                                                                                        "totalPredictions",
+                                                                                        "modelBundleVersion",
+                                                                                        "calculatedAt"
+                                                                                    ],
+                                                                       "title":  "MetricsOverviewResponse"
+                                                                   },
+                                       "ModelVersionResponse":  {
+                                                                    "properties":  {
+                                                                                       "version":  {
+                                                                                                       "type":  "string",
+                                                                                                       "title":  "Version"
+                                                                                                   },
+                                                                                       "modelKind":  {
+                                                                                                         "type":  "string",
+                                                                                                         "title":  "Modelkind"
+                                                                                                     },
+                                                                                       "algorithm":  {
+                                                                                                         "type":  "string",
+                                                                                                         "title":  "Algorithm"
+                                                                                                     },
+                                                                                       "status":  {
+                                                                                                      "type":  "string",
+                                                                                                      "title":  "Status"
+                                                                                                  },
+                                                                                       "metrics":  {
+                                                                                                       "additionalProperties":  true,
+                                                                                                       "type":  "object",
+                                                                                                       "title":  "Metrics"
+                                                                                                   },
+                                                                                       "createdAt":  {
+                                                                                                         "type":  "string",
+                                                                                                         "title":  "Createdat"
+                                                                                                     },
+                                                                                       "activatedAt":  {
+                                                                                                           "anyOf":  [
+                                                                                                                         {
+                                                                                                                             "type":  "string"
+                                                                                                                         },
+                                                                                                                         {
+                                                                                                                             "type":  "null"
+                                                                                                                         }
+                                                                                                                     ],
+                                                                                                           "title":  "Activatedat"
+                                                                                                       }
+                                                                                   },
+                                                                    "type":  "object",
+                                                                    "required":  [
+                                                                                     "version",
+                                                                                     "modelKind",
+                                                                                     "algorithm",
+                                                                                     "status",
+                                                                                     "metrics",
+                                                                                     "createdAt",
+                                                                                     "activatedAt"
+                                                                                 ],
+                                                                    "title":  "ModelVersionResponse"
+                                                                },
+                                       "PredictionResponse":  {
+                                                                  "properties":  {
+                                                                                     "assessmentId":  {
+                                                                                                          "type":  "string",
+                                                                                                          "title":  "Assessmentid"
+                                                                                                      },
+                                                                                     "transactionId":  {
+                                                                                                           "type":  "string",
+                                                                                                           "title":  "Transactionid"
+                                                                                                       },
+                                                                                     "riskScore":  {
+                                                                                                       "type":  "number",
+                                                                                                       "title":  "Riskscore"
+                                                                                                   },
+                                                                                     "riskLevel":  {
+                                                                                                       "type":  "string",
+                                                                                                       "enum":  [
+                                                                                                                    "DUSUK",
+                                                                                                                    "ORTA",
+                                                                                                                    "YUKSEK",
+                                                                                                                    "KRITIK"
+                                                                                                                ],
+                                                                                                       "title":  "Risklevel"
+                                                                                                   },
+                                                                                     "decision":  {
+                                                                                                      "type":  "string",
+                                                                                                      "enum":  [
+                                                                                                                   "ONAY",
+                                                                                                                   "INCELEME",
+                                                                                                                   "BLOK"
+                                                                                                               ],
+                                                                                                      "title":  "Decision"
+                                                                                                  },
+                                                                                     "fraudType":  {
+                                                                                                       "type":  "string",
+                                                                                                       "enum":  [
+                                                                                                                    "CALINTI_KART",
+                                                                                                                    "HESAP_ELE_GECIRME",
+                                                                                                                    "PARA_AKLAMA",
+                                                                                                                    "SUPHELI_DAVRANIS",
+                                                                                                                    "TEMIZ"
+                                                                                                                ],
+                                                                                                       "title":  "Fraudtype"
+                                                                                                   },
+                                                                                     "reasonCodes":  {
+                                                                                                         "items":  {
+                                                                                                                       "$ref":  "#/components/schemas/ReasonCodeResponse"
+                                                                                                                   },
+                                                                                                         "type":  "array",
+                                                                                                         "title":  "Reasoncodes"
+                                                                                                     },
+                                                                                     "predictedAt":  {
+                                                                                                         "type":  "string",
+                                                                                                         "title":  "Predictedat"
+                                                                                                     }
+                                                                                 },
+                                                                  "type":  "object",
+                                                                  "required":  [
+                                                                                   "assessmentId",
+                                                                                   "transactionId",
+                                                                                   "riskScore",
+                                                                                   "riskLevel",
+                                                                                   "decision",
+                                                                                   "fraudType",
+                                                                                   "reasonCodes",
+                                                                                   "predictedAt"
+                                                                               ],
+                                                                  "title":  "PredictionResponse"
+                                                              },
+                                       "ReasonCodeResponse":  {
+                                                                  "properties":  {
+                                                                                     "code":  {
+                                                                                                  "type":  "string",
+                                                                                                  "title":  "Code"
+                                                                                              },
+                                                                                     "label":  {
+                                                                                                   "type":  "string",
+                                                                                                   "title":  "Label"
+                                                                                               },
+                                                                                     "impact":  {
+                                                                                                    "type":  "string",
+                                                                                                    "enum":  [
+                                                                                                                 "HIGH",
+                                                                                                                 "MEDIUM",
+                                                                                                                 "LOW"
+                                                                                                             ],
+                                                                                                    "title":  "Impact"
+                                                                                                }
+                                                                                 },
+                                                                  "type":  "object",
+                                                                  "required":  [
+                                                                                   "code",
+                                                                                   "label",
+                                                                                   "impact"
+                                                                               ],
+                                                                  "title":  "ReasonCodeResponse"
+                                                              },
+                                       "RiskModelResponse":  {
+                                                                 "properties":  {
+                                                                                    "version":  {
+                                                                                                    "anyOf":  [
+                                                                                                                  {
+                                                                                                                      "type":  "string"
+                                                                                                                  },
+                                                                                                                  {
+                                                                                                                      "type":  "null"
+                                                                                                                  }
+                                                                                                              ],
+                                                                                                    "title":  "Version"
+                                                                                                },
+                                                                                    "algorithm":  {
+                                                                                                      "anyOf":  [
+                                                                                                                    {
+                                                                                                                        "type":  "string"
+                                                                                                                    },
+                                                                                                                    {
+                                                                                                                        "type":  "null"
+                                                                                                                    }
+                                                                                                                ],
+                                                                                                      "title":  "Algorithm"
+                                                                                                  },
+                                                                                    "calibrated":  {
+                                                                                                       "type":  "boolean",
+                                                                                                       "title":  "Calibrated"
+                                                                                                   }
+                                                                                },
+                                                                 "type":  "object",
+                                                                 "required":  [
+                                                                                  "version",
+                                                                                  "algorithm",
+                                                                                  "calibrated"
+                                                                              ],
+                                                                 "title":  "RiskModelResponse"
+                                                             },
+                                       "ValidationError":  {
+                                                               "properties":  {
+                                                                                  "loc":  {
+                                                                                              "items":  {
+                                                                                                            "anyOf":  [
+                                                                                                                          {
+                                                                                                                              "type":  "string"
+                                                                                                                          },
+                                                                                                                          {
+                                                                                                                              "type":  "integer"
+                                                                                                                          }
+                                                                                                                      ]
+                                                                                                        },
+                                                                                              "type":  "array",
+                                                                                              "title":  "Location"
+                                                                                          },
+                                                                                  "msg":  {
+                                                                                              "type":  "string",
+                                                                                              "title":  "Message"
+                                                                                          },
+                                                                                  "type":  {
+                                                                                               "type":  "string",
+                                                                                               "title":  "Error Type"
+                                                                                           }
+                                                                              },
+                                                               "type":  "object",
+                                                               "required":  [
+                                                                                "loc",
+                                                                                "msg",
+                                                                                "type"
+                                                                            ],
+                                                               "title":  "ValidationError"
+                                                           }
+                                   }
+                   }
+}

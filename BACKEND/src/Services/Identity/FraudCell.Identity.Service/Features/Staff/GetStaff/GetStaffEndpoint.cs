@@ -16,6 +16,7 @@ public static class GetStaffEndpoint
         app.MapGet("/api/v1/staff/{staffId}", HandleAsync)
            .WithName("GetStaff")
            .WithTags("Staff")
+           .ProducesApi<StaffResponse>()
            .RequireAuthorization();
     }
 

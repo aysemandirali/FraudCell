@@ -22,6 +22,7 @@ public static class UpdateStaffEndpoint
         app.MapPatch("/api/v1/staff/{staffId}", HandleAsync)
            .WithName("UpdateStaff")
            .WithTags("Staff")
+           .ProducesApi<StaffResponse>()
            .RequireAuthorization(policy => policy.RequireRole(RoleNames.Admin));
     }
 

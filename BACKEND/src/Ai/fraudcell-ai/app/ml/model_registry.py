@@ -11,6 +11,7 @@ import hashlib
 import json
 import logging
 from pathlib import Path
+from typing import Any
 
 import joblib
 import numpy as np
@@ -31,7 +32,7 @@ class ModelRegistry:
     def __init__(self) -> None:
         self._risk_model = None
         self._fraud_type_model = None
-        self.metadata: dict | None = None
+        self.metadata: dict[str, Any] | None = None
 
     def load(self) -> None:
         artifact_dir = Path(settings.model.artifact_dir)
@@ -42,22 +43,23 @@ class ModelRegistry:
                 f"Model metadata bulunamadi: {metadata_path}. Once 'python train.py' calistirilmalidir."
             )
 
-        self.metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+        metadata: dict[str, Any] = json.loads(metadata_path.read_text(encoding="utf-8"))
+        self.metadata = metadata
 
-        risk_path = artifact_dir / self.metadata["riskModel"]["artifactPath"]
-        fraud_type_path = artifact_dir / self.metadata["fraudTypeModel"]["artifactPath"]
+        risk_path = artifact_dir / metadata["riskModel"]["artifactPath"]
+        fraud_type_path = artifact_dir / metadata["fraudTypeModel"]["artifactPath"]
 
-        self._verify_checksum(risk_path, self.metadata["riskModel"]["artifactSha256"])
-        self._verify_checksum(fraud_type_path, self.metadata["fraudTypeModel"]["artifactSha256"])
+        self._verify_checksum(risk_path, metadata["riskModel"]["artifactSha256"])
+        self._verify_checksum(fraud_type_path, metadata["fraudTypeModel"]["artifactSha256"])
 
         self._risk_model = joblib.load(risk_path)
         self._fraud_type_model = joblib.load(fraud_type_path)
 
         logger.info(
             "Loaded model bundle %s (risk=%s, fraudType=%s)",
-            self.metadata["bundleVersion"],
-            self.metadata["riskModel"]["version"],
-            self.metadata["fraudTypeModel"]["version"],
+            metadata["bundleVersion"],
+            metadata["riskModel"]["version"],
+            metadata["fraudTypeModel"]["version"],
         )
 
     @staticmethod

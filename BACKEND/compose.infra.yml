@@ -1,0 +1,55 @@
+name: fraudcell-dev-infra
+
+# Daily development infrastructure only. Application processes run natively on
+# Windows, so code changes do not trigger image rebuilds.
+services:
+  postgres:
+    image: postgres:18.4
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:-devpassword}
+      IDENTITY_DB_PASSWORD: ${IDENTITY_DB_PASSWORD:-devpassword}
+      TRANSACTION_DB_PASSWORD: ${TRANSACTION_DB_PASSWORD:-devpassword}
+      GAMIFICATION_DB_PASSWORD: ${GAMIFICATION_DB_PASSWORD:-devpassword}
+      AI_DB_PASSWORD: ${AI_DB_PASSWORD:-devpassword}
+    volumes:
+      - dev-postgres-data:/var/lib/postgresql
+      - ./docker/postgres/init-multiple-databases.sh:/docker-entrypoint-initdb.d/10-fraudcell-databases.sh:ro
+    ports:
+      - "127.0.0.1:55432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 20s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    cpus: 1.00
+    mem_limit: 768m
+    mem_reservation: 256m
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:4.3
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-fraudcell}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-devpassword}
+      RABBITMQ_DEFAULT_VHOST: /
+    volumes:
+      - dev-rabbitmq-data:/var/lib/rabbitmq
+    ports:
+      - "127.0.0.1:5672:5672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 20s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
+    cpus: 0.75
+    mem_limit: 512m
+    mem_reservation: 192m
+    restart: unless-stopped
+
+volumes:
+  dev-postgres-data:
+  dev-rabbitmq-data:

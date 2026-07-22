@@ -9,11 +9,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.envelope import ok
 from app.database import get_session
 from app.models.ai import ModelBundle, ModelVersion
+from app.schemas.public import ActiveModelResponse, ApiEnvelope, ModelVersionResponse
 
 router = APIRouter(prefix="/api/v1/ai/models", tags=["AI Models"])
 
 
-@router.get("/active")
+@router.get("/active", response_model=ApiEnvelope[ActiveModelResponse])
 async def get_active_bundle(session: AsyncSession = Depends(get_session)) -> dict:
     bundle = (await session.execute(select(ModelBundle).where(ModelBundle.status == "ACTIVE"))).scalar_one_or_none()
     if bundle is None:
@@ -37,7 +38,7 @@ async def get_active_bundle(session: AsyncSession = Depends(get_session)) -> dic
     })
 
 
-@router.get("/{model_version}")
+@router.get("/{model_version}", response_model=ApiEnvelope[ModelVersionResponse])
 async def get_model_version(model_version: str, session: AsyncSession = Depends(get_session)) -> dict:
     version = (
         await session.execute(select(ModelVersion).where(ModelVersion.semantic_version == model_version))

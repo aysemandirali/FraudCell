@@ -30,7 +30,7 @@ export const queryKeys = {
   cases: {
     all: ['cases'] as const,
     /** Süpervizör/admin — tüm vakalar. */
-    list: (filters: { status?: CaseStatus; riskLevel?: RiskLevel } = {}) =>
+    list: (filters: { status?: CaseStatus; riskLevel?: RiskLevel; cursor?: string } = {}) =>
       ['cases', 'list', filters] as const,
     /** Analist — kendine atanmışlar. */
     assigned: (filters: { status?: CaseStatus } = {}) => ['cases', 'assigned', filters] as const,
@@ -59,17 +59,32 @@ export const queryKeys = {
 
   auditLogs: (filters: Record<string, unknown> = {}) => ['audit-logs', filters] as const,
 
-  /* ----------------------------- backend'i henüz yazılmamış (MSW mock) -- */
+  /* -------------------------------------------------------- oyunlaştırma -- */
   gamification: {
     all: ['gamification'] as const,
     me: ['gamification', 'me'] as const,
-    points: ['gamification', 'me', 'points'] as const,
-    badges: ['gamification', 'me', 'badges'] as const,
+    profile: (analystId: string) => ['gamification', 'profile', analystId] as const,
+    points: (analystId: string) => ['gamification', 'profile', analystId, 'points'] as const,
+    badges: (analystId: string) => ['gamification', 'profile', analystId, 'badges'] as const,
+    performance: (analystId: string) =>
+      ['gamification', 'performance', analystId] as const,
     leaderboard: (period: string) => ['gamification', 'leaderboard', period] as const,
   },
 
+  ai: {
+    metrics: ['ai', 'metrics'] as const,
+    categoryAccuracy: ['ai', 'metrics', 'categories'] as const,
+    decisionAgreement: ['ai', 'metrics', 'decision-agreement'] as const,
+    activeModel: ['ai', 'models', 'active'] as const,
+    prediction: (assessmentId: string) => ['ai', 'predictions', assessmentId] as const,
+    explanationByTransaction: (transactionId: string) =>
+      ['ai', 'predictions', 'by-transaction', transactionId, 'explanation'] as const,
+  },
+
+  /* Canlı SSE bildirimleri kullanıcı oturumu boyunca query cache'te tutulur. */
   notifications: ['notifications'] as const,
+
+  /* Aggregate endpoint'i olmayan, ekranların alt sorgulardan oluşturduğu görünümler. */
   dashboard: ['dashboard'] as const,
-  aiMetrics: ['ai', 'metrics'] as const,
   systemHealth: ['system', 'health'] as const,
 } as const;

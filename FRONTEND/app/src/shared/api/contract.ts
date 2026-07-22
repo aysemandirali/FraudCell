@@ -122,15 +122,15 @@ export interface RequestOtpChallengeResponse {
 export interface VerifyOtpCustomerInfo {
   firstName: string;
   lastName: string;
-  email?: string | null;
+  email: string | null;
 }
 
 /** `POST /api/v1/auth/customer/otp/verifications` */
 export interface VerifyOtpChallengeBody {
   challengeId: string;
   code: string;
-  /** Numara kayıtlıysa gönderilmez; kayıtlı değilse zorunludur. */
-  customer?: VerifyOtpCustomerInfo | null;
+  /** Login challenge'ında null; register challenge'ında zorunludur. */
+  customer: VerifyOtpCustomerInfo | null;
 }
 
 export interface VerifiedUserResponse {
@@ -527,7 +527,7 @@ export interface AddNoteBody {
   text: string;
 }
 
-/** `POST /api/v1/cases/{caseId}/review` — ATANDI → INCELENIYOR. */
+/** `POST /api/v1/cases/{caseId}/review` — ATANDI → INCELENIYOR. `If-Match` zorunludur. */
 export interface StartReviewResponse {
   caseId: string;
   previousStatus: CaseStatus;
@@ -702,4 +702,177 @@ export interface FeedbackResponse {
   rating: number;
   comment: string | null;
   submittedAt: string;
+}
+
+/** `POST /api/v1/events/tickets` — tek kullanımlık, kısa ömürlü SSE bileti. */
+export interface StreamTicketResponse {
+  ticket: string;
+  expiresAt: string;
+}
+
+/* ========================================================================== */
+/*  Gamification — oyunlaştırma ve performans                                 */
+/* ========================================================================== */
+
+export const POINT_RULE_CODES = [
+  'CASE_DECISION',
+  'FAST_DECISION',
+  'CONFIRMED_FRAUD',
+  'CRITICAL_WITHIN_SLA',
+  'SLA_BREACH',
+  'FALSE_POSITIVE',
+] as const;
+export type PointRuleCode = (typeof POINT_RULE_CODES)[number];
+
+export const ANALYST_LEVELS = ['BRONZ', 'GUMUS', 'ALTIN', 'PLATIN'] as const;
+export type AnalystLevel = (typeof ANALYST_LEVELS)[number];
+
+export type LeaderboardPeriod = 'daily' | 'weekly';
+
+export interface BadgeDefinitionResponse {
+  code: string;
+  displayName: string;
+  description: string;
+}
+
+export interface BadgeSummaryResponse {
+  code: string;
+  displayName: string;
+  earnedAt: string;
+}
+
+export interface GamificationProfileResponse {
+  analystId: string;
+  displayName: string | null;
+  totalPoints: number;
+  level: AnalystLevel;
+  dailyRank: number | null;
+  weeklyRank: number | null;
+  totalDecisions: number;
+  averageDecisionSeconds: number | null;
+  accuracyRate: number;
+  badges: BadgeSummaryResponse[];
+}
+
+export interface PointLedgerItemResponse {
+  ledgerId: string;
+  caseId: string | null;
+  ruleCode: PointRuleCode;
+  points: number;
+  description: string;
+  occurredAt: string;
+}
+
+export interface FraudTypePerformanceResponse {
+  fraudType: FraudType;
+  decisionCount: number;
+  confirmedFraudCount: number;
+  accuracyRate: number;
+}
+
+export interface AnalystPerformanceResponse {
+  analystId: string;
+  totalDecisions: number;
+  correctDecisions: number;
+  falsePositiveCount: number;
+  slaCompliantCount: number;
+  slaBreachCount: number;
+  averageDecisionSeconds: number | null;
+  accuracyRate: number;
+  fraudTypeBreakdown: FraudTypePerformanceResponse[];
+}
+
+export interface LeaderboardItemResponse {
+  rank: number;
+  analystId: string;
+  displayName: string | null;
+  points: number;
+  level: AnalystLevel;
+  decisionCount: number;
+  badgeCount: number;
+}
+
+export interface LeaderboardResponse {
+  period: LeaderboardPeriod;
+  periodStart: string;
+  periodEnd: string;
+  items: LeaderboardItemResponse[];
+}
+
+/* ========================================================================== */
+/*  AI — model, tahmin ve ground-truth metrikleri                             */
+/* ========================================================================== */
+
+export interface AiMetricsOverviewResponse {
+  sampleCount: number;
+  fraudTypeAccuracy: number | null;
+  decisionAgreementRate: number | null;
+  falsePositiveRate: number | null;
+  totalPredictions: number;
+  modelBundleVersion: string | null;
+  calculatedAt: string;
+}
+
+export interface AiCategoryAccuracyItemResponse {
+  fraudType: FraudType | 'UNKNOWN';
+  sampleCount: number;
+  accuracy: number | null;
+}
+
+export interface AiCategoryAccuracyResponse {
+  items: AiCategoryAccuracyItemResponse[];
+}
+
+export interface AiDecisionAgreementResponse {
+  sampleCount: number;
+  decisionAgreementRate: number | null;
+}
+
+export interface AiActiveModelResponse {
+  bundleVersion: string;
+  riskModel: {
+    version: string | null;
+    algorithm: string | null;
+    calibrated: boolean;
+  };
+  fraudTypeModel: {
+    version: string | null;
+    algorithm: string | null;
+  };
+  activatedAt: string | null;
+}
+
+export interface AiModelVersionResponse {
+  version: string;
+  modelKind: string;
+  algorithm: string;
+  status: string;
+  metrics: Record<string, unknown>;
+  createdAt: string;
+  activatedAt: string | null;
+}
+
+export interface AiPredictionResponse {
+  assessmentId: string;
+  transactionId: string;
+  riskScore: number;
+  riskLevel: RiskLevel;
+  decision: ScreeningDecision;
+  fraudType: FraudType;
+  reasonCodes: ReasonCodeResponse[];
+  predictedAt: string;
+}
+
+/**
+ * `GET /api/v1/ai/predictions/{assessmentId}/explanation`
+ * ve `.../by-transaction/{transactionId}/explanation`.
+ *
+ * `source`: "gemini" → LLM anlatısı (cache'lenir); "deterministic" → reason
+ * code'lardan üretilen yedek özet (LLM erişilemediğinde).
+ */
+export interface AiExplanationResponse {
+  assessmentId: string;
+  explanation: string;
+  source: 'gemini' | 'deterministic';
+  generatedAt: string | null;
 }

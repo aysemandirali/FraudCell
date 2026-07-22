@@ -2,6 +2,11 @@
 **/bin/
 **/obj/
 **/artifacts/
+**/.venv/
+**/.mypy_cache/
+**/.pytest_cache/
+**/.ruff_cache/
+**/__pycache__/
 
 ## IDE / OS
 **/.vs/
@@ -23,3 +28,5 @@
 **/*.log
 .git/
 docs/
+references/
+.runtime/

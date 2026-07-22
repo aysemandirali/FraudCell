@@ -2,6 +2,10 @@ using System.Text.Json;
 using System.Threading.RateLimiting;
 using FraudCell.BuildingBlocks.Api;
 using FraudCell.BuildingBlocks.Correlation;
+using FraudCell.BuildingBlocks.Messaging.Outbox;
+using FraudCell.BuildingBlocks.Messaging.RabbitMq;
+using FraudCell.BuildingBlocks.Time;
+using FraudCell.Edge.Gateway.Realtime;
 using FraudCell.Edge.Gateway.Security;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -18,10 +22,17 @@ builder.Host.UseSerilog((context, services, configuration) => configuration
     .WriteTo.Console(new Serilog.Formatting.Json.JsonFormatter()));
 
 builder.Services.AddScoped<CorrelationContext>();
+builder.Services.AddSingleton<IClock, SystemClock>();
+builder.Services.AddSingleton(new ServiceIdentity("edge-gateway"));
 builder.Services.AddSingleton(JsonDefaults.Create());
 builder.Services.ConfigureHttpJsonOptions(options => JsonDefaults.ApplyTo(options.SerializerOptions));
 builder.Services.Configure<JwtValidationOptions>(builder.Configuration.GetSection(JwtValidationOptions.SectionName));
+builder.Services.Configure<RabbitMqOptions>(builder.Configuration.GetSection(RabbitMqOptions.SectionName));
 builder.Services.AddSingleton<RsaPublicKeyProvider>();
+builder.Services.AddSingleton<RabbitMqConnectionProvider>();
+builder.Services.AddSingleton<NotificationHub>();
+builder.Services.AddSingleton<StreamTicketStore>();
+builder.Services.AddHostedService<NotificationRelayConsumer>();
 
 builder.Services.AddCors(options =>
 {
@@ -87,6 +98,8 @@ var jsonOptions = app.Services.GetRequiredService<JsonSerializerOptions>();
 app.UseMiddleware<CorrelationMiddleware>();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseSecurityHeaders();
+app.UseDefaultFiles();
+app.UseStaticFiles();
 app.UseCors("FrontendDev");
 app.UseAuthentication();
 app.UseInvalidBearerTokenGuard(jsonOptions);
@@ -95,9 +108,10 @@ app.UseAuthorization();
 
 app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false });
 app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = _ => false });
-app.MapGet("/", () => Results.Redirect("/health/ready"));
+app.MapRealtimeEndpoints();
 
 app.MapReverseProxy();
+app.MapFallbackToFile("index.html");
 
 app.Run();
 
@@ -115,7 +129,15 @@ internal static class GatewayMiddlewareExtensions
                 headers["X-Frame-Options"] = "DENY";
                 headers["Referrer-Policy"] = "no-referrer";
                 headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
-                headers["Content-Security-Policy"] = "default-src 'self'; frame-ancestors 'none'";
+                headers["Content-Security-Policy"] =
+                    "default-src 'self'; " +
+                    "script-src 'self'; " +
+                    "style-src 'self' 'unsafe-inline'; " +
+                    "img-src 'self' data:; " +
+                    "connect-src 'self'; " +
+                    "object-src 'none'; " +
+                    "base-uri 'self'; " +
+                    "frame-ancestors 'none'";
                 return Task.CompletedTask;
             });
 

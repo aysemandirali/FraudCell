@@ -6,12 +6,20 @@ motorlarda destekler; ayri bir "psycopg_async" surucusune gerek yoktur.
 
 from __future__ import annotations
 
+import asyncio
+import sys
 from collections.abc import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
 from app.config import settings
+
+
+# psycopg async connections require a selector loop on Windows. Set the policy
+# before uvicorn or a one-shot migration creates the first event loop.
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 
 class Base(DeclarativeBase):

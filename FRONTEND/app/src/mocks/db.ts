@@ -10,7 +10,7 @@
  */
 
 import type { CurrentUserResponse } from '@/shared/api/contract';
-import type { AnalystSpecialty, OperationRegion, Role } from '@/shared/api/enums';
+import type { AnalystSpecialty, OperationRegion, OtpPurpose, Role } from '@/shared/api/enums';
 
 export interface MockUser extends CurrentUserResponse {
   /** Yalnızca personel girişinde kullanılır. */
@@ -84,13 +84,14 @@ export const mockUsers: MockUser[] = [
 ];
 
 /** Demo sunumunda gösterilen sabit OTP. Gerçek backend rastgele üretir. */
-export const DEMO_OTP_CODE = '123456';
+export const DEMO_OTP_CODE = '1234';
 
 /* --------------------------------------------------------------- oturum -- */
 
 interface OtpChallenge {
   challengeId: string;
   gsmNumber: string;
+  purpose: OtpPurpose;
   expiresAt: number;
   attempts: number;
 }

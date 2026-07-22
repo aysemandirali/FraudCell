@@ -5,6 +5,7 @@ Python esdegeri: SKIP LOCKED benzeri kira mekanizmasi ile bekleyen kayitlari yay
 from __future__ import annotations
 
 import asyncio
+import datetime as dt
 import json
 import logging
 import socket
@@ -120,7 +121,7 @@ def _build_envelope_bytes(row) -> bytes:  # type: ignore[no-untyped-def]
         "eventId": row["event_id"],
         "eventType": row["event_type"],
         "eventVersion": row["event_version"],
-        "occurredAt": row["occurred_at"].isoformat(),
+        "occurredAt": _as_utc_isoformat(row["occurred_at"]),
         "producer": row["producer"],
         "correlationId": row["correlation_id"],
         "causationId": row["causation_id"],
@@ -128,3 +129,14 @@ def _build_envelope_bytes(row) -> bytes:  # type: ignore[no-untyped-def]
         "payload": payload,
     }
     return json.dumps(envelope, ensure_ascii=False).encode("utf-8")
+
+
+def _as_utc_isoformat(value: dt.datetime) -> str:
+    # PostgreSQL timestamp-without-time-zone values return as naive datetimes.
+    # Outbox timestamps are written in UTC, so restore that contract at the
+    # service boundary instead of letting consumers interpret local machine time.
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=dt.timezone.utc)
+    else:
+        value = value.astimezone(dt.timezone.utc)
+    return value.isoformat().replace("+00:00", "Z")

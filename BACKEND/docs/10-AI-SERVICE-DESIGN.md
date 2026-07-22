@@ -272,6 +272,27 @@ Nedenleri:
 
 FraudCell kendi veri setini, eğitim kodunu ve model artifact’larını kullanacaktır.
 
+## 8.1 İstisna: Açıklama Anlatısı (skorlama dışı)
+
+Yukarıdaki yasak **yalnızca risk skorlama ve fraud-type classification** için geçerlidir.
+Bu iki karar tamamen kendi ML modellerinden gelir ve harici LLM'e ASLA bağımlı değildir.
+
+Buna karşılık, **zaten hesaplanmış** çıktıların (risk seviyesi, karar, fraud tipi,
+deterministik `reason_codes`) analiste yönelik akıcı bir metne çevrilmesi için harici LLM
+(Gemini 2.5 Flash) kullanılabilir. Bu kullanım şu güvencelerle sınırlıdır:
+
+- **Karar bağımsızlığı:** Skor/karar üretildikten sonra, karardan bağımsız çalışır. LLM
+  yeni skor/sinyal üretmez; yalnızca verilen sinyalleri prose'a çevirir.
+- **Best-effort + fallback:** LLM erişilemezse (api_key yok, timeout, hata) sistem
+  deterministik özete geri düşer. Hiçbir akış LLM'in erişilebilirliğine bağlı değildir.
+- **Opsiyonel:** `GEMINI_API_KEY` boşken servis eksiksiz çalışır; offline Docker Compose
+  demosu bozulmaz.
+- **Lazy + cache:** Açıklama yalnızca analist vakayı açtığında üretilir ve `predictions`
+  tablosunda cache'lenir; her işlem için LLM çağrısı yapılmaz.
+
+İlgili kod: `app/ml/explanation.py`, `app/api/predictions_router.py` (`.../explanation`),
+`app/config.py` (`GeminiSettings`).
+
 ---
 
 # 9. Makine Öğrenmesi Problem Tanımları

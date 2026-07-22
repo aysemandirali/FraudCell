@@ -19,6 +19,7 @@ public static class ListTransactionsEndpoint
         app.MapGet("/api/v1/transactions", HandleAsync)
            .WithName("ListTransactions")
            .WithTags("Transactions")
+           .ProducesApi<CursorPage<TransactionListItemResponse>>()
            .RequireAuthorization();
     }
 

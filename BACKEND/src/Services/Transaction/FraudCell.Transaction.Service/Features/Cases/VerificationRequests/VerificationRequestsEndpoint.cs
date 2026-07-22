@@ -22,6 +22,7 @@ public static class VerificationRequestsEndpoint
         app.MapPost("/api/v1/cases/{caseId}/verification-requests", HandleAsync)
            .WithName("RequestCustomerVerification")
            .WithTags("Cases")
+           .ProducesApi<VerificationRequestResponse>(StatusCodes.Status201Created)
            .RequireAuthorization(policy => policy.RequireRole(RoleNames.Analyst, RoleNames.Supervisor));
     }
 

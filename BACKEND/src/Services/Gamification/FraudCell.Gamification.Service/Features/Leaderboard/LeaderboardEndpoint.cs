@@ -19,6 +19,7 @@ public static class LeaderboardEndpoint
         app.MapGet("/api/v1/game/leaderboard", HandleAsync)
            .WithName("GetLeaderboard")
            .WithTags("Gamification")
+           .ProducesApi<LeaderboardResponse>()
            .RequireAuthorization();
     }
 

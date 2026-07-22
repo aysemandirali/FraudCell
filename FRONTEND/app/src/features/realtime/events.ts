@@ -23,6 +23,7 @@ export const REALTIME_EVENT_TYPES = [
   'sla.breached',
   'badge.earned',
   'points.earned',
+  'notification.received',
 ] as const;
 
 export type RealtimeEventType = (typeof REALTIME_EVENT_TYPES)[number];
@@ -61,6 +62,18 @@ export const realtimeEventSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('points.earned'),
     data: z.object({ points: z.number(), ruleCode: z.string(), caseId: z.string().nullable() }),
+  }),
+  z.object({
+    id: z.string(),
+    type: z.literal('notification.received'),
+    data: z.object({
+      notificationType: z.string(),
+      title: z.string(),
+      message: z.string(),
+      resourceType: z.string().nullable(),
+      resourceId: z.string().nullable(),
+      occurredAt: z.string(),
+    }),
   }),
 ]);
 

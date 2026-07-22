@@ -31,6 +31,7 @@ public static class VerifyOtpChallengeEndpoint
         app.MapPost("/api/v1/auth/customer/otp/verifications", HandleAsync)
            .WithName("VerifyCustomerOtp")
            .WithTags("Auth")
+           .ProducesApi<VerifyOtpChallengeResponse>()
            .AllowAnonymous();
     }
 

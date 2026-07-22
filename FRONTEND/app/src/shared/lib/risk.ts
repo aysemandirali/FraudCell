@@ -31,6 +31,15 @@ export interface Tone {
   rail: string;
   /** SVG halka rengi. */
   stroke: string;
+  /**
+   * Grafik dolgusu — ham hex.
+   *
+   * Recharts `fill`/`stroke` proplarını DOM'a doğrudan geçirir, Tailwind sınıfı
+   * kabul etmez. Buraya koyuyoruz ki rozetler ile grafikler aynı risk
+   * paletinden beslensin; ikinci bir renk sözlüğü doğmasın.
+   * Değerler globals.css'teki semantik token'larla birebir aynıdır.
+   */
+  chartFill: string;
 }
 
 const TONES: Record<DisplayRiskLevel, Tone> = {
@@ -40,6 +49,7 @@ const TONES: Record<DisplayRiskLevel, Tone> = {
     bar: 'bg-success-500',
     rail: 'bg-success-500',
     stroke: 'stroke-success-500',
+    chartFill: '#43a047',
   },
   ORTA: {
     chip: 'bg-warning-100 text-warning-700',
@@ -47,6 +57,7 @@ const TONES: Record<DisplayRiskLevel, Tone> = {
     bar: 'bg-warning-500',
     rail: 'bg-warning-500',
     stroke: 'stroke-warning-500',
+    chartFill: '#f5a623',
   },
   YUKSEK: {
     chip: 'bg-danger-100 text-danger-700',
@@ -54,6 +65,7 @@ const TONES: Record<DisplayRiskLevel, Tone> = {
     bar: 'bg-danger-500',
     rail: 'bg-danger-500',
     stroke: 'stroke-danger-500',
+    chartFill: '#e53935',
   },
   KRITIK: {
     chip: 'bg-critical-100 text-critical-700',
@@ -61,6 +73,7 @@ const TONES: Record<DisplayRiskLevel, Tone> = {
     bar: 'bg-critical-500',
     rail: 'bg-critical-500',
     stroke: 'stroke-critical-500',
+    chartFill: '#b71c1c',
   },
   BELIRSIZ: {
     chip: 'bg-ink-100 text-ink-500',
@@ -68,8 +81,31 @@ const TONES: Record<DisplayRiskLevel, Tone> = {
     bar: 'bg-ink-400',
     rail: 'bg-ink-400',
     stroke: 'stroke-ink-400',
+    chartFill: '#8e98a4',
   },
 };
+
+/**
+ * Kategorik grafik serisi (fraud tipi, işlem tipi, aksiyon dağılımı).
+ *
+ * Risk paletinden AYRIDIR ve öyle kalmalıdır: aynı grafikte hem kategori hem
+ * risk rengi görünürse izleyici yeşili "düşük risk" sanır. Risk grafikleri
+ * `riskTone().chartFill` kullanır, kategori grafikleri bunu.
+ */
+export const CHART_SERIES = [
+  '#0a4a94',
+  '#2fc4e0',
+  '#6c5ce7',
+  '#00a3a3',
+  '#f5a623',
+  '#8cc4f3',
+] as const;
+
+export function seriesColor(index: number): string {
+  // Modülo sonucu her zaman aralık içindedir; `?? ` yalnızca
+  // noUncheckedIndexedAccess'i susturur, negatif index'e karşı da güvencedir.
+  return CHART_SERIES[Math.abs(index) % CHART_SERIES.length] ?? CHART_SERIES[0];
+}
 
 export function riskTone(level: DisplayRiskLevel | RiskLevel | null | undefined): Tone {
   return TONES[level ?? UNKNOWN_RISK];

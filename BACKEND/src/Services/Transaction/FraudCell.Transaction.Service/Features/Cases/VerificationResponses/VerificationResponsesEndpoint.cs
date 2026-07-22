@@ -28,10 +28,12 @@ public static class VerificationResponsesEndpoint
     {
         app.MapPost("/api/v1/cases/{caseId}/verification-responses", SubmitAsync)
            .WithName("SubmitCustomerVerification").WithTags("Cases")
+           .ProducesApi<SubmitVerificationResponseResult>()
            .RequireAuthorization(policy => policy.RequireRole(RoleNames.Customer));
 
         app.MapGet("/api/v1/customer/verifications/pending", ListPendingAsync)
            .WithName("GetPendingVerifications").WithTags("Cases")
+           .ProducesApi<IReadOnlyList<PendingVerificationResponse>>()
            .RequireAuthorization(policy => policy.RequireRole(RoleNames.Customer));
     }
 

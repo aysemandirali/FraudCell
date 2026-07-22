@@ -61,6 +61,7 @@ export const identityHandlers = [
     otpChallenges.set(challengeId, {
       challengeId,
       gsmNumber: digits,
+      purpose: body.purpose,
       expiresAt: Date.now() + OTP_TTL_MS,
       attempts: 0,
     });
@@ -106,8 +107,11 @@ export const identityHandlers = [
 
     let user = findByGsm(challenge.gsmNumber);
 
-    if (!user) {
-      // Kayıtsız numara: müşteri bilgisi aynı istekte gelmeli.
+    if (challenge.purpose === 'CustomerRegister') {
+      if (user) {
+        return fail(409, 'GSM_NUMBER_ALREADY_REGISTERED', 'Bu numara zaten kayıtlı.');
+      }
+
       if (!body.customer) {
         return fail(400, 'VALIDATION_FAILED', 'Yeni numara için ad ve soyad gerekli.', {
           field: 'customer',
@@ -126,6 +130,8 @@ export const identityHandlers = [
         regions: [],
       };
       mockUsers.push(user);
+    } else if (!user) {
+      return fail(401, 'OTP_CODE_INVALID', 'OTP kodu hatalı.');
     }
 
     const token = issueToken(user.id);

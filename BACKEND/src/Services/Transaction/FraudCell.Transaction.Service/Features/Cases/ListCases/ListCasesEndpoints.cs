@@ -22,14 +22,17 @@ public static class ListCasesEndpoints
     {
         app.MapGet("/api/v1/cases", ListAllAsync)
            .WithName("ListCases").WithTags("Cases")
+           .ProducesApi<CursorPage<CaseResponse>>()
            .RequireAuthorization(policy => policy.RequireRole(RoleNames.Supervisor, RoleNames.Admin));
 
         app.MapGet("/api/v1/cases/assigned", ListAssignedAsync)
            .WithName("ListAssignedCases").WithTags("Cases")
+           .ProducesApi<CursorPage<CaseResponse>>()
            .RequireAuthorization(policy => policy.RequireRole(RoleNames.Analyst));
 
         app.MapGet("/api/v1/cases/assignment-queue", ListAssignmentQueueAsync)
            .WithName("GetAssignmentQueue").WithTags("Cases")
+           .ProducesApi<CursorPage<AssignmentQueueItemResponse>>()
            .RequireAuthorization(policy => policy.RequireRole(RoleNames.Supervisor, RoleNames.Admin));
     }
 

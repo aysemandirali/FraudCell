@@ -27,6 +27,7 @@ public static class RequestOtpChallengeEndpoint
         app.MapPost("/api/v1/auth/customer/otp/challenges", HandleAsync)
            .WithName("RequestCustomerOtp")
            .WithTags("Auth")
+           .ProducesApi<RequestOtpChallengeResponse>(StatusCodes.Status202Accepted)
            .AllowAnonymous();
     }
 

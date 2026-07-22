@@ -1,17 +1,93 @@
-import { createRootRouteWithContext, createRoute, redirect } from '@tanstack/react-router';
+import {
+  createRootRouteWithContext,
+  createRoute,
+  lazyRouteComponent,
+  redirect,
+} from '@tanstack/react-router';
 import { z } from 'zod';
 
 import { CASE_STATUSES, RISK_LEVELS } from '@/shared/api/enums';
 import { CustomerShell } from '@/routes/shells/CustomerShell';
 import { ConsoleShell } from '@/routes/shells/ConsoleShell';
+import { AuthLandingPage } from '@/routes/auth/AuthLandingPage';
+import { CustomerOtpPage } from '@/routes/auth/CustomerOtpPage';
+import { StaffLoginPage } from '@/routes/auth/StaffLoginPage';
 import { RootLayout } from './RootLayout';
-import { RouteStub } from './RouteStub';
 import {
   HOME_BY_ROLE,
   redirectIfAuthenticated,
   requireRole,
   type RouterContext,
 } from './guards';
+
+const AssignedCasesPage = lazyRouteComponent(
+  () => import('@/routes/analyst/AssignedCasesPage'),
+  'AssignedCasesPage',
+);
+const AuditLogsPage = lazyRouteComponent(
+  () => import('@/routes/admin/AuditLogsPage'),
+  'AuditLogsPage',
+);
+const StaffManagementPage = lazyRouteComponent(
+  () => import('@/routes/admin/StaffManagementPage'),
+  'StaffManagementPage',
+);
+const AnalystPointsPage = lazyRouteComponent(
+  () => import('@/routes/analyst/AnalystPointsPage'),
+  'AnalystPointsPage',
+);
+const CaseDetailPage = lazyRouteComponent(
+  () => import('@/routes/analyst/CaseDetailPage'),
+  'CaseDetailPage',
+);
+const CustomerHomePage = lazyRouteComponent(
+  () => import('@/routes/customer/CustomerHomePage'),
+  'CustomerHomePage',
+);
+const CustomerNotificationsPage = lazyRouteComponent(
+  () => import('@/routes/customer/CustomerNotificationsPage'),
+  'CustomerNotificationsPage',
+);
+const CustomerProfilePage = lazyRouteComponent(
+  () => import('@/routes/customer/CustomerProfilePage'),
+  'CustomerProfilePage',
+);
+const CustomerTransactionsPage = lazyRouteComponent(
+  () => import('@/routes/customer/CustomerTransactionsPage'),
+  'CustomerTransactionsPage',
+);
+const CustomerVerificationsPage = lazyRouteComponent(
+  () => import('@/routes/customer/CustomerVerificationsPage'),
+  'CustomerVerificationsPage',
+);
+const NewTransactionPage = lazyRouteComponent(
+  () => import('@/routes/customer/NewTransactionPage'),
+  'NewTransactionPage',
+);
+const TransactionDetailPage = lazyRouteComponent(
+  () => import('@/routes/customer/TransactionDetailPage'),
+  'TransactionDetailPage',
+);
+const LeaderboardPage = lazyRouteComponent(
+  () => import('@/routes/supervisor/LeaderboardPage'),
+  'LeaderboardPage',
+);
+const AssignmentQueuePage = lazyRouteComponent(
+  () => import('@/routes/supervisor/AssignmentQueuePage'),
+  'AssignmentQueuePage',
+);
+const SupervisorCaseDetailPage = lazyRouteComponent(
+  () => import('@/routes/supervisor/SupervisorCaseDetailPage'),
+  'SupervisorCaseDetailPage',
+);
+const SupervisorCasesPage = lazyRouteComponent(
+  () => import('@/routes/supervisor/SupervisorCasesPage'),
+  'SupervisorCasesPage',
+);
+const SupervisorDashboardPage = lazyRouteComponent(
+  () => import('@/routes/supervisor/SupervisorDashboardPage'),
+  'SupervisorDashboardPage',
+);
 
 /**
  * Route ağacı.
@@ -65,41 +141,42 @@ const authIndexRoute = createRoute({
    * ekranı patlamamalı.
    */
   validateSearch: z.object({ redirect: z.string().optional() }).catch({}),
-  component: () => (
-    <RouteStub
-      screen="Karşılama / Giriş seçimi"
-      owner="A — Müşteri & Kimlik & Admin"
-      endpoints={['— (statik ekran)']}
-    />
-  ),
+  component: AuthIndexPage,
 });
+
+function AuthIndexPage() {
+  const { redirect: redirectTo } = authIndexRoute.useSearch();
+  return <AuthLandingPage redirectTo={redirectTo} />;
+}
 
 const authOtpRoute = createRoute({
   getParentRoute: () => authLayoutRoute,
   path: '/auth/otp',
-  component: () => (
-    <RouteStub
-      screen="Telefon + OTP doğrulama"
-      owner="A — Müşteri & Kimlik & Admin"
-      endpoints={[
-        'POST /auth/customer/otp/challenges',
-        'POST /auth/customer/otp/verifications',
-      ]}
-    />
-  ),
+  validateSearch: z
+    .object({
+      mode: z.enum(['login', 'register']).default('login'),
+      redirect: z.string().optional(),
+    })
+    .catch({ mode: 'login' as const }),
+  component: AuthOtpPage,
 });
+
+function AuthOtpPage() {
+  const { mode, redirect: redirectTo } = authOtpRoute.useSearch();
+  return <CustomerOtpPage mode={mode} redirectTo={redirectTo} />;
+}
 
 const authStaffRoute = createRoute({
   getParentRoute: () => authLayoutRoute,
   path: '/auth/staff',
-  component: () => (
-    <RouteStub
-      screen="Personel girişi"
-      owner="A — Müşteri & Kimlik & Admin"
-      endpoints={['POST /auth/staff/login']}
-    />
-  ),
+  validateSearch: z.object({ redirect: z.string().optional() }).catch({}),
+  component: AuthStaffPage,
 });
+
+function AuthStaffPage() {
+  const { redirect: redirectTo } = authStaffRoute.useSearch();
+  return <StaffLoginPage redirectTo={redirectTo} />;
+}
 
 /* ======================================================================== */
 /*  /customer  —  A tarafı                                                  */
@@ -115,13 +192,7 @@ const customerRoute = createRoute({
 const customerHomeRoute = createRoute({
   getParentRoute: () => customerRoute,
   path: '/',
-  component: () => (
-    <RouteStub
-      screen="Müşteri ana sayfası"
-      owner="A — Müşteri & Kimlik & Admin"
-      endpoints={['GET /transactions?limit=5', 'GET /customer/verifications/pending']}
-    />
-  ),
+  component: CustomerHomePage,
 });
 
 const customerTransactionsRoute = createRoute({
@@ -134,76 +205,47 @@ const customerTransactionsRoute = createRoute({
       cursor: z.string().optional(),
     })
     .catch({}),
-  component: () => (
-    <RouteStub
-      screen="İşlem listesi"
-      owner="A — Müşteri & Kimlik & Admin"
-      endpoints={['GET /transactions']}
-    />
-  ),
+  component: CustomerTransactionsRoutePage,
 });
+
+function CustomerTransactionsRoutePage() {
+  const { riskLevel } = customerTransactionsRoute.useSearch();
+  return <CustomerTransactionsPage riskLevel={riskLevel} />;
+}
 
 const customerNewTransactionRoute = createRoute({
   getParentRoute: () => customerRoute,
   path: '/transactions/new',
-  component: () => (
-    <RouteStub
-      screen="Yeni işlem"
-      owner="A — Müşteri & Kimlik & Admin"
-      endpoints={['POST /transactions  (Idempotency-Key zorunlu)']}
-    />
-  ),
+  component: NewTransactionPage,
 });
 
 const customerTransactionDetailRoute = createRoute({
   getParentRoute: () => customerRoute,
   path: '/transactions/$transactionId',
-  component: () => (
-    <RouteStub
-      screen="İşlem detayı"
-      owner="A — Müşteri & Kimlik & Admin"
-      endpoints={['GET /transactions/{id}']}
-    />
-  ),
+  component: CustomerTransactionDetailRoutePage,
 });
+
+function CustomerTransactionDetailRoutePage() {
+  const { transactionId } = customerTransactionDetailRoute.useParams();
+  return <TransactionDetailPage transactionId={transactionId} />;
+}
 
 const customerVerificationsRoute = createRoute({
   getParentRoute: () => customerRoute,
   path: '/verifications',
-  component: () => (
-    <RouteStub
-      screen="Bekleyen doğrulamalar"
-      owner="A — Müşteri & Kimlik & Admin"
-      endpoints={[
-        'GET /customer/verifications/pending',
-        'POST /cases/{id}/verification-responses',
-      ]}
-    />
-  ),
+  component: CustomerVerificationsPage,
 });
 
 const customerNotificationsRoute = createRoute({
   getParentRoute: () => customerRoute,
   path: '/notifications',
-  component: () => (
-    <RouteStub
-      screen="Bildirimler"
-      owner="A — Müşteri & Kimlik & Admin"
-      endpoints={['⚠ MSW mock — Notification servisi yazılmadı']}
-    />
-  ),
+  component: CustomerNotificationsPage,
 });
 
 const customerProfileRoute = createRoute({
   getParentRoute: () => customerRoute,
   path: '/profile',
-  component: () => (
-    <RouteStub
-      screen="Profil ve güvenlik"
-      owner="A — Müşteri & Kimlik & Admin"
-      endpoints={['GET /auth/me', 'GET /auth/sessions', 'DELETE /auth/sessions/{id}']}
-    />
-  ),
+  component: CustomerProfilePage,
 });
 
 /* ======================================================================== */
@@ -221,44 +263,29 @@ const analystCasesRoute = createRoute({
   getParentRoute: () => analystRoute,
   path: '/',
   validateSearch: z.object({ status: z.enum(CASE_STATUSES).optional() }).catch({}),
-  component: () => (
-    <RouteStub
-      screen="Vakalarım"
-      owner="B — Operasyon Konsolu"
-      endpoints={['GET /cases/assigned']}
-    />
-  ),
+  component: AnalystCasesRoutePage,
 });
+
+function AnalystCasesRoutePage() {
+  const { status } = analystCasesRoute.useSearch();
+  return <AssignedCasesPage status={status} />;
+}
 
 const analystCaseDetailRoute = createRoute({
   getParentRoute: () => analystRoute,
   path: '/cases/$caseId',
-  component: () => (
-    <RouteStub
-      screen="Vaka detayı ve karar"
-      owner="B — Operasyon Konsolu"
-      endpoints={[
-        'GET /cases/{id}',
-        'GET /cases/{id}/history',
-        'GET|POST /cases/{id}/notes',
-        'POST /cases/{id}/review',
-        'POST /cases/{id}/verification-requests',
-        'PATCH /cases/{id}/decision  (If-Match)',
-      ]}
-    />
-  ),
+  component: AnalystCaseDetailRoutePage,
 });
+
+function AnalystCaseDetailRoutePage() {
+  const { caseId } = analystCaseDetailRoute.useParams();
+  return <CaseDetailPage caseId={caseId} />;
+}
 
 const analystPointsRoute = createRoute({
   getParentRoute: () => analystRoute,
   path: '/points',
-  component: () => (
-    <RouteStub
-      screen="Puanlarım ve rozetler"
-      owner="B — Operasyon Konsolu"
-      endpoints={['⚠ MSW mock — Gamification servisi yazılmadı']}
-    />
-  ),
+  component: AnalystPointsPage,
 });
 
 /* ======================================================================== */
@@ -276,13 +303,7 @@ const supervisorRoute = createRoute({
 const supervisorDashboardRoute = createRoute({
   getParentRoute: () => supervisorRoute,
   path: '/',
-  component: () => (
-    <RouteStub
-      screen="Operasyon panosu"
-      owner="B — Operasyon Konsolu"
-      endpoints={['⚠ MSW mock — aggregate ucu yok', '⚠ MSW mock — AI metrikleri']}
-    />
-  ),
+  component: SupervisorDashboardPage,
 });
 
 /**
@@ -302,32 +323,24 @@ const supervisorCasesRoute = createRoute({
       cursor: z.string().optional(),
     })
     .catch({}),
-  component: () => (
-    <RouteStub
-      screen="Tüm vakalar"
-      owner="B — Operasyon Konsolu"
-      endpoints={['GET /cases?status=&riskLevel=&cursor=&limit=']}
-    />
-  ),
+  component: SupervisorCasesRoutePage,
 });
+
+function SupervisorCasesRoutePage() {
+  const search = supervisorCasesRoute.useSearch();
+  return <SupervisorCasesPage {...search} />;
+}
 
 const supervisorCaseDetailRoute = createRoute({
   getParentRoute: () => supervisorRoute,
   path: '/cases/$caseId',
-  component: () => (
-    <RouteStub
-      screen="Vaka detayı (süpervizör)"
-      owner="B — Operasyon Konsolu"
-      endpoints={[
-        'GET /cases/{id}',
-        'PUT /cases/{id}/assignment  (If-Match)',
-        'POST /cases/{id}/reassignments',
-        'PATCH /cases/{id}/fraud-type  (If-Match)',
-        'PATCH /cases/{id}/risk-level  (If-Match)',
-      ]}
-    />
-  ),
+  component: SupervisorCaseDetailRoutePage,
 });
+
+function SupervisorCaseDetailRoutePage() {
+  const { caseId } = supervisorCaseDetailRoute.useParams();
+  return <SupervisorCaseDetailPage caseId={caseId} />;
+}
 
 const supervisorQueueRoute = createRoute({
   getParentRoute: () => supervisorRoute,
@@ -335,14 +348,13 @@ const supervisorQueueRoute = createRoute({
   validateSearch: z
     .object({ queueType: z.enum(['QUEUED', 'MANUAL_QUEUE']).default('QUEUED') })
     .catch({ queueType: 'QUEUED' }),
-  component: () => (
-    <RouteStub
-      screen="Atama kuyruğu"
-      owner="B — Operasyon Konsolu"
-      endpoints={['GET /cases/assignment-queue?queueType=']}
-    />
-  ),
+  component: SupervisorQueueRoutePage,
 });
+
+function SupervisorQueueRoutePage() {
+  const { queueType } = supervisorQueueRoute.useSearch();
+  return <AssignmentQueuePage queueType={queueType} />;
+}
 
 const supervisorLeaderboardRoute = createRoute({
   getParentRoute: () => supervisorRoute,
@@ -350,14 +362,13 @@ const supervisorLeaderboardRoute = createRoute({
   validateSearch: z
     .object({ period: z.enum(['daily', 'weekly']).default('daily') })
     .catch({ period: 'daily' }),
-  component: () => (
-    <RouteStub
-      screen="Liderlik tablosu"
-      owner="B — Operasyon Konsolu"
-      endpoints={['⚠ MSW mock — Gamification servisi yazılmadı']}
-    />
-  ),
+  component: SupervisorLeaderboardRoutePage,
 });
+
+function SupervisorLeaderboardRoutePage() {
+  const { period } = supervisorLeaderboardRoute.useSearch();
+  return <LeaderboardPage period={period} />;
+}
 
 /* ======================================================================== */
 /*  /admin  —  A tarafı                                                     */
@@ -373,19 +384,7 @@ const adminRoute = createRoute({
 const adminStaffRoute = createRoute({
   getParentRoute: () => adminRoute,
   path: '/',
-  component: () => (
-    <RouteStub
-      screen="Personel yönetimi"
-      owner="A — Müşteri & Kimlik & Admin"
-      endpoints={[
-        'GET /staff',
-        'POST /staff',
-        'PATCH /staff/{id}  (If-Match)',
-        'PUT /staff/{id}/role|specialties|regions  (If-Match)',
-        'GET /reference/roles|specialties|regions',
-      ]}
-    />
-  ),
+  component: StaffManagementPage,
 });
 
 const adminAuditRoute = createRoute({
@@ -394,14 +393,13 @@ const adminAuditRoute = createRoute({
   validateSearch: z
     .object({ action: z.string().optional(), cursor: z.string().optional() })
     .catch({}),
-  component: () => (
-    <RouteStub
-      screen="Denetim kayıtları"
-      owner="A — Müşteri & Kimlik & Admin"
-      endpoints={['GET /audit-logs', 'GET /audit-logs/{id}']}
-    />
-  ),
+  component: AdminAuditRoutePage,
 });
+
+function AdminAuditRoutePage() {
+  const { action, cursor } = adminAuditRoute.useSearch();
+  return <AuditLogsPage action={action} cursor={cursor} />;
+}
 
 /* ======================================================================== */
 

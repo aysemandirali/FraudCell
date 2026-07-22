@@ -30,6 +30,7 @@ public static class SubmitDecisionEndpoint
         app.MapPatch("/api/v1/cases/{caseId}/decision", HandleAsync)
            .WithName("SubmitCaseDecision")
            .WithTags("Cases")
+           .ProducesApi<SubmitDecisionResponse>()
            .RequireAuthorization(policy => policy.RequireRole(RoleNames.Analyst, RoleNames.Supervisor));
     }
 

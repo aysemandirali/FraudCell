@@ -7,16 +7,17 @@ from sqlalchemy import text
 
 from app.database import SessionFactory
 from app.ml.model_registry import registry
+from app.schemas.public import HealthLiveResponse, HealthReadyResponse
 
 router = APIRouter(tags=["Health"])
 
 
-@router.get("/health/live")
+@router.get("/health/live", response_model=HealthLiveResponse)
 async def live() -> dict[str, str]:
     return {"status": "Healthy"}
 
 
-@router.get("/health/ready")
+@router.get("/health/ready", response_model=HealthReadyResponse)
 async def ready() -> dict[str, object]:
     checks: dict[str, str] = {}
 

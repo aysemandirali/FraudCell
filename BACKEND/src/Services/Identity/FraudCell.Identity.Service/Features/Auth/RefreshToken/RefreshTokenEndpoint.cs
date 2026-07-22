@@ -23,6 +23,7 @@ public static class RefreshTokenEndpoint
         app.MapPost("/api/v1/auth/refresh", HandleAsync)
            .WithName("RefreshAccessToken")
            .WithTags("Auth")
+           .ProducesApi<RefreshTokenResponse>()
            .AllowAnonymous();
     }
 

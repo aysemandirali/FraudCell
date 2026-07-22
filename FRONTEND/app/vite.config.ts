@@ -7,7 +7,7 @@ import path from 'node:path';
 
 /**
  * DESIGN.MD "Production topolojisi": tarayıcı yalnızca Gateway ile konuşur.
- * Development'ta Vite çalışır, /api ve /events isteklerini Gateway'e proxy eder;
+ * Development'ta Vite çalışır, /api isteklerini Gateway'e proxy eder;
  * böylece dev ile production arasında origin farkı oluşmaz ve CORS'a hiç
  * girmeyiz. Gateway ayakta değilken VITE_API_MODE=mock ile MSW devreye girer.
  */
@@ -22,14 +22,13 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': { target: gateway, changeOrigin: true },
-      // SSE: proxy buffering kapalı olmalı, aksi hâlde event'ler birikir.
-      '/events': { target: gateway, changeOrigin: true, ws: false },
     },
   },
   test: {
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
+    include: ['src/**/*.test.{ts,tsx}'],
     css: false,
   },
 });

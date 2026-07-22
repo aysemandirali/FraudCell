@@ -24,15 +24,19 @@ public static class ProfilesEndpoints
     public static void MapProfiles(this IEndpointRouteBuilder app)
     {
         app.MapGet("/api/v1/game/profiles/me", GetMineAsync).WithName("GetMyProfile").WithTags("Gamification")
+           .ProducesApi<ProfileResponse>()
            .RequireAuthorization(policy => policy.RequireRole(RoleNames.Analyst));
 
         app.MapGet("/api/v1/game/profiles/{analystId}", GetOneAsync).WithName("GetAnalystProfile").WithTags("Gamification")
+           .ProducesApi<ProfileResponse>()
            .RequireAuthorization();
 
         app.MapGet("/api/v1/game/profiles/{analystId}/points", GetPointsAsync).WithName("GetAnalystPoints").WithTags("Gamification")
+           .ProducesApi<IReadOnlyList<PointLedgerItemResponse>>()
            .RequireAuthorization();
 
         app.MapGet("/api/v1/game/profiles/{analystId}/badges", GetBadgesAsync).WithName("GetAnalystBadges").WithTags("Gamification")
+           .ProducesApi<IReadOnlyList<BadgeSummaryResponse>>()
            .RequireAuthorization();
     }
 
@@ -60,8 +64,9 @@ public static class ProfilesEndpoints
 
         var badges = await db.EarnedBadges.AsNoTracking()
             .Where(b => b.AnalystId == analystId)
-            .Join(db.BadgeDefinitions, b => b.BadgeId, d => d.Id, (b, d) => new BadgeSummaryResponse(d.Code, d.DisplayName, b.EarnedAt))
+            .Join(db.BadgeDefinitions, b => b.BadgeId, d => d.Id, (b, d) => new { d.Code, d.DisplayName, b.EarnedAt })
             .OrderByDescending(b => b.EarnedAt)
+            .Select(b => new BadgeSummaryResponse(b.Code, b.DisplayName, b.EarnedAt))
             .ToListAsync(cancellationToken);
 
         var response = new ProfileResponse(
@@ -104,8 +109,9 @@ public static class ProfilesEndpoints
 
         var badges = await db.EarnedBadges.AsNoTracking()
             .Where(b => b.AnalystId == analystId)
-            .Join(db.BadgeDefinitions, b => b.BadgeId, d => d.Id, (b, d) => new BadgeSummaryResponse(d.Code, d.DisplayName, b.EarnedAt))
+            .Join(db.BadgeDefinitions, b => b.BadgeId, d => d.Id, (b, d) => new { d.Code, d.DisplayName, b.EarnedAt })
             .OrderByDescending(b => b.EarnedAt)
+            .Select(b => new BadgeSummaryResponse(b.Code, b.DisplayName, b.EarnedAt))
             .ToListAsync(cancellationToken);
 
         return ApiResults.Ok(badges, correlation);

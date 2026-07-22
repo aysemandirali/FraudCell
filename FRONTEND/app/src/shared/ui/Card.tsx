@@ -75,6 +75,8 @@ export function StatTile({
   hint,
   tone = 'text-ink-900',
   icon,
+  trend,
+  footer,
   className,
 }: {
   label: string;
@@ -82,16 +84,41 @@ export function StatTile({
   hint?: ReactNode;
   tone?: string;
   icon?: ReactNode;
+  /** Küçük değişim rozeti — yön ve renk anlamlıdır. */
+  trend?: { value: string; direction: 'up' | 'down' | 'flat'; good?: boolean };
+  /** Kartın altına gelen serbest içerik — sparkline vb. */
+  footer?: ReactNode;
   className?: string;
 }) {
   return (
-    <div className={cn('surface-card p-4', className)}>
+    <div className={cn('surface-panel p-4', className)}>
       <div className="flex items-start justify-between gap-2">
         <p className="text-sm text-ink-500">{label}</p>
-        {icon && <span className="shrink-0 text-ink-400">{icon}</span>}
+        {icon && (
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-tile bg-brand-50 text-brand-600">
+            {icon}
+          </span>
+        )}
       </div>
-      <p className={cn('mt-2 text-2xl font-bold tabular', tone)}>{value}</p>
+      <div className="mt-2 flex items-baseline gap-2">
+        <p className={cn('text-2xl font-bold tabular', tone)}>{value}</p>
+        {trend && (
+          <span
+            className={cn(
+              'text-caption font-semibold',
+              trend.direction === 'flat'
+                ? 'text-ink-400'
+                : trend.good
+                  ? 'text-success-600'
+                  : 'text-danger-600',
+            )}
+          >
+            {trend.direction === 'up' ? '▲' : trend.direction === 'down' ? '▼' : '—'} {trend.value}
+          </span>
+        )}
+      </div>
       {hint && <p className="mt-1 text-xs text-ink-400">{hint}</p>}
+      {footer && <div className="mt-3">{footer}</div>}
     </div>
   );
 }

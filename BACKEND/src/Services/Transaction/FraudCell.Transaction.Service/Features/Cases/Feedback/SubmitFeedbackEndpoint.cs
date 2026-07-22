@@ -23,6 +23,7 @@ public static class SubmitFeedbackEndpoint
         app.MapPost("/api/v1/cases/{caseId}/feedback", HandleAsync)
            .WithName("SubmitCaseFeedback")
            .WithTags("Cases")
+           .ProducesApi<FeedbackResponse>()
            .RequireAuthorization(policy => policy.RequireRole(RoleNames.Customer));
     }
 

@@ -8,7 +8,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class DatabaseSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="AI_DB_")
 
-    host: str = "ai-db"
+    host: str = "postgres"
     port: int = 5432
     name: str = "fraudcell_ai"
     user: str = "ai_app"
@@ -43,11 +43,32 @@ class ModelSettings(BaseSettings):
     bundle_version: str = "fraudcell-ai-1.0.0"
 
 
+class GeminiSettings(BaseSettings):
+    """Harici LLM ayarlari; SADECE aciklama anlatisi icin (dokuman 10-AI-SERVICE-DESIGN.md §8).
+
+    Risk skorlama / fraud-type siniflandirma bu servisi ASLA kullanmaz. api_key
+    bos veya enabled=False ise ozellik sessizce devre disi kalir ve cagiran taraf
+    deterministik reason_codes'a geri duser.
+    """
+
+    model_config = SettingsConfigDict(env_prefix="GEMINI_")
+
+    api_key: str = ""
+    model: str = "gemini-flash-latest"
+    timeout_seconds: float = 8.0
+    enabled: bool = True
+
+    @property
+    def is_active(self) -> bool:
+        return self.enabled and bool(self.api_key)
+
+
 class Settings(BaseSettings):
     service_name: str = "ai-service"
     database: DatabaseSettings = DatabaseSettings()
     rabbitmq: RabbitMqSettings = RabbitMqSettings()
     model: ModelSettings = ModelSettings()
+    gemini: GeminiSettings = GeminiSettings()
     internal_api_token: str = "CHANGE_ME"
 
 

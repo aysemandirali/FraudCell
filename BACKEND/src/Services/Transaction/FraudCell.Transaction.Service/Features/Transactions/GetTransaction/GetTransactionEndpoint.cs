@@ -30,6 +30,7 @@ public static class GetTransactionEndpoint
         app.MapGet("/api/v1/transactions/{transactionId}", HandleAsync)
            .WithName("GetTransaction")
            .WithTags("Transactions")
+           .ProducesApi<TransactionDetailResponse>()
            .RequireAuthorization();
     }
 

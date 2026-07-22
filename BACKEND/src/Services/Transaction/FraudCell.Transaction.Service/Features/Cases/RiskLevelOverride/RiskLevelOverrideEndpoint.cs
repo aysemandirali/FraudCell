@@ -24,6 +24,7 @@ public static class RiskLevelOverrideEndpoint
         app.MapPatch("/api/v1/cases/{caseId}/risk-level", HandleAsync)
            .WithName("OverrideRiskLevel")
            .WithTags("Cases")
+           .ProducesApi<RiskLevelOverrideResponse>()
            .RequireAuthorization(policy => policy.RequireRole(RoleNames.Supervisor));
     }
 

@@ -16,6 +16,7 @@ dependencies = [
     "numpy>=2.1,<2.2",
     "joblib>=1.4,<1.5",
     "python-ulid>=2.7,<3",
+    "google-genai>=1.0,<2",
 ]
 
 [dependency-groups]
@@ -41,6 +42,9 @@ target-version = "py312"
 python_version = "3.12"
 strict = false
 ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_default_fixture_loop_scope = "function"
 
 [build-system]
 requires = ["hatchling"]

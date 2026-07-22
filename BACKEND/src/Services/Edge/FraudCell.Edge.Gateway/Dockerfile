@@ -1,16 +1,28 @@
-# This Dockerfile must be built with BACKEND/ as the Docker build context.
+# This Dockerfile must be built with the repository root as its build context.
+
+FROM node:24.18.0-bookworm-slim AS frontend-build
+WORKDIR /frontend
+
+COPY FRONTEND/app/package.json FRONTEND/app/package-lock.json ./
+RUN npm install --global npm@11.6.2 --no-audit --no-fund \
+    && npm ci --no-audit --no-fund
+
+COPY FRONTEND/app/ ./
+ENV VITE_API_MODE=live \
+    VITE_REALTIME_ENABLED=true
+RUN npm run build
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0.100 AS build
 WORKDIR /src
 
-COPY global.json Directory.Build.props Directory.Packages.props .editorconfig ./
-COPY src/BuildingBlocks/FraudCell.BuildingBlocks/FraudCell.BuildingBlocks.csproj src/BuildingBlocks/FraudCell.BuildingBlocks/
-COPY src/Services/Edge/FraudCell.Edge.Gateway/FraudCell.Edge.Gateway.csproj src/Services/Edge/FraudCell.Edge.Gateway/
+COPY BACKEND/global.json BACKEND/Directory.Build.props BACKEND/Directory.Packages.props BACKEND/.editorconfig ./
+COPY BACKEND/src/BuildingBlocks/FraudCell.BuildingBlocks/FraudCell.BuildingBlocks.csproj src/BuildingBlocks/FraudCell.BuildingBlocks/
+COPY BACKEND/src/Services/Edge/FraudCell.Edge.Gateway/FraudCell.Edge.Gateway.csproj src/Services/Edge/FraudCell.Edge.Gateway/
 
 RUN dotnet restore src/Services/Edge/FraudCell.Edge.Gateway/FraudCell.Edge.Gateway.csproj
 
-COPY src/BuildingBlocks/FraudCell.BuildingBlocks/ src/BuildingBlocks/FraudCell.BuildingBlocks/
-COPY src/Services/Edge/FraudCell.Edge.Gateway/ src/Services/Edge/FraudCell.Edge.Gateway/
+COPY BACKEND/src/BuildingBlocks/FraudCell.BuildingBlocks/ src/BuildingBlocks/FraudCell.BuildingBlocks/
+COPY BACKEND/src/Services/Edge/FraudCell.Edge.Gateway/ src/Services/Edge/FraudCell.Edge.Gateway/
 
 RUN dotnet publish src/Services/Edge/FraudCell.Edge.Gateway/FraudCell.Edge.Gateway.csproj \
     -c Release -o /app/publish --no-restore
@@ -28,6 +40,7 @@ RUN groupadd --system fraudcell \
     && chown -R fraudcell:fraudcell /app /keys/identity
 
 COPY --from=build /app/publish .
+COPY --from=frontend-build /frontend/dist ./wwwroot
 
 ENV ASPNETCORE_HTTP_PORTS=8080
 EXPOSE 8080

@@ -85,6 +85,10 @@ class TransactionCreatedConsumer(BaseConsumer):
                 )
                 session.add(prediction)
 
+                # No ORM relationship links these rows, so SQLAlchemy cannot infer
+                # that the prediction must be inserted before its FK dependants.
+                await session.flush()
+
                 if candidates:
                     recommendation = AssignmentRecommendation(
                         id=str(ULID()), prediction_id=prediction.id, transaction_id=transaction_id,

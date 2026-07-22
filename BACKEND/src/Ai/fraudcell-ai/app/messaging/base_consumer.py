@@ -11,6 +11,7 @@ import asyncio
 import json
 import logging
 from abc import ABC, abstractmethod
+from decimal import Decimal
 
 import aio_pika
 
@@ -20,6 +21,14 @@ from app.messaging.topology import RETRY_DELAYS_SECONDS, declare_consumer_queue,
 logger = logging.getLogger(__name__)
 
 RETRY_COUNT_HEADER = "x-fraudcell-retry-count"
+
+
+def _parse_retry_count(value: object) -> int:
+    if isinstance(value, (bytes, bytearray)):
+        value = value.decode("ascii")
+    if isinstance(value, (int, float, Decimal, str)):
+        return int(value)
+    return 0
 
 
 class BaseConsumer(ABC):
@@ -70,7 +79,7 @@ class BaseConsumer(ABC):
         self, channel: aio_pika.abc.AbstractChannel, message: aio_pika.abc.AbstractIncomingMessage
     ) -> None:
         headers = dict(message.headers or {})
-        retry_count = int(headers.get(RETRY_COUNT_HEADER, 0))
+        retry_count = _parse_retry_count(headers.get(RETRY_COUNT_HEADER, 0))
         headers[RETRY_COUNT_HEADER] = retry_count + 1
 
         if retry_count < len(RETRY_DELAYS_SECONDS):

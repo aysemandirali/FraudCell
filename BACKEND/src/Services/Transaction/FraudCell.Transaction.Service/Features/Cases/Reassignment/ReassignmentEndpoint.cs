@@ -21,6 +21,7 @@ public static class ReassignmentEndpoint
         app.MapPost("/api/v1/cases/{caseId}/reassignments", HandleAsync)
            .WithName("ReassignCase")
            .WithTags("Cases")
+           .ProducesApi<ReassignmentResponse>()
            .RequireAuthorization(policy => policy.RequireRole(RoleNames.Supervisor));
     }
 

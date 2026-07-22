@@ -15,6 +15,7 @@ public static class GetCaseEndpoint
         app.MapGet("/api/v1/cases/{caseId}", HandleAsync)
            .WithName("GetCase")
            .WithTags("Cases")
+           .ProducesApi<CaseResponse>()
            .RequireAuthorization();
     }
 

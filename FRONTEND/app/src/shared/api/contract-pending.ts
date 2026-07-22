@@ -5,9 +5,7 @@
  * yalnızca Identity ve Transaction servisleri var; aşağıdakiler MSW mock'u
  * tarafından karşılanır:
  *
- *   - Gamification (puan, rozet, liderlik tablosu)
  *   - Notification (bildirim listesi + SSE)
- *   - AI metrikleri (süpervizör panosu)
  *   - Dashboard aggregate'leri
  *   - Sistem sağlığı (demo kontrol paneli)
  *
@@ -25,77 +23,6 @@ import type { CursorPage, PageInfo } from './contract';
 import type { CaseStatus, FraudType, RiskLevel } from './enums';
 
 export type { CursorPage, PageInfo };
-
-/* ========================================================================== */
-/*  Gamification                                                              */
-/* ========================================================================== */
-
-export const POINT_RULE_CODES = [
-  'CASE_DECISION',
-  'FAST_DECISION',
-  'CONFIRMED_FRAUD',
-  'CRITICAL_WITHIN_SLA',
-  'SLA_BREACH',
-  'CUSTOMER_FEEDBACK',
-] as const;
-export type PointRuleCode = (typeof POINT_RULE_CODES)[number];
-
-export const POINT_RULE_LABEL: Record<PointRuleCode, string> = {
-  CASE_DECISION: 'Vaka kararı verildi',
-  FAST_DECISION: 'Hızlı karar',
-  CONFIRMED_FRAUD: 'Doğrulanmış dolandırıcılık',
-  CRITICAL_WITHIN_SLA: 'Kritik vaka SLA içinde',
-  SLA_BREACH: 'SLA aşımı',
-  CUSTOMER_FEEDBACK: 'Müşteri geri bildirimi',
-};
-
-export interface PointEntry {
-  id: string;
-  caseId: string | null;
-  transactionNo: string | null;
-  ruleCode: PointRuleCode;
-  /** SLA_BREACH'te negatif olabilir. */
-  points: number;
-  occurredAt: string;
-}
-
-export interface BadgeResponse {
-  code: string;
-  name: string;
-  description: string;
-  /** Henüz kazanılmadıysa null. */
-  earnedAt: string | null;
-  /** 0–1 arası; kazanılmışlarda 1. */
-  progress: number;
-  progressLabel: string;
-}
-
-export interface AnalystScoreResponse {
-  analystId: string;
-  totalPoints: number;
-  dailyPoints: number;
-  weeklyPoints: number;
-  resolvedCases: number;
-  activeCases: number;
-  /** 10 aktif vaka üzerinden kapasite oranı (doküman §13). */
-  capacity: number;
-  accuracy: number;
-  dailyRank: number;
-  weeklyRank: number;
-}
-
-export interface LeaderboardEntry {
-  rank: number;
-  analystId: string;
-  analystName: string;
-  points: number;
-  resolvedCases: number;
-  accuracy: number;
-  /** Oturumdaki kullanıcının satırını vurgulamak için. */
-  isCurrentUser: boolean;
-}
-
-export type LeaderboardPeriod = 'daily' | 'weekly';
 
 /* ========================================================================== */
 /*  Notification                                                              */
@@ -172,32 +99,6 @@ export interface DashboardResponse {
   trend: CaseTrendPoint[];
   /** `meta.generatedAt` ile aynı; kart altında "son güncelleme" olarak gösterilir. */
   generatedAt: string;
-}
-
-/* ========================================================================== */
-/*  AI metrikleri                                                             */
-/* ========================================================================== */
-
-export interface FraudTypeAccuracy {
-  fraudType: FraudType;
-  accuracy: number;
-  sampleSize: number;
-}
-
-/**
- * Vaka listesinden TÜRETİLEMEZ: ground truth ile analistin override'ı ve nihai
- * kararının karşılaştırılmasını gerektirir. Sahibi AI Service'tir.
- */
-export interface AiMetricsResponse {
-  /** Fraud türü tahmininin override edilmeden kalma oranı. */
-  overallAccuracy: number;
-  /** AI kararı ile analistin nihai kararının uyuşma oranı. */
-  decisionAgreement: number;
-  /** AI'ın BLOK dediği ama analistin onayladığı vakaların oranı. */
-  falsePositiveRate: number;
-  totalPredictions: number;
-  modelVersion: string;
-  byFraudType: FraudTypeAccuracy[];
 }
 
 /* ========================================================================== */
