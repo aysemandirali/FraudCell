@@ -4,6 +4,15 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#0A4A94" />
+    <!--
+      Favicon gömülü SVG olarak verilir: ek bir ağ isteği doğmaz ve tarayıcının
+      /favicon.ico için 404 üretmesi engellenir (MSW o isteği passthrough
+      etmeye çalışırken konsola hata basıyordu).
+    -->
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230A4A94'/><path d='M16 6l7 3v6.4c0 4.6-3 8.4-7 9.6-4-1.2-7-5-7-9.6V9l7-3z' fill='%23fff'/><circle cx='16' cy='15' r='3.2' fill='%23FFC800'/></svg>"
+    />
     <meta
       name="description"
       content="FraudCell — Paycell işlemleri için yapay zekâ destekli dolandırıcılık tespit ve vaka yönetim platformu."

@@ -1,22 +1,31 @@
 import { setupWorker } from 'msw/browser';
 import { handlers } from './handlers';
-import { seed } from './db';
 
 export const worker = setupWorker(...handlers);
 
 /**
- * Mock backend'i başlatır. Yalnızca VITE_API_MODE=mock iken çağrılır.
+ * Mock backend'i başlatır.
  *
- * Backend ayağa kalktığında `.env` içinde VITE_API_MODE=live yapmak yeterli;
- * uygulama kodunda hiçbir değişiklik gerekmez — istekler aynı yollara,
- * bu kez Edge Gateway'e gider.
+ * `onUnhandledRequest: 'warn'`: karşılığı olmayan bir uç çağrıldığında konsola
+ * uyarı düşer. Sessizce geçirmek, backend'i henüz yazılmamış bir ucu fark
+ * etmeden "çalışıyor" sanmamıza yol açardı; hata fırlatmak ise statik dosya
+ * isteklerini de kırardı.
  */
-export async function startMockBackend(): Promise<void> {
-  seed();
+export async function startMockWorker(): Promise<void> {
   await worker.start({
-    // Uygulamanın kendi varlıkları (js, css, ikon) uyarı üretmesin.
-    onUnhandledRequest: 'bypass',
-    quiet: true,
+    onUnhandledRequest(request, print) {
+      // Vite'ın kendi kaynak/HMR istekleri gürültü yapmasın.
+      const url = new URL(request.url);
+      if (!url.pathname.startsWith('/api')) return;
+      print.warning();
+    },
     serviceWorker: { url: '/mockServiceWorker.js' },
+    quiet: false,
   });
+
+  console.info(
+    '%c[FraudCell] Mock backend devrede.',
+    'color:#0f6fd1;font-weight:600',
+    '\nGerçek Gateway için: VITE_API_MODE=live',
+  );
 }

@@ -1,48 +1,44 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { App } from './App';
-import { ToastProvider } from '@/components/ui';
-import { ApiError } from '@/api/client';
-import './styles/globals.css';
+import { RouterProvider } from '@tanstack/react-router';
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 15_000,
-      refetchOnWindowFocus: false,
-      retry: (failureCount, error) => {
-        // Yetki, doğrulama ve domain hatalarını yeniden denemek anlamsız.
-        if (error instanceof ApiError && error.status >= 400 && error.status < 500) return false;
-        return failureCount < 2;
-      },
-    },
-    mutations: { retry: false },
-  },
-});
+import '@/app/styles/globals.css';
+import { AppProviders } from '@/app/providers/AppProviders';
+import { router } from '@/app/router';
+import { bootstrapSession, installAuthBridge } from '@/features/authentication/session';
+import { env } from '@/shared/config/env';
 
-async function bootstrap() {
-  // Backend henüz ayakta değilken tarayıcı içi mock servis devreye girer.
-  if (import.meta.env.VITE_API_MODE !== 'live') {
-    const { startMockBackend } = await import('./mocks/browser');
-    await startMockBackend();
+/**
+ * Açılış sırası kritik:
+ *
+ *   1. MSW — mock modda, İLK istekten önce worker ayakta olmalı
+ *   2. Auth köprüsü — HTTP client'ın token'a erişmesi için
+ *   3. Oturum tazeleme — refresh cookie'sinden access token alınır
+ *   4. Render
+ *
+ * (3) render'dan ÖNCE bekleniyor: yoksa router guard'ları henüz "anonim" olan
+ * oturumu görüp kullanıcıyı giriş ekranına atar, refresh dönünce geri fırlatır.
+ * Burada beklemek ilk boyamanın doğru ekranla yapılmasını garantiler.
+ */
+async function start(): Promise<void> {
+  if (env.isMock) {
+    const { startMockWorker } = await import('@/mocks/browser');
+    await startMockWorker();
   }
 
+  installAuthBridge();
+  await bootstrapSession();
+
   const container = document.getElementById('root');
-  if (!container) throw new Error('#root bulunamadı.');
+  if (!container) throw new Error('#root bulunamadı — index.html bozulmuş olabilir.');
 
   createRoot(container).render(
     <StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <ToastProvider>
-            <App />
-          </ToastProvider>
-        </BrowserRouter>
-      </QueryClientProvider>
+      <AppProviders>
+        <RouterProvider router={router} />
+      </AppProviders>
     </StrictMode>,
   );
 }
 
-void bootstrap();
+void start();
