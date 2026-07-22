@@ -5,12 +5,14 @@ using FraudCell.Identity.Service.Security;
 namespace FraudCell.Identity.Service.Common;
 
 /// <summary>
-/// Refresh token'in HttpOnly cookie olarak tasinmasi (dokuman §20 SEC-010).
-/// Token asla response body'sine yazilmaz; boylece XSS ile calinamaz.
+/// Refresh token'in HttpOnly cookie olarak tasinmasi (dokuman `07-API-DESIGN.md`
+/// §13.2, SEC-010). Token asla response body'sine yazilmaz; boylece XSS ile
+/// calinamaz. Cookie adi doküman §24/§26 orneklerindeki <c>fraudcell_refresh</c>
+/// ile birebir eslesir.
 /// </summary>
 public static class RefreshCookie
 {
-    public const string Name = "fraudcell_rt";
+    public const string Name = "fraudcell_refresh";
 
     public static void Append(HttpResponse response, string rawToken, IOptions<JwtSigningOptions> options)
     {

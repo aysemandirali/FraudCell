@@ -23,7 +23,8 @@ public sealed record RefreshRotationResult(
     string? PreviousFamilyId = null);
 
 /// <summary>
-/// Refresh token family, rotation ve reuse detection (dokuman §6/§9 SEC-006).
+/// Refresh token family, rotation ve reuse detection (dokuman
+/// `06-DATA-ARCHITECTURE.md` §17, `07-API-DESIGN.md` §26, SEC-006).
 ///
 /// Her rotation eskisini revoke edip ayni family'de yeni bir satir olusturur.
 /// Revoke edilmis bir token TEKRAR kullanilirsa (calinti token senaryosu),
@@ -35,7 +36,7 @@ public sealed class RefreshTokenService(IdentityServiceDbContext db, IClock cloc
     private readonly JwtSigningOptions _options = options.Value;
 
     public async Task<(string RawToken, RefreshSession Session)> IssueAsync(
-        string userId, string? ip, string? userAgent, string? familyId, CancellationToken cancellationToken)
+        string userId, string? ip, string? userAgent, string? familyId, string? parentSessionId, CancellationToken cancellationToken)
     {
         var raw = GenerateRawToken();
         var now = clock.UtcNow;
@@ -46,10 +47,11 @@ public sealed class RefreshTokenService(IdentityServiceDbContext db, IClock cloc
             UserId = userId,
             FamilyId = familyId ?? Ulid.NewUlid().ToString(),
             TokenHash = Hash(raw),
+            ParentSessionId = parentSessionId,
             CreatedAt = now,
             ExpiresAt = now.AddDays(_options.RefreshTokenLifetimeDays),
             CreatedIp = ip,
-            UserAgent = Truncate(userAgent, 300),
+            UserAgent = Truncate(userAgent, 512),
         };
 
         db.RefreshSessions.Add(session);
@@ -79,19 +81,18 @@ public sealed class RefreshTokenService(IdentityServiceDbContext db, IClock cloc
         if (current.RevokedAt is not null)
         {
             // Bu token daha once rotate edilmis/iptal edilmisti; simdi tekrar
-            // sunulmasi calinti token senaryosudur (dokuman §6 "Revoke edilmis
-            // token tekrar kullanilirsa"). Tum family iptal edilir.
-            var reuseTime = clock.UtcNow;
+            // sunulmasi calinti token senaryosudur. Tum family iptal edilir.
             var familyMembers = await db.RefreshSessions
                 .Where(s => s.FamilyId == current.FamilyId && s.RevokedAt == null)
                 .ToListAsync(cancellationToken);
 
             foreach (var member in familyMembers)
             {
-                member.RevokedAt = reuseTime;
+                member.RevokedAt = now;
+                member.RevocationReason = RevocationReasons.ReuseDetected;
             }
 
-            current.ReuseDetectedAt = reuseTime;
+            current.ReuseDetectedAt = now;
             await db.SaveChangesAsync(cancellationToken);
 
             return new RefreshRotationResult(RefreshOutcome.ReuseDetected, current.UserId, PreviousFamilyId: current.FamilyId);
@@ -100,6 +101,7 @@ public sealed class RefreshTokenService(IdentityServiceDbContext db, IClock cloc
         if (current.ExpiresAt <= now)
         {
             current.RevokedAt = now;
+            current.RevocationReason = "EXPIRED";
             await db.SaveChangesAsync(cancellationToken);
             return new RefreshRotationResult(RefreshOutcome.Expired, current.UserId);
         }
@@ -111,14 +113,18 @@ public sealed class RefreshTokenService(IdentityServiceDbContext db, IClock cloc
             UserId = current.UserId,
             FamilyId = current.FamilyId,
             TokenHash = Hash(newRaw),
+            ParentSessionId = current.Id,
             CreatedAt = now,
             ExpiresAt = now.AddDays(_options.RefreshTokenLifetimeDays),
             CreatedIp = ip,
-            UserAgent = Truncate(userAgent, 300),
+            UserAgent = Truncate(userAgent, 512),
         };
 
         current.RevokedAt = now;
-        current.ReplacedById = newSession.Id;
+        current.RevocationReason = RevocationReasons.Rotated;
+        current.ReplacedBySessionId = newSession.Id;
+        current.LastUsedAt = now;
+        current.LastUsedIp = ip;
 
         db.RefreshSessions.Add(newSession);
         await db.SaveChangesAsync(cancellationToken);
@@ -127,7 +133,7 @@ public sealed class RefreshTokenService(IdentityServiceDbContext db, IClock cloc
     }
 
     /// <summary>Logout: yalnizca sunulan oturumu iptal eder, ailenin geri kalanina dokunmaz.</summary>
-    public async Task RevokeAsync(string rawToken, CancellationToken cancellationToken)
+    public async Task RevokeAsync(string rawToken, string reason, CancellationToken cancellationToken)
     {
         var hash = Hash(rawToken);
         var session = await db.RefreshSessions.SingleOrDefaultAsync(s => s.TokenHash == hash, cancellationToken);
@@ -138,16 +144,34 @@ public sealed class RefreshTokenService(IdentityServiceDbContext db, IClock cloc
         }
 
         session.RevokedAt = clock.UtcNow;
+        session.RevocationReason = reason;
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task RevokeByIdAsync(string sessionId, string reason, CancellationToken cancellationToken)
+    {
+        var session = await db.RefreshSessions.SingleOrDefaultAsync(s => s.Id == sessionId, cancellationToken);
+        if (session is null || session.RevokedAt is not null)
+        {
+            return;
+        }
+
+        session.RevokedAt = clock.UtcNow;
+        session.RevocationReason = reason;
         await db.SaveChangesAsync(cancellationToken);
     }
 
     /// <summary>Token theft tespitinde veya admin zorlamasinda kullanicinin TUM oturumlarini dusurur.</summary>
-    public async Task RevokeAllForUserAsync(string userId, CancellationToken cancellationToken)
+    public async Task RevokeAllForUserAsync(string userId, string reason, CancellationToken cancellationToken)
     {
         var now = clock.UtcNow;
         await db.RefreshSessions
             .Where(s => s.UserId == userId && s.RevokedAt == null)
-            .ExecuteUpdateAsync(setters => setters.SetProperty(s => s.RevokedAt, now), cancellationToken);
+            .ExecuteUpdateAsync(
+                setters => setters
+                    .SetProperty(s => s.RevokedAt, now)
+                    .SetProperty(s => s.RevocationReason, reason),
+                cancellationToken);
     }
 
     private static string GenerateRawToken() => Convert.ToBase64String(RandomNumberGenerator.GetBytes(48))

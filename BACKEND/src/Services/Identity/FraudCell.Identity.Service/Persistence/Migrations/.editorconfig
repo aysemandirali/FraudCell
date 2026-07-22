@@ -1,0 +1,7 @@
+# EF Core migration dosyalari tool tarafindan uretilir; elle duzenlenmez.
+# Analyzer kurallarimiz (CA1861, IDE0161 vb.) burada uygulanmaz.
+root = false
+
+[*.cs]
+dotnet_diagnostic.CA1861.severity = none
+dotnet_diagnostic.IDE0161.severity = none

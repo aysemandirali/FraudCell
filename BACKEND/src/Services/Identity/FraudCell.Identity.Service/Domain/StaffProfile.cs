@@ -1,11 +1,9 @@
-using FraudCell.Identity.Service.Common;
-
 namespace FraudCell.Identity.Service.Domain;
 
 /// <summary>
-/// Personel profili (dokuman §7.2). Uzmanlik ve bolge coktan-coge iliskilerdir;
-/// AI Service bunlari <c>identity.staff.profile.updated</c> event'iyle projection
-/// olarak alir (dokuman §7.8).
+/// <c>identity.staff_profiles</c> (dokuman §11). Uzmanlik ve bolge coktan-coge
+/// iliskilerdir; AI Service bunlari <c>identity.staff.profile.updated</c>
+/// event'iyle projection olarak alir (dokuman `04-SERVICE-BOUNDARIES.md` §7.8).
 /// </summary>
 public sealed class StaffProfile
 {
@@ -15,14 +13,19 @@ public sealed class StaffProfile
 
     public required string LastName { get; set; }
 
-    public required string CreatedByUserId { get; set; }
+    public string? EmployeeNumber { get; set; }
+
+    /// <summary>Yalnizca ANALYST rolundeki personeller icin anlamlidir (dokuman §11).</summary>
+    public bool AssignmentEnabled { get; set; } = true;
+
+    public required string CreatedByAdminId { get; set; }
 
     public required DateTimeOffset CreatedAt { get; set; }
 
-    public bool IsActive { get; set; } = true;
+    public DateTimeOffset UpdatedAt { get; set; }
 
-    /// <summary>Optimistic concurrency: profil guncellemesi ile event yayinini eslestirmek icin.</summary>
-    public uint Version { get; set; }
+    /// <summary>API ETag/If-Match sozlesmesinin kaynagi (dokuman `07-API-DESIGN.md` §15).</summary>
+    public long Version { get; set; }
 
     public ApplicationUser User { get; set; } = null!;
 
@@ -31,16 +34,30 @@ public sealed class StaffProfile
     public List<StaffRegion> Regions { get; set; } = [];
 }
 
+/// <summary><c>identity.staff_specialties</c> (dokuman §13.2).</summary>
 public sealed class StaffSpecialty
 {
-    public required string StaffProfileUserId { get; set; }
+    public required string StaffUserId { get; set; }
 
-    public required AnalystSpecialty Specialty { get; set; }
+    public required string SpecialtyId { get; set; }
+
+    public required string AssignedBy { get; set; }
+
+    public required DateTimeOffset AssignedAt { get; set; }
+
+    public Specialty Specialty { get; set; } = null!;
 }
 
+/// <summary><c>identity.staff_regions</c> (dokuman §14.2).</summary>
 public sealed class StaffRegion
 {
-    public required string StaffProfileUserId { get; set; }
+    public required string StaffUserId { get; set; }
 
-    public required OperationRegion Region { get; set; }
+    public required string RegionId { get; set; }
+
+    public required string AssignedBy { get; set; }
+
+    public required DateTimeOffset AssignedAt { get; set; }
+
+    public Region Region { get; set; } = null!;
 }

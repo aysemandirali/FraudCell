@@ -1,22 +1,26 @@
-using System.Text.Json;
 using FraudCell.BuildingBlocks.Api;
 using FraudCell.BuildingBlocks.Correlation;
 using FraudCell.BuildingBlocks.Messaging.Outbox;
 using FraudCell.BuildingBlocks.Messaging.RabbitMq;
-using FraudCell.BuildingBlocks.Persistence;
 using FraudCell.BuildingBlocks.Time;
 using FraudCell.Identity.Service.BackgroundJobs;
 using FraudCell.Identity.Service.Common;
 using FraudCell.Identity.Service.Domain;
 using FraudCell.Identity.Service.Features.Audit.GetAuditLogs;
+using FraudCell.Identity.Service.Features.Auth.CurrentUser;
+using FraudCell.Identity.Service.Features.Auth.CustomerOtp;
 using FraudCell.Identity.Service.Features.Auth.Logout;
 using FraudCell.Identity.Service.Features.Auth.RefreshToken;
-using FraudCell.Identity.Service.Features.Auth.RegisterCustomer;
-using FraudCell.Identity.Service.Features.Auth.RequestOtp;
+using FraudCell.Identity.Service.Features.Auth.Sessions;
 using FraudCell.Identity.Service.Features.Auth.StaffLogin;
-using FraudCell.Identity.Service.Features.Auth.VerifyOtp;
+using FraudCell.Identity.Service.Features.Reference;
 using FraudCell.Identity.Service.Features.Staff.CreateStaff;
-using FraudCell.Identity.Service.Features.Users.GetCurrentUser;
+using FraudCell.Identity.Service.Features.Staff.GetStaff;
+using FraudCell.Identity.Service.Features.Staff.ListStaff;
+using FraudCell.Identity.Service.Features.Staff.UpdateStaff;
+using FraudCell.Identity.Service.Features.Staff.UpdateStaffRegions;
+using FraudCell.Identity.Service.Features.Staff.UpdateStaffRole;
+using FraudCell.Identity.Service.Features.Staff.UpdateStaffSpecialties;
 using FraudCell.Identity.Service.Messaging;
 using FraudCell.Identity.Service.Persistence;
 using FraudCell.Identity.Service.Security;
@@ -58,7 +62,8 @@ builder.Services.AddScoped<IMessagingDbContext>(sp => sp.GetRequiredService<Iden
 builder.Services
     .AddIdentityCore<ApplicationUser>(options =>
     {
-        // Dokuman §7.1 IDN-009..012: min 8 karakter, buyuk harf, rakam, ozel karakter.
+        // Dokuman `01-REQUIREMENTS-TRACEABILITY.md` IDN-009..012: min 8 karakter,
+        // buyuk harf, rakam, ozel karakter.
         options.Password.RequiredLength = 8;
         options.Password.RequireDigit = true;
         options.Password.RequireUppercase = true;
@@ -66,7 +71,7 @@ builder.Services
         options.Password.RequireLowercase = false;
         options.Password.RequiredUniqueChars = 1;
 
-        // Dokuman §7.1 IDN-015/016: 5 basarisiz denemede 15 dakika kilit.
+        // IDN-015/016: 5 basarisiz denemede 15 dakika kilit.
         options.Lockout.MaxFailedAccessAttempts = 5;
         options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
         options.Lockout.AllowedForNewUsers = true;
@@ -78,7 +83,7 @@ builder.Services
     .AddEntityFrameworkStores<IdentityServiceDbContext>()
     .AddDefaultTokenProviders();
 
-// Varsayilan PBKDF2 hasher yerine Argon2id (dokuman §8.3).
+// Varsayilan PBKDF2 hasher yerine Argon2id (dokuman `03-TECH-STACK.md` §8.3).
 builder.Services.AddScoped<IPasswordHasher<ApplicationUser>, Argon2idPasswordHasher>();
 
 builder.Services.AddSingleton<RsaKeyProvider>();
@@ -102,19 +107,18 @@ builder.Services
     .AddJwtBearer();
 
 // RsaKeyProvider ve JwtSigningOptions'i DI konteynerini ikinci kez insa etmeden
-// (BuildServiceProvider) enjekte etmek icin PostConfigure yerine tip bazli
-// Configure asiri yuklemesi kullanilir.
+// enjekte etmek icin tip bazli Configure asiri yuklemesi kullanilir.
 builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
-    .Configure<RsaKeyProvider, Microsoft.Extensions.Options.IOptions<JwtSigningOptions>>((options, keyProvider, jwtOptionsAccessor) =>
+    .Configure<RsaKeyProvider, Microsoft.Extensions.Options.IOptions<JwtSigningOptions>>((jwtBearerOptions, keyProvider, jwtOptionsAccessor) =>
     {
         var jwtOptions = jwtOptionsAccessor.Value;
 
         // MapInboundClaims kapali: "role"/"specialties" claim'leri .NET'in uzun
         // varsayilan URI'lerine donusturulmez; JwtTokenService'te uretilen isimlerle
-        // birebir eslesir (dokuman §6 claim ornegi).
-        options.MapInboundClaims = false;
+        // birebir eslesir.
+        jwtBearerOptions.MapInboundClaims = false;
 
-        options.TokenValidationParameters = new TokenValidationParameters
+        jwtBearerOptions.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
             ValidIssuer = jwtOptions.Issuer,
@@ -155,21 +159,30 @@ if (app.Environment.IsDevelopment())
 app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false });
 app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = check => check.Tags.Contains("ready") });
 
-app.MapRegisterCustomer();
-app.MapRequestOtp();
-app.MapVerifyOtp();
+app.MapRequestOtpChallenge();
+app.MapVerifyOtpChallenge();
 app.MapStaffLogin();
 app.MapRefreshToken();
 app.MapLogout();
-app.MapCreateStaff();
 app.MapGetCurrentUser();
+app.MapSessions();
+
+app.MapCreateStaff();
+app.MapListStaff();
+app.MapGetStaff();
+app.MapUpdateStaff();
+app.MapUpdateStaffRole();
+app.MapUpdateStaffSpecialties();
+app.MapUpdateStaffRegions();
+
+app.MapReference();
 app.MapGetAuditLogs();
 
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<IdentityServiceDbContext>();
     await db.Database.MigrateAsync();
-    await IdentitySeed.EnsureRolesAsync(scope.ServiceProvider);
+    await IdentitySeed.RunAsync(scope.ServiceProvider);
 }
 
 app.Run();

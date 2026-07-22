@@ -17,6 +17,7 @@ namespace FraudCell.Identity.Service.Persistence.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
+                .HasDefaultSchema("identity")
                 .HasAnnotation("ProductVersion", "10.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
@@ -34,6 +35,10 @@ namespace FraudCell.Identity.Service.Persistence.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("consumer_name");
 
+                    b.Property<int>("AttemptCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("attempt_count");
+
                     b.Property<string>("CorrelationId")
                         .IsRequired()
                         .HasMaxLength(64)
@@ -46,9 +51,29 @@ namespace FraudCell.Identity.Service.Persistence.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("event_type");
 
+                    b.Property<int>("EventVersion")
+                        .HasColumnType("integer")
+                        .HasColumnName("event_version");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("last_error");
+
+                    b.Property<string>("PayloadHash")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("payload_hash");
+
                     b.Property<DateTimeOffset>("ProcessedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("processed_at");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
 
                     b.HasKey("EventId", "ConsumerName")
                         .HasName("pk_inbox_messages");
@@ -56,7 +81,7 @@ namespace FraudCell.Identity.Service.Persistence.Migrations
                     b.HasIndex("ProcessedAt")
                         .HasDatabaseName("ix_inbox_processed_at");
 
-                    b.ToTable("inbox_messages", (string)null);
+                    b.ToTable("inbox_messages", "identity");
                 });
 
             modelBuilder.Entity("FraudCell.BuildingBlocks.Messaging.Outbox.OutboxMessage", b =>
@@ -91,10 +116,23 @@ namespace FraudCell.Identity.Service.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("event_version");
 
+                    b.Property<string>("Headers")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("headers");
+
                     b.Property<string>("LastError")
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)")
                         .HasColumnName("last_error");
+
+                    b.Property<string>("LockOwner")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("lock_owner");
+
+                    b.Property<DateTimeOffset?>("LockedUntil")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("locked_until");
 
                     b.Property<DateTimeOffset?>("NextAttemptAt")
                         .HasColumnType("timestamp with time zone")
@@ -138,13 +176,14 @@ namespace FraudCell.Identity.Service.Persistence.Migrations
                         .HasDatabaseName("ix_outbox_pending")
                         .HasFilter("published_at IS NULL");
 
-                    b.ToTable("outbox_messages", (string)null);
+                    b.ToTable("outbox_messages", "identity");
                 });
 
             modelBuilder.Entity("FraudCell.Identity.Service.Domain.ApplicationRole", b =>
                 {
                     b.Property<string>("Id")
-                        .HasColumnType("text")
+                        .HasMaxLength(26)
+                        .HasColumnType("character varying(26)")
                         .HasColumnName("id");
 
                     b.Property<string>("ConcurrencyStamp")
@@ -152,10 +191,20 @@ namespace FraudCell.Identity.Service.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("concurrency_stamp");
 
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("display_name");
+
                     b.Property<string>("Name")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)")
-                        .HasColumnName("name");
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("code");
 
                     b.Property<string>("NormalizedName")
                         .HasMaxLength(256)
@@ -169,7 +218,7 @@ namespace FraudCell.Identity.Service.Persistence.Migrations
                         .IsUnique()
                         .HasDatabaseName("role_name_index");
 
-                    b.ToTable("roles", (string)null);
+                    b.ToTable("roles", "identity");
                 });
 
             modelBuilder.Entity("FraudCell.Identity.Service.Domain.ApplicationUser", b =>
@@ -182,10 +231,6 @@ namespace FraudCell.Identity.Service.Persistence.Migrations
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("integer")
                         .HasColumnName("access_failed_count");
-
-                    b.Property<int>("ActorType")
-                        .HasColumnType("integer")
-                        .HasColumnName("actor_type");
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
@@ -205,9 +250,18 @@ namespace FraudCell.Identity.Service.Persistence.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("email_confirmed");
 
+                    b.Property<string>("GsmNumber")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("gsm_number");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean")
                         .HasColumnName("is_active");
+
+                    b.Property<DateTimeOffset?>("LastLoginAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_login_at");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("boolean")
@@ -215,12 +269,7 @@ namespace FraudCell.Identity.Service.Persistence.Migrations
 
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("lockout_end");
-
-                    b.Property<string>("Msisdn")
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("msisdn");
+                        .HasColumnName("lockout_end_at");
 
                     b.Property<string>("NormalizedEmail")
                         .HasMaxLength(256)
@@ -252,30 +301,57 @@ namespace FraudCell.Identity.Service.Persistence.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("two_factor_enabled");
 
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
                     b.Property<string>("UserName")
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)")
                         .HasColumnName("user_name");
 
+                    b.Property<string>("UserType")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("user_type");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("version");
+
                     b.HasKey("Id")
                         .HasName("pk_users");
 
-                    b.HasIndex("Msisdn")
+                    b.HasIndex("GsmNumber")
                         .IsUnique()
-                        .HasDatabaseName("ix_users_msisdn")
-                        .HasFilter("msisdn IS NOT NULL");
+                        .HasDatabaseName("ux_users_gsm_number")
+                        .HasFilter("gsm_number IS NOT NULL");
+
+                    b.HasIndex("LockoutEnd")
+                        .HasDatabaseName("ix_users_lockout")
+                        .HasFilter("lockout_end_at IS NOT NULL");
 
                     b.HasIndex("NormalizedEmail")
-                        .HasDatabaseName("email_index");
+                        .IsUnique()
+                        .HasDatabaseName("ux_users_normalized_email")
+                        .HasFilter("normalized_email IS NOT NULL");
 
                     b.HasIndex("NormalizedUserName")
                         .IsUnique()
                         .HasDatabaseName("user_name_index");
 
-                    b.ToTable("users", (string)null);
+                    b.HasIndex("UserType", "IsActive")
+                        .HasDatabaseName("ix_users_active_type");
+
+                    b.ToTable("users", "identity", t =>
+                        {
+                            t.HasCheckConstraint("ck_users_access_failed_count", "access_failed_count >= 0");
+                        });
                 });
 
-            modelBuilder.Entity("FraudCell.Identity.Service.Domain.AuditLogEntry", b =>
+            modelBuilder.Entity("FraudCell.Identity.Service.Domain.AuditLog", b =>
                 {
                     b.Property<string>("Id")
                         .HasMaxLength(26)
@@ -293,6 +369,11 @@ namespace FraudCell.Identity.Service.Persistence.Migrations
                         .HasColumnType("character varying(26)")
                         .HasColumnName("actor_id");
 
+                    b.Property<string>("ActorRole")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("actor_role");
+
                     b.Property<string>("CorrelationId")
                         .IsRequired()
                         .HasMaxLength(64)
@@ -301,7 +382,7 @@ namespace FraudCell.Identity.Service.Persistence.Migrations
 
                     b.Property<string>("DetailsJson")
                         .HasColumnType("jsonb")
-                        .HasColumnName("details_json");
+                        .HasColumnName("details");
 
                     b.Property<string>("IpAddress")
                         .HasMaxLength(64)
@@ -312,38 +393,58 @@ namespace FraudCell.Identity.Service.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("occurred_at");
 
+                    b.Property<DateTimeOffset>("PersistedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("persisted_at");
+
                     b.Property<string>("ResourceId")
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
                         .HasColumnName("resource_id");
 
                     b.Property<string>("ResourceType")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
                         .HasColumnName("resource_type");
 
                     b.Property<string>("Result")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
                         .HasColumnName("result");
+
+                    b.Property<string>("SourceEventId")
+                        .IsRequired()
+                        .HasMaxLength(26)
+                        .HasColumnType("character varying(26)")
+                        .HasColumnName("source_event_id");
 
                     b.Property<string>("SourceService")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
                         .HasColumnName("source_service");
 
                     b.HasKey("Id")
-                        .HasName("pk_audit_log_entries");
+                        .HasName("pk_audit_logs");
 
-                    b.HasIndex("ActorId")
-                        .HasDatabaseName("ix_audit_actor_id");
+                    b.HasIndex("CorrelationId")
+                        .HasDatabaseName("ix_audit_correlation");
 
-                    b.HasIndex("OccurredAt")
-                        .HasDatabaseName("ix_audit_occurred_at");
+                    b.HasIndex("SourceEventId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_audit_logs_source_event");
 
-                    b.ToTable("audit_log_entries", (string)null);
+                    b.HasIndex("Action", "OccurredAt")
+                        .HasDatabaseName("ix_audit_action_time");
+
+                    b.HasIndex("ActorId", "OccurredAt")
+                        .HasDatabaseName("ix_audit_actor_time");
+
+                    b.HasIndex("ResourceType", "ResourceId", "OccurredAt")
+                        .HasDatabaseName("ix_audit_resource");
+
+                    b.ToTable("audit_logs", "identity");
                 });
 
             modelBuilder.Entity("FraudCell.Identity.Service.Domain.CustomerProfile", b =>
@@ -353,10 +454,9 @@ namespace FraudCell.Identity.Service.Persistence.Migrations
                         .HasColumnType("character varying(26)")
                         .HasColumnName("user_id");
 
-                    b.Property<string>("Email")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)")
-                        .HasColumnName("email");
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
 
                     b.Property<string>("FirstName")
                         .IsRequired()
@@ -370,14 +470,82 @@ namespace FraudCell.Identity.Service.Persistence.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("last_name");
 
-                    b.Property<DateTimeOffset>("RegisteredAt")
+                    b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("registered_at");
+                        .HasColumnName("updated_at");
 
                     b.HasKey("UserId")
                         .HasName("pk_customer_profiles");
 
-                    b.ToTable("customer_profiles", (string)null);
+                    b.ToTable("customer_profiles", "identity");
+                });
+
+            modelBuilder.Entity("FraudCell.Identity.Service.Domain.LoginAttempt", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(26)
+                        .HasColumnType("character varying(26)")
+                        .HasColumnName("id");
+
+                    b.Property<string>("CorrelationId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("correlation_id");
+
+                    b.Property<string>("FailureReason")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("failure_reason");
+
+                    b.Property<string>("IpAddress")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("ip_address");
+
+                    b.Property<string>("LoginIdentifierHash")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("login_identifier_hash");
+
+                    b.Property<string>("LoginType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("login_type");
+
+                    b.Property<DateTimeOffset>("OccurredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("occurred_at");
+
+                    b.Property<string>("Result")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("result");
+
+                    b.Property<string>("UserAgent")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("user_agent");
+
+                    b.Property<string>("UserId")
+                        .HasMaxLength(26)
+                        .HasColumnType("character varying(26)")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_login_attempts");
+
+                    b.HasIndex("IpAddress", "OccurredAt")
+                        .HasDatabaseName("ix_login_attempts_ip_time");
+
+                    b.HasIndex("UserId", "OccurredAt")
+                        .HasDatabaseName("ix_login_attempts_user_time")
+                        .HasFilter("user_id IS NOT NULL");
+
+                    b.ToTable("login_attempts", "identity");
                 });
 
             modelBuilder.Entity("FraudCell.Identity.Service.Domain.OtpChallenge", b =>
@@ -397,37 +565,61 @@ namespace FraudCell.Identity.Service.Persistence.Migrations
                         .HasColumnType("character varying(128)")
                         .HasColumnName("code_hash");
 
-                    b.Property<DateTimeOffset?>("ConsumedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("consumed_at");
-
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
+
+                    b.Property<string>("CreatedIp")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("created_ip");
 
                     b.Property<DateTimeOffset>("ExpiresAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("expires_at");
 
-                    b.Property<string>("Msisdn")
+                    b.Property<string>("GsmNumber")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)")
-                        .HasColumnName("msisdn");
+                        .HasColumnName("gsm_number");
+
+                    b.Property<int>("MaxAttempts")
+                        .HasColumnType("integer")
+                        .HasColumnName("max_attempts");
 
                     b.Property<string>("Purpose")
                         .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("purpose");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)")
-                        .HasColumnName("purpose");
+                        .HasColumnName("status");
+
+                    b.Property<DateTimeOffset?>("VerifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("verified_at");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("version");
 
                     b.HasKey("Id")
                         .HasName("pk_otp_challenges");
 
-                    b.HasIndex("Msisdn", "Purpose", "ExpiresAt")
-                        .HasDatabaseName("ix_otp_lookup");
+                    b.HasIndex("GsmNumber", "CreatedAt")
+                        .HasDatabaseName("ix_otp_pending_gsm")
+                        .HasFilter("status = 'Pending'");
 
-                    b.ToTable("otp_challenges", (string)null);
+                    b.ToTable("otp_challenges", "identity", t =>
+                        {
+                            t.HasCheckConstraint("ck_otp_attempt_count", "attempt_count >= 0 AND attempt_count <= max_attempts");
+                        });
                 });
 
             modelBuilder.Entity("FraudCell.Identity.Service.Domain.RefreshSession", b =>
@@ -456,13 +648,33 @@ namespace FraudCell.Identity.Service.Persistence.Migrations
                         .HasColumnType("character varying(26)")
                         .HasColumnName("family_id");
 
-                    b.Property<string>("ReplacedById")
-                        .HasColumnType("text")
-                        .HasColumnName("replaced_by_id");
+                    b.Property<DateTimeOffset?>("LastUsedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_used_at");
+
+                    b.Property<string>("LastUsedIp")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("last_used_ip");
+
+                    b.Property<string>("ParentSessionId")
+                        .HasMaxLength(26)
+                        .HasColumnType("character varying(26)")
+                        .HasColumnName("parent_session_id");
+
+                    b.Property<string>("ReplacedBySessionId")
+                        .HasMaxLength(26)
+                        .HasColumnType("character varying(26)")
+                        .HasColumnName("replaced_by_session_id");
 
                     b.Property<DateTimeOffset?>("ReuseDetectedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("reuse_detected_at");
+
+                    b.Property<string>("RevocationReason")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("revocation_reason");
 
                     b.Property<DateTimeOffset?>("RevokedAt")
                         .HasColumnType("timestamp with time zone")
@@ -475,8 +687,8 @@ namespace FraudCell.Identity.Service.Persistence.Migrations
                         .HasColumnName("token_hash");
 
                     b.Property<string>("UserAgent")
-                        .HasMaxLength(300)
-                        .HasColumnType("character varying(300)")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
                         .HasColumnName("user_agent");
 
                     b.Property<string>("UserId")
@@ -485,20 +697,103 @@ namespace FraudCell.Identity.Service.Persistence.Migrations
                         .HasColumnType("character varying(26)")
                         .HasColumnName("user_id");
 
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("version");
+
                     b.HasKey("Id")
                         .HasName("pk_refresh_sessions");
 
-                    b.HasIndex("FamilyId")
-                        .HasDatabaseName("ix_refresh_sessions_family");
+                    b.HasIndex("ExpiresAt")
+                        .HasDatabaseName("ix_refresh_sessions_expired");
 
                     b.HasIndex("TokenHash")
                         .IsUnique()
-                        .HasDatabaseName("ix_refresh_sessions_token_hash");
+                        .HasDatabaseName("ux_refresh_sessions_token_hash");
 
-                    b.HasIndex("UserId")
-                        .HasDatabaseName("ix_refresh_sessions_user");
+                    b.HasIndex("FamilyId", "CreatedAt")
+                        .HasDatabaseName("ix_refresh_sessions_family");
 
-                    b.ToTable("refresh_sessions", (string)null);
+                    b.HasIndex("UserId", "ExpiresAt")
+                        .HasDatabaseName("ix_refresh_sessions_user_active")
+                        .HasFilter("revoked_at IS NULL");
+
+                    b.ToTable("refresh_sessions", "identity");
+                });
+
+            modelBuilder.Entity("FraudCell.Identity.Service.Domain.Region", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(26)
+                        .HasColumnType("character varying(26)")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("code");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("display_name");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.HasKey("Id")
+                        .HasName("pk_regions");
+
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasDatabaseName("ux_regions_code");
+
+                    b.ToTable("regions", "identity");
+                });
+
+            modelBuilder.Entity("FraudCell.Identity.Service.Domain.Specialty", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(26)
+                        .HasColumnType("character varying(26)")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("code");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("display_name");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.HasKey("Id")
+                        .HasName("pk_specialties");
+
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasDatabaseName("ux_specialties_code");
+
+                    b.ToTable("specialties", "identity");
                 });
 
             modelBuilder.Entity("FraudCell.Identity.Service.Domain.StaffProfile", b =>
@@ -508,15 +803,24 @@ namespace FraudCell.Identity.Service.Persistence.Migrations
                         .HasColumnType("character varying(26)")
                         .HasColumnName("user_id");
 
+                    b.Property<bool>("AssignmentEnabled")
+                        .HasColumnType("boolean")
+                        .HasColumnName("assignment_enabled");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
-                    b.Property<string>("CreatedByUserId")
+                    b.Property<string>("CreatedByAdminId")
                         .IsRequired()
                         .HasMaxLength(26)
                         .HasColumnType("character varying(26)")
-                        .HasColumnName("created_by_user_id");
+                        .HasColumnName("created_by_admin_id");
+
+                    b.Property<string>("EmployeeNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("employee_number");
 
                     b.Property<string>("FirstName")
                         .IsRequired()
@@ -524,62 +828,92 @@ namespace FraudCell.Identity.Service.Persistence.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("first_name");
 
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_active");
-
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasColumnName("last_name");
 
-                    b.Property<uint>("Version")
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<long>("Version")
                         .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("xid")
+                        .HasColumnType("bigint")
                         .HasColumnName("version");
 
                     b.HasKey("UserId")
                         .HasName("pk_staff_profiles");
 
-                    b.ToTable("staff_profiles", (string)null);
+                    b.HasIndex("EmployeeNumber")
+                        .IsUnique()
+                        .HasDatabaseName("ux_staff_employee_number")
+                        .HasFilter("employee_number IS NOT NULL");
+
+                    b.ToTable("staff_profiles", "identity");
                 });
 
             modelBuilder.Entity("FraudCell.Identity.Service.Domain.StaffRegion", b =>
                 {
-                    b.Property<string>("StaffProfileUserId")
+                    b.Property<string>("StaffUserId")
                         .HasMaxLength(26)
                         .HasColumnType("character varying(26)")
-                        .HasColumnName("staff_profile_user_id");
+                        .HasColumnName("staff_user_id");
 
-                    b.Property<string>("Region")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("region");
+                    b.Property<string>("RegionId")
+                        .HasMaxLength(26)
+                        .HasColumnType("character varying(26)")
+                        .HasColumnName("region_id");
 
-                    b.HasKey("StaffProfileUserId", "Region")
+                    b.Property<DateTimeOffset>("AssignedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("assigned_at");
+
+                    b.Property<string>("AssignedBy")
+                        .IsRequired()
+                        .HasMaxLength(26)
+                        .HasColumnType("character varying(26)")
+                        .HasColumnName("assigned_by");
+
+                    b.HasKey("StaffUserId", "RegionId")
                         .HasName("pk_staff_regions");
 
-                    b.ToTable("staff_regions", (string)null);
+                    b.HasIndex("RegionId")
+                        .HasDatabaseName("ix_staff_regions_region_id");
+
+                    b.ToTable("staff_regions", "identity");
                 });
 
             modelBuilder.Entity("FraudCell.Identity.Service.Domain.StaffSpecialty", b =>
                 {
-                    b.Property<string>("StaffProfileUserId")
+                    b.Property<string>("StaffUserId")
                         .HasMaxLength(26)
                         .HasColumnType("character varying(26)")
-                        .HasColumnName("staff_profile_user_id");
+                        .HasColumnName("staff_user_id");
 
-                    b.Property<string>("Specialty")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("specialty");
+                    b.Property<string>("SpecialtyId")
+                        .HasMaxLength(26)
+                        .HasColumnType("character varying(26)")
+                        .HasColumnName("specialty_id");
 
-                    b.HasKey("StaffProfileUserId", "Specialty")
+                    b.Property<DateTimeOffset>("AssignedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("assigned_at");
+
+                    b.Property<string>("AssignedBy")
+                        .IsRequired()
+                        .HasMaxLength(26)
+                        .HasColumnType("character varying(26)")
+                        .HasColumnName("assigned_by");
+
+                    b.HasKey("StaffUserId", "SpecialtyId")
                         .HasName("pk_staff_specialties");
 
-                    b.ToTable("staff_specialties", (string)null);
+                    b.HasIndex("SpecialtyId")
+                        .HasDatabaseName("ix_staff_specialties_specialty_id");
+
+                    b.ToTable("staff_specialties", "identity");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -601,7 +935,7 @@ namespace FraudCell.Identity.Service.Persistence.Migrations
 
                     b.Property<string>("RoleId")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasColumnType("character varying(26)")
                         .HasColumnName("role_id");
 
                     b.HasKey("Id")
@@ -610,7 +944,7 @@ namespace FraudCell.Identity.Service.Persistence.Migrations
                     b.HasIndex("RoleId")
                         .HasDatabaseName("ix_role_claims_role_id");
 
-                    b.ToTable("role_claims", (string)null);
+                    b.ToTable("role_claims", "identity");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
@@ -641,7 +975,7 @@ namespace FraudCell.Identity.Service.Persistence.Migrations
                     b.HasIndex("UserId")
                         .HasDatabaseName("ix_user_claims_user_id");
 
-                    b.ToTable("user_claims", (string)null);
+                    b.ToTable("user_claims", "identity");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
@@ -669,17 +1003,19 @@ namespace FraudCell.Identity.Service.Persistence.Migrations
                     b.HasIndex("UserId")
                         .HasDatabaseName("ix_user_logins_user_id");
 
-                    b.ToTable("user_logins", (string)null);
+                    b.ToTable("user_logins", "identity");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
                 {
                     b.Property<string>("UserId")
+                        .HasMaxLength(26)
                         .HasColumnType("character varying(26)")
                         .HasColumnName("user_id");
 
                     b.Property<string>("RoleId")
-                        .HasColumnType("text")
+                        .HasMaxLength(26)
+                        .HasColumnType("character varying(26)")
                         .HasColumnName("role_id");
 
                     b.HasKey("UserId", "RoleId")
@@ -688,7 +1024,7 @@ namespace FraudCell.Identity.Service.Persistence.Migrations
                     b.HasIndex("RoleId")
                         .HasDatabaseName("ix_user_roles_role_id");
 
-                    b.ToTable("user_roles", (string)null);
+                    b.ToTable("user_roles", "identity");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
@@ -712,7 +1048,7 @@ namespace FraudCell.Identity.Service.Persistence.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name")
                         .HasName("pk_user_tokens");
 
-                    b.ToTable("user_tokens", (string)null);
+                    b.ToTable("user_tokens", "identity");
                 });
 
             modelBuilder.Entity("FraudCell.Identity.Service.Domain.CustomerProfile", b =>
@@ -720,7 +1056,7 @@ namespace FraudCell.Identity.Service.Persistence.Migrations
                     b.HasOne("FraudCell.Identity.Service.Domain.ApplicationUser", "User")
                         .WithOne("CustomerProfile")
                         .HasForeignKey("FraudCell.Identity.Service.Domain.CustomerProfile", "UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_customer_profiles_users_user_id");
 
@@ -732,7 +1068,7 @@ namespace FraudCell.Identity.Service.Persistence.Migrations
                     b.HasOne("FraudCell.Identity.Service.Domain.ApplicationUser", "User")
                         .WithOne("StaffProfile")
                         .HasForeignKey("FraudCell.Identity.Service.Domain.StaffProfile", "UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_staff_profiles_users_user_id");
 
@@ -741,22 +1077,40 @@ namespace FraudCell.Identity.Service.Persistence.Migrations
 
             modelBuilder.Entity("FraudCell.Identity.Service.Domain.StaffRegion", b =>
                 {
+                    b.HasOne("FraudCell.Identity.Service.Domain.Region", "Region")
+                        .WithMany()
+                        .HasForeignKey("RegionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_staff_regions_regions_region_id");
+
                     b.HasOne("FraudCell.Identity.Service.Domain.StaffProfile", null)
                         .WithMany("Regions")
-                        .HasForeignKey("StaffProfileUserId")
+                        .HasForeignKey("StaffUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_staff_regions_staff_profiles_staff_profile_user_id");
+                        .HasConstraintName("fk_staff_regions_staff_profiles_staff_user_id");
+
+                    b.Navigation("Region");
                 });
 
             modelBuilder.Entity("FraudCell.Identity.Service.Domain.StaffSpecialty", b =>
                 {
+                    b.HasOne("FraudCell.Identity.Service.Domain.Specialty", "Specialty")
+                        .WithMany()
+                        .HasForeignKey("SpecialtyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_staff_specialties_specialties_specialty_id");
+
                     b.HasOne("FraudCell.Identity.Service.Domain.StaffProfile", null)
                         .WithMany("Specialties")
-                        .HasForeignKey("StaffProfileUserId")
+                        .HasForeignKey("StaffUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_staff_specialties_staff_profiles_staff_profile_user_id");
+                        .HasConstraintName("fk_staff_specialties_staff_profiles_staff_user_id");
+
+                    b.Navigation("Specialty");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

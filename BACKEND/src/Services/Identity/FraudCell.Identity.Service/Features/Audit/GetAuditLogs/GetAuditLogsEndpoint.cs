@@ -6,9 +6,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FraudCell.Identity.Service.Features.Audit.GetAuditLogs;
 
-public sealed record AuditLogEntryResponse(
+public sealed record AuditLogResponse(
     string Id,
     string? ActorId,
+    string? ActorRole,
     string Action,
     string SourceService,
     string? ResourceType,
@@ -16,37 +17,44 @@ public sealed record AuditLogEntryResponse(
     string? IpAddress,
     string Result,
     DateTimeOffset OccurredAt,
-    string CorrelationId);
-
-public sealed record AuditLogPageResponse(IReadOnlyCollection<AuditLogEntryResponse> Items, int Page, int PageSize, int TotalCount);
+    string? DetailsJson);
 
 /// <summary>
-/// Yalnizca admin audit log sorgulayabilir (dokuman §7.4/ROLE-013). Kayitlar
-/// append-only'dir; bu endpoint yalnizca okuma yapar (dokuman §18).
+/// <c>GET /api/v1/audit-logs</c> ve <c>/audit-logs/{auditId}</c> (dokuman §22/§32).
+/// Yalnizca admin sorgulayabilir. Kayitlar append-only'dir; bu endpoint yalnizca okur.
 /// </summary>
 public static class GetAuditLogsEndpoint
 {
     public static void MapGetAuditLogs(this IEndpointRouteBuilder app)
     {
-        app.MapGet("/api/v1/audit-logs", HandleAsync)
-           .WithName("GetAuditLogs")
-           .WithTags("Audit")
+        app.MapGet("/api/v1/audit-logs", ListAsync)
+           .WithName("GetAuditLogs").WithTags("Audit")
+           .RequireAuthorization(policy => policy.RequireRole(RoleNames.Admin));
+
+        app.MapGet("/api/v1/audit-logs/{auditId}", GetByIdAsync)
+           .WithName("GetAuditLog").WithTags("Audit")
            .RequireAuthorization(policy => policy.RequireRole(RoleNames.Admin));
     }
 
-    private static async Task<IResult> HandleAsync(
+    private static async Task<IResult> ListAsync(
         IdentityServiceDbContext db,
+        HttpContext httpContext,
         CorrelationContext correlation,
         CancellationToken cancellationToken,
         string? actorId = null,
         string? action = null,
-        int page = 1,
-        int pageSize = 50)
+        DateTimeOffset? from = null,
+        DateTimeOffset? to = null,
+        int limit = 50)
     {
-        page = Math.Max(page, 1);
-        pageSize = Math.Clamp(pageSize, 1, 200);
+        limit = Math.Clamp(limit, 1, 100);
 
-        var query = db.AuditLogEntries.AsNoTracking().OrderByDescending(e => e.OccurredAt).AsQueryable();
+        if (from is not null && to is not null && from >= to)
+        {
+            throw AppException.Validation("'from' degeri 'to' degerinden kucuk olmalidir.");
+        }
+
+        var query = db.AuditLogs.AsNoTracking().OrderByDescending(e => e.OccurredAt).AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(actorId))
         {
@@ -58,16 +66,40 @@ public static class GetAuditLogsEndpoint
             query = query.Where(e => e.Action == action);
         }
 
-        var totalCount = await query.CountAsync(cancellationToken);
+        if (from is not null)
+        {
+            query = query.Where(e => e.OccurredAt >= from);
+        }
+
+        if (to is not null)
+        {
+            query = query.Where(e => e.OccurredAt <= to);
+        }
 
         var items = await query
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .Select(e => new AuditLogEntryResponse(
-                e.Id, e.ActorId, e.Action, e.SourceService, e.ResourceType, e.ResourceId,
-                e.IpAddress, e.Result.ToString(), e.OccurredAt, e.CorrelationId))
+            .Take(limit + 1)
+            .Select(e => new AuditLogResponse(
+                e.Id, e.ActorId, e.ActorRole, e.Action, e.SourceService, e.ResourceType, e.ResourceId,
+                e.IpAddress, e.Result.ToString(), e.OccurredAt, e.DetailsJson))
             .ToListAsync(cancellationToken);
 
-        return ApiResults.Ok(new AuditLogPageResponse(items, page, pageSize, totalCount), correlation);
+        var hasMore = items.Count > limit;
+        var page = new PageInfo(null, hasMore, limit);
+
+        httpContext.Response.Headers.CacheControl = "no-store";
+        return ApiResults.Ok(new CursorPage<AuditLogResponse>(items.Take(limit).ToList(), page), correlation);
+    }
+
+    private static async Task<IResult> GetByIdAsync(
+        string auditId, IdentityServiceDbContext db, HttpContext httpContext, CorrelationContext correlation, CancellationToken cancellationToken)
+    {
+        var entry = await db.AuditLogs.AsNoTracking().SingleOrDefaultAsync(e => e.Id == auditId, cancellationToken)
+            ?? throw AppException.NotFound();
+
+        httpContext.Response.Headers.CacheControl = "no-store";
+        return ApiResults.Ok(
+            new AuditLogResponse(entry.Id, entry.ActorId, entry.ActorRole, entry.Action, entry.SourceService,
+                entry.ResourceType, entry.ResourceId, entry.IpAddress, entry.Result.ToString(), entry.OccurredAt, entry.DetailsJson),
+            correlation);
     }
 }

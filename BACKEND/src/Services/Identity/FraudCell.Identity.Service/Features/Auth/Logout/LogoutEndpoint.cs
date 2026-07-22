@@ -1,6 +1,4 @@
 using System.Security.Claims;
-using FraudCell.BuildingBlocks.Api;
-using FraudCell.BuildingBlocks.Correlation;
 using FraudCell.Identity.Service.Common;
 using FraudCell.Identity.Service.Domain;
 using FraudCell.Identity.Service.Persistence;
@@ -8,7 +6,10 @@ using FraudCell.Identity.Service.Security;
 
 namespace FraudCell.Identity.Service.Features.Auth.Logout;
 
-/// <summary>Yalnizca sunulan oturumu iptal eder (dokuman §7.1 IDN-027).</summary>
+/// <summary>
+/// <c>POST /api/v1/auth/logout</c> (dokuman `07-API-DESIGN.md` §27). Idempotenttir:
+/// zaten revoke edilmis bir oturum icin tekrar cagri guvenli sekilde 204 doner.
+/// </summary>
 public static class LogoutEndpoint
 {
     public static void MapLogout(this IEndpointRouteBuilder app)
@@ -24,24 +25,23 @@ public static class LogoutEndpoint
         RefreshTokenService refreshTokenService,
         AuditWriter auditWriter,
         IdentityServiceDbContext db,
-        CorrelationContext correlation,
         CancellationToken cancellationToken)
     {
         var rawToken = RefreshCookie.Read(httpContext.Request);
         if (rawToken is not null)
         {
-            await refreshTokenService.RevokeAsync(rawToken, cancellationToken);
+            await refreshTokenService.RevokeAsync(rawToken, RevocationReasons.Logout, cancellationToken);
         }
 
         RefreshCookie.Clear(httpContext.Response);
 
-        var actorId = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier)
-            ?? httpContext.User.FindFirstValue("sub");
+        var actorId = httpContext.User.FindFirstValue("sub");
+        var role = httpContext.User.FindFirstValue("role");
 
-        auditWriter.Record(actorId, AuditActions.Logout, AuditResult.Success, "user", actorId,
+        auditWriter.Record(actorId, role, AuditActions.Logout, AuditResult.Success, "user", actorId,
             RefreshCookie.GetClientIp(httpContext));
         await db.SaveChangesAsync(cancellationToken);
 
-        return ApiResults.Empty(correlation);
+        return Results.NoContent();
     }
 }

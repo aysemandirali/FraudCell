@@ -2,6 +2,7 @@ using FraudCell.BuildingBlocks.Time;
 using FraudCell.Identity.Service.Common;
 using FraudCell.Identity.Service.Domain;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -10,26 +11,85 @@ using Microsoft.Extensions.Logging;
 namespace FraudCell.Identity.Service.Persistence;
 
 /// <summary>
-/// Uygulama acilisinda dort rolun var oldugunu garanti eder ve (yalnizca
-/// yapilandirma ile acikca istenirse) ilk admin hesabini olusturur.
-///
-/// CreateStaff endpoint'i yalnizca ADMIN rolune acik oldugu icin (dokuman
-/// §7.1 IDN-005/ROLE-012) sistemde en az bir admin bulunmadan personel hesabi
-/// olusturulamaz; bu "tavuk-yumurta" problemini demo/ilk kurulum icin cozer.
+/// Uygulama acilisinda referans verilerin (roller, uzmanliklar, bolgeler) var
+/// oldugunu garanti eder ve (yalnizca yapilandirma ile acikca istenirse) ilk
+/// admin hesabini olusturur.
 /// </summary>
 public static class IdentitySeed
 {
-    public static async Task EnsureRolesAsync(IServiceProvider services)
+    private static readonly (string Code, string DisplayName)[] RoleSeed =
+    [
+        (RoleNames.Customer, "Musteri"),
+        (RoleNames.Analyst, "Fraud Analisti"),
+        (RoleNames.Supervisor, "Supervizor"),
+        (RoleNames.Admin, "Admin"),
+    ];
+
+    private static readonly (AnalystSpecialty Code, string DisplayName)[] SpecialtySeed =
+    [
+        (AnalystSpecialty.CALINTI_KART, "Calinti Kart"),
+        (AnalystSpecialty.HESAP_ELE_GECIRME, "Hesap Ele Gecirme"),
+        (AnalystSpecialty.PARA_AKLAMA, "Para Aklama"),
+        (AnalystSpecialty.SUPHELI_DAVRANIS, "Supheli Davranis"),
+    ];
+
+    private static readonly (OperationRegion Code, string DisplayName)[] RegionSeed =
+    [
+        (OperationRegion.MARMARA, "Marmara"),
+        (OperationRegion.EGE, "Ege"),
+        (OperationRegion.AKDENIZ, "Akdeniz"),
+        (OperationRegion.IC_ANADOLU, "Ic Anadolu"),
+        (OperationRegion.KARADENIZ, "Karadeniz"),
+        (OperationRegion.DOGU_ANADOLU, "Dogu Anadolu"),
+        (OperationRegion.GUNEYDOGU_ANADOLU, "Guneydogu Anadolu"),
+        (OperationRegion.YURT_DISI, "Yurt Disi"),
+    ];
+
+    public static async Task RunAsync(IServiceProvider services)
     {
         var roleManager = services.GetRequiredService<RoleManager<ApplicationRole>>();
+        var db = services.GetRequiredService<IdentityServiceDbContext>();
+        var clock = services.GetRequiredService<IClock>();
 
-        foreach (var roleName in RoleNames.All)
+        foreach (var (code, displayName) in RoleSeed)
         {
-            if (!await roleManager.RoleExistsAsync(roleName))
+            if (!await roleManager.RoleExistsAsync(code))
             {
-                await roleManager.CreateAsync(new ApplicationRole(roleName));
+                await roleManager.CreateAsync(new ApplicationRole(code, displayName) { CreatedAt = clock.UtcNow });
             }
         }
+
+        foreach (var (code, displayName) in SpecialtySeed)
+        {
+            var exists = await db.Specialties.AnyAsync(s => s.Code == code);
+            if (!exists)
+            {
+                db.Specialties.Add(new Specialty
+                {
+                    Id = Ulid.NewUlid().ToString(),
+                    Code = code,
+                    DisplayName = displayName,
+                    CreatedAt = clock.UtcNow,
+                });
+            }
+        }
+
+        foreach (var (code, displayName) in RegionSeed)
+        {
+            var exists = await db.Regions.AnyAsync(r => r.Code == code);
+            if (!exists)
+            {
+                db.Regions.Add(new Region
+                {
+                    Id = Ulid.NewUlid().ToString(),
+                    Code = code,
+                    DisplayName = displayName,
+                    CreatedAt = clock.UtcNow,
+                });
+            }
+        }
+
+        await db.SaveChangesAsync();
 
         await EnsureSeedAdminAsync(services);
     }
@@ -67,7 +127,7 @@ public static class IdentitySeed
         {
             UserName = adminEmail,
             Email = adminEmail,
-            ActorType = ActorType.Staff,
+            UserType = UserType.Staff,
             CreatedAt = clock.UtcNow,
         };
 
@@ -87,8 +147,9 @@ public static class IdentitySeed
             UserId = admin.Id,
             FirstName = "Seed",
             LastName = "Admin",
-            CreatedByUserId = admin.Id,
+            CreatedByAdminId = admin.Id,
             CreatedAt = clock.UtcNow,
+            AssignmentEnabled = false,
         });
 
         await db.SaveChangesAsync();

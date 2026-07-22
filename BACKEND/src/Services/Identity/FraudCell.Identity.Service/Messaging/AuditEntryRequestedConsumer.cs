@@ -15,6 +15,7 @@ namespace FraudCell.Identity.Service.Messaging;
 
 public sealed record AuditEntryRequestedPayload(
     string? ActorId,
+    string? ActorRole,
     string Action,
     string SourceService,
     string? ResourceType,
@@ -27,8 +28,12 @@ public sealed record AuditEntryRequestedPayload(
 /// <summary>
 /// Diger servislerin (Transaction, AI, Gamification, Edge) yayinladigi
 /// <c>audit.entry.requested</c> event'ini tuketip append-only audit kaydina
-/// donusturur (dokuman §18/§26). Identity Service audit persistence otoritesidir;
-/// bu consumer tek yazma noktasidir.
+/// donusturur (dokuman `02-ARCHITECTURE-OVERVIEW.md` §18/§26). Identity
+/// Service audit persistence otoritesidir; bu consumer tek yazma noktasidir.
+///
+/// Idempotency IKI katmandadir: BuildingBlocks inbox tablosu (ayni event'in
+/// consumer tarafindan tekrar islenmesini engeller) ve <c>audit_logs.source_event_id</c>
+/// unique constraint'i (dokuman §18.3, veritabani seviyesinde ikinci savunma).
 /// </summary>
 public sealed class AuditEntryRequestedConsumer(
     RabbitMqConnectionProvider connectionProvider,
@@ -49,7 +54,6 @@ public sealed class AuditEntryRequestedConsumer(
         await using var scope = scopeFactory.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<IdentityServiceDbContext>();
 
-        // Idempotency: ayni event birden fazla kez teslim edilebilir (at-least-once).
         var alreadyProcessed = await db.InboxMessages
             .AnyAsync(m => m.EventId == envelope.EventId && m.ConsumerName == ConsumerName, cancellationToken);
 
@@ -67,10 +71,14 @@ public sealed class AuditEntryRequestedConsumer(
                 : AuditResult.Failure;
         }
 
-        db.AuditLogEntries.Add(new AuditLogEntry
+        var now = clock.UtcNow;
+
+        db.AuditLogs.Add(new AuditLog
         {
             Id = Ulid.NewUlid().ToString(),
+            SourceEventId = envelope.EventId,
             ActorId = payload.ActorId,
+            ActorRole = payload.ActorRole,
             Action = payload.Action,
             SourceService = payload.SourceService,
             ResourceType = payload.ResourceType,
@@ -78,6 +86,7 @@ public sealed class AuditEntryRequestedConsumer(
             IpAddress = payload.IpAddress,
             Result = result,
             OccurredAt = payload.OccurredAt,
+            PersistedAt = now,
             CorrelationId = envelope.CorrelationId,
             DetailsJson = payload.Details?.GetRawText(),
         });
@@ -87,7 +96,7 @@ public sealed class AuditEntryRequestedConsumer(
             EventId = envelope.EventId,
             ConsumerName = ConsumerName,
             EventType = envelope.EventType,
-            ProcessedAt = clock.UtcNow,
+            ProcessedAt = now,
             CorrelationId = envelope.CorrelationId,
         });
 

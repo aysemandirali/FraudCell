@@ -17,7 +17,7 @@ public sealed class OtpOptions
 
     public int MaxAttempts { get; set; } = 5;
 
-    /// <summary>Dokuman §7.1 IDN-003: demo profilinde sabit kod kabul edilir.</summary>
+    /// <summary>Dokuman `07-API-DESIGN.md` §23: demo profilinde <c>demoHint</c> alani ve sabit kod doner.</summary>
     public bool UseFixedDemoCode { get; set; }
 
     public string FixedDemoCode { get; set; } = "1234";
@@ -28,25 +28,30 @@ public enum OtpVerifyOutcome
     Verified,
     NotFound,
     Expired,
-    AlreadyConsumed,
-    AttemptsExceeded,
+    Locked,
+    AlreadyVerified,
     CodeMismatch,
 }
 
+public sealed record OtpChallengeResult(string ChallengeId, DateTimeOffset ExpiresAt, string? DemoHint);
+
 /// <summary>
-/// GSM + OTP dogrulama akisi (dokuman §7.1). Gercek bir SMS gateway'i bu case
-/// kapsaminda yok; kod "gonderilmis" gibi loglanir ve demo profilinde sabit
-/// deger kabul edilir.
+/// GSM + OTP dogrulama akisi (dokuman `06-DATA-ARCHITECTURE.md` §15,
+/// `07-API-DESIGN.md` §23-24). Gercek bir SMS gateway'i bu case kapsaminda
+/// yok; kod "gonderilmis" gibi loglanir ve demo profilinde sabit deger kabul
+/// edilir.
 /// </summary>
 public sealed class OtpService(
     IdentityServiceDbContext db,
     IClock clock,
     IOptions<OtpOptions> options,
+    IHostEnvironment environment,
     ILogger<OtpService> logger)
 {
     private readonly OtpOptions _options = options.Value;
 
-    public async Task<string> IssueChallengeAsync(string msisdn, OtpPurpose purpose, CancellationToken cancellationToken)
+    public async Task<OtpChallengeResult> IssueChallengeAsync(
+        string gsmNumber, OtpPurpose purpose, string? ip, CancellationToken cancellationToken)
     {
         var code = _options.UseFixedDemoCode
             ? _options.FixedDemoCode
@@ -56,9 +61,11 @@ public sealed class OtpService(
         var challenge = new OtpChallenge
         {
             Id = Ulid.NewUlid().ToString(),
-            Msisdn = msisdn,
+            GsmNumber = gsmNumber,
             Purpose = purpose,
-            CodeHash = Hash(msisdn, purpose, code),
+            CodeHash = Hash(gsmNumber, purpose, code),
+            MaxAttempts = _options.MaxAttempts,
+            CreatedIp = ip,
             CreatedAt = now,
             ExpiresAt = now.AddMinutes(_options.ExpiryMinutes),
         };
@@ -67,61 +74,71 @@ public sealed class OtpService(
         await db.SaveChangesAsync(cancellationToken);
 
         // SMS entegrasyonu case kapsami disinda; demo/dogrulama amacli loglanir.
-        // Kodun kendisi Information seviyesinde LOGLANMAZ (yalnizca demo modda,
-        // ve o zaman zaten sabittir); bu satir yalnizca bir OTP uretildigini belgeler.
+        // Kodun kendisi yalnizca demo modda ve sabit oldugu icin log'a yazilmaz.
         logger.LogInformation(
-            "OTP challenge issued for msisdn ending {MsisdnSuffix} (purpose {Purpose}), expires at {ExpiresAt}.",
-            msisdn[^4..], purpose, challenge.ExpiresAt);
+            "OTP challenge issued for gsm ending {GsmSuffix} (purpose {Purpose}), expires at {ExpiresAt}.",
+            gsmNumber[^4..], purpose, challenge.ExpiresAt);
 
-        return challenge.Id;
+        var demoHint = environment.IsDevelopment() && _options.UseFixedDemoCode
+            ? $"Demo ortaminda OTP: {_options.FixedDemoCode}"
+            : null;
+
+        return new OtpChallengeResult(challenge.Id, challenge.ExpiresAt, demoHint);
     }
 
-    public async Task<OtpVerifyOutcome> VerifyAsync(
-        string msisdn, OtpPurpose purpose, string providedCode, CancellationToken cancellationToken)
+    public async Task<(OtpVerifyOutcome Outcome, OtpChallenge? Challenge)> VerifyAsync(
+        string challengeId, string providedCode, CancellationToken cancellationToken)
     {
-        var challenge = await db.OtpChallenges
-            .Where(c => c.Msisdn == msisdn && c.Purpose == purpose)
-            .OrderByDescending(c => c.CreatedAt)
-            .FirstOrDefaultAsync(cancellationToken);
+        var challenge = await db.OtpChallenges.SingleOrDefaultAsync(c => c.Id == challengeId, cancellationToken);
 
         if (challenge is null)
         {
-            return OtpVerifyOutcome.NotFound;
+            return (OtpVerifyOutcome.NotFound, null);
         }
 
-        if (challenge.ConsumedAt is not null)
+        if (challenge.Status == OtpStatus.Verified)
         {
-            return OtpVerifyOutcome.AlreadyConsumed;
+            return (OtpVerifyOutcome.AlreadyVerified, challenge);
         }
 
         var now = clock.UtcNow;
-        if (challenge.ExpiresAt <= now)
+        if (challenge.Status is OtpStatus.Expired or OtpStatus.Cancelled || challenge.ExpiresAt <= now)
         {
-            return OtpVerifyOutcome.Expired;
+            challenge.Status = OtpStatus.Expired;
+            await db.SaveChangesAsync(cancellationToken);
+            return (OtpVerifyOutcome.Expired, challenge);
         }
 
-        if (challenge.AttemptCount >= _options.MaxAttempts)
+        if (challenge.Status == OtpStatus.Locked || challenge.AttemptCount >= challenge.MaxAttempts)
         {
-            return OtpVerifyOutcome.AttemptsExceeded;
+            challenge.Status = OtpStatus.Locked;
+            await db.SaveChangesAsync(cancellationToken);
+            return (OtpVerifyOutcome.Locked, challenge);
         }
 
         challenge.AttemptCount++;
 
-        var expectedHash = Hash(msisdn, purpose, providedCode);
+        var expectedHash = Hash(challenge.GsmNumber, challenge.Purpose, providedCode);
         if (!CryptographicOperations.FixedTimeEquals(
                 System.Text.Encoding.UTF8.GetBytes(expectedHash),
                 System.Text.Encoding.UTF8.GetBytes(challenge.CodeHash)))
         {
+            if (challenge.AttemptCount >= challenge.MaxAttempts)
+            {
+                challenge.Status = OtpStatus.Locked;
+            }
+
             await db.SaveChangesAsync(cancellationToken);
-            return OtpVerifyOutcome.CodeMismatch;
+            return (OtpVerifyOutcome.CodeMismatch, challenge);
         }
 
-        challenge.ConsumedAt = now;
+        challenge.Status = OtpStatus.Verified;
+        challenge.VerifiedAt = now;
         await db.SaveChangesAsync(cancellationToken);
-        return OtpVerifyOutcome.Verified;
+        return (OtpVerifyOutcome.Verified, challenge);
     }
 
-    private static string Hash(string msisdn, OtpPurpose purpose, string code)
+    private static string Hash(string gsmNumber, OtpPurpose purpose, string code)
         => Convert.ToHexStringLower(SHA256.HashData(
-            System.Text.Encoding.UTF8.GetBytes($"{msisdn}:{purpose}:{code}")));
+            System.Text.Encoding.UTF8.GetBytes($"{gsmNumber}:{purpose}:{code}")));
 }

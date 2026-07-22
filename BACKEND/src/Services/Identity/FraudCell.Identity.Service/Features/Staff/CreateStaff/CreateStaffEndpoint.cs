@@ -18,14 +18,13 @@ public sealed record CreateStaffRequest(
     string Password,
     string Role,
     IReadOnlyCollection<AnalystSpecialty> Specialties,
-    IReadOnlyCollection<OperationRegion> Regions);
-
-public sealed record CreateStaffResponse(string UserId, string Email, string Role);
+    IReadOnlyCollection<OperationRegion> Regions,
+    bool AssignmentEnabled = true);
 
 /// <summary>
-/// Yalnizca admin personel hesabi olusturabilir (dokuman §7.1 IDN-005/ROLE-012).
-/// Sifre politikasi ASP.NET Core Identity password validator'lari ile,
-/// hash'leme Argon2id ile yapilir (dokuman §8.3).
+/// <c>POST /api/v1/staff</c> (dokuman `07-API-DESIGN.md` §29). Yalnizca admin
+/// personel hesabi olusturabilir. Sifre politikasi ASP.NET Core Identity
+/// validator'lari ile, hash'leme Argon2id ile yapilir.
 /// </summary>
 public static class CreateStaffEndpoint
 {
@@ -55,8 +54,7 @@ public static class CreateStaffEndpoint
 
         if (!RoleNames.StaffRoles.Contains(request.Role, StringComparer.Ordinal))
         {
-            throw AppException.Validation(
-                "Rol ANALYST, SUPERVISOR veya ADMIN olmalidir.",
+            throw AppException.Validation("Rol ANALYST, SUPERVISOR veya ADMIN olmalidir.",
                 new Dictionary<string, object?> { ["field"] = "role" });
         }
 
@@ -73,30 +71,25 @@ public static class CreateStaffEndpoint
         var existing = await userManager.FindByEmailAsync(request.Email.Trim());
         if (existing is not null)
         {
-            throw new AppException(
-                System.Net.HttpStatusCode.Conflict,
-                ErrorCodes.EmailAlreadyRegistered,
+            throw new AppException(System.Net.HttpStatusCode.Conflict, ErrorCodes.EmailAlreadyRegistered,
                 "Bu e-posta ile zaten bir hesap mevcut.");
         }
 
-        var adminId = httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier)
-            ?? httpContext.User.FindFirstValue("sub")
-            ?? throw AppException.Forbidden();
+        var adminId = httpContext.User.FindFirstValue("sub") ?? throw AppException.Forbidden();
 
         var now = clock.UtcNow;
         var user = new ApplicationUser
         {
             UserName = request.Email.Trim(),
             Email = request.Email.Trim(),
-            ActorType = ActorType.Staff,
+            UserType = UserType.Staff,
             CreatedAt = now,
         };
 
         var createResult = await userManager.CreateAsync(user, request.Password);
         if (!createResult.Succeeded)
         {
-            throw AppException.Validation(
-                "Sifre politikasi ihlal edildi.",
+            throw AppException.Validation("Sifre politikasi ihlal edildi.",
                 new Dictionary<string, object?>
                 {
                     ["violations"] = createResult.Errors.Select(e => e.Code).ToArray(),
@@ -106,59 +99,58 @@ public static class CreateStaffEndpoint
 
         await userManager.AddToRoleAsync(user, request.Role);
 
+        var specialtyIds = await db.Specialties
+            .Where(s => request.Specialties.Contains(s.Code))
+            .Select(s => s.Id)
+            .ToListAsync(cancellationToken);
+
+        var regionIds = await db.Regions
+            .Where(r => request.Regions.Contains(r.Code))
+            .Select(r => r.Id)
+            .ToListAsync(cancellationToken);
+
         var profile = new StaffProfile
         {
             UserId = user.Id,
             FirstName = request.FirstName.Trim(),
             LastName = request.LastName.Trim(),
-            CreatedByUserId = adminId,
+            CreatedByAdminId = adminId,
             CreatedAt = now,
+            AssignmentEnabled = request.AssignmentEnabled,
         };
 
-        foreach (var specialty in request.Specialties.Distinct())
+        foreach (var specialtyId in specialtyIds)
         {
-            profile.Specialties.Add(new StaffSpecialty { StaffProfileUserId = user.Id, Specialty = specialty });
+            profile.Specialties.Add(new StaffSpecialty { StaffUserId = user.Id, SpecialtyId = specialtyId, AssignedBy = adminId, AssignedAt = now });
         }
 
-        foreach (var region in request.Regions.Distinct())
+        foreach (var regionId in regionIds)
         {
-            profile.Regions.Add(new StaffRegion { StaffProfileUserId = user.Id, Region = region });
+            profile.Regions.Add(new StaffRegion { StaffUserId = user.Id, RegionId = regionId, AssignedBy = adminId, AssignedAt = now });
         }
 
         db.StaffProfiles.Add(profile);
 
-        outboxWriter.Enqueue(
-            IdentityEventTypes.StaffCreated,
-            subjectId: user.Id,
-            payload: new { userId = user.Id, role = request.Role, createdAt = now });
+        outboxWriter.Enqueue(IdentityEventTypes.StaffCreated, user.Id, new { userId = user.Id, role = request.Role, createdAt = now });
+        outboxWriter.Enqueue(IdentityEventTypes.StaffProfileUpdated, user.Id, new
+        {
+            userId = user.Id,
+            isActive = true,
+            assignmentEnabled = request.AssignmentEnabled,
+            specialties = request.Specialties.Select(s => s.ToString()).ToArray(),
+            regions = request.Regions.Select(r => r.ToString()).ToArray(),
+            displayName = $"{profile.FirstName} {profile.LastName}",
+            updatedAt = now,
+        });
 
-        outboxWriter.Enqueue(
-            IdentityEventTypes.StaffProfileUpdated,
-            subjectId: user.Id,
-            payload: new
-            {
-                userId = user.Id,
-                isActive = true,
-                specialties = request.Specialties.Select(s => s.ToString()).ToArray(),
-                regions = request.Regions.Select(r => r.ToString()).ToArray(),
-                displayName = $"{profile.FirstName} {profile.LastName}",
-                updatedAt = now,
-            });
-
-        auditWriter.Record(
-            actorId: adminId,
-            action: AuditActions.StaffCreated,
-            result: AuditResult.Success,
-            resourceType: "user",
-            resourceId: user.Id,
-            ipAddress: Common.RefreshCookie.GetClientIp(httpContext),
-            detailsJson: $$"""{"role":"{{request.Role}}"}""");
+        auditWriter.Record(adminId, RoleNames.Admin, AuditActions.StaffCreated, AuditResult.Success, "user", user.Id,
+            Common.RefreshCookie.GetClientIp(httpContext), $$"""{"role":"{{request.Role}}"}""");
 
         await db.SaveChangesAsync(cancellationToken);
 
-        return ApiResults.Created(
-            $"/api/v1/staff/{user.Id}",
-            new CreateStaffResponse(user.Id, user.Email!, request.Role),
-            correlation);
+        var response = await StaffProjector.ProjectAsync(db, userManager, user, cancellationToken);
+        ETagHelper.WriteETag(httpContext.Response, response.Version);
+
+        return ApiResults.Created($"/api/v1/staff/{user.Id}", response, correlation);
     }
 }

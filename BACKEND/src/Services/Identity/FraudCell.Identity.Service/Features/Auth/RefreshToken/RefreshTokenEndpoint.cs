@@ -5,24 +5,23 @@ using FraudCell.Identity.Service.Domain;
 using FraudCell.Identity.Service.Persistence;
 using FraudCell.Identity.Service.Security;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
 namespace FraudCell.Identity.Service.Features.Auth.RefreshToken;
 
-public sealed record RefreshTokenResponse(string AccessToken, DateTimeOffset ExpiresAt);
+public sealed record RefreshTokenResponse(string AccessToken, DateTimeOffset AccessTokenExpiresAt);
 
 /// <summary>
-/// Refresh token rotation (dokuman §6/§9 SEC-006). Token her kullanimda
-/// rotate edilir; revoke edilmis bir token'in tekrar sunulmasi calinti token
-/// senaryosu sayilir ve TUM aktif oturumlar dusurulur.
+/// <c>POST /api/v1/auth/refresh</c> (dokuman `07-API-DESIGN.md` §26). Token
+/// her kullanimda rotate edilir; revoke edilmis bir token'in tekrar
+/// sunulmasi calinti token senaryosu sayilir ve TUM aktif oturumlar dusurulur.
 /// </summary>
 public static class RefreshTokenEndpoint
 {
     public static void MapRefreshToken(this IEndpointRouteBuilder app)
     {
         app.MapPost("/api/v1/auth/refresh", HandleAsync)
-           .WithName("RefreshToken")
+           .WithName("RefreshAccessToken")
            .WithTags("Auth")
            .AllowAnonymous();
     }
@@ -31,6 +30,7 @@ public static class RefreshTokenEndpoint
         HttpContext httpContext,
         RefreshTokenService refreshTokenService,
         UserManager<ApplicationUser> userManager,
+        SessionIssuer sessionIssuer,
         IdentityServiceDbContext db,
         JwtTokenService jwtTokenService,
         AuditWriter auditWriter,
@@ -60,16 +60,12 @@ public static class RefreshTokenEndpoint
                     var user = await userManager.FindByIdAsync(result.UserId);
                     if (user is not null)
                     {
-                        // Security stamp yenilemesi, o an bellekte tutulan diger access
-                        // token'lari iptal etmez (statik JWT'ler exp'e kadar gecerlidir),
-                        // ancak yeni refresh/login akislarini ve sunucu tarafi kontrolleri
-                        // etkileyecek sekilde kullanicinin oturum durumunu isaretler.
                         await userManager.UpdateSecurityStampAsync(user);
                     }
                 }
 
                 auditWriter.Record(
-                    result.UserId, AuditActions.TokenReuseDetected, AuditResult.Failure,
+                    result.UserId, null, AuditActions.TokenReuseDetected, AuditResult.Failure,
                     "refresh_session_family", result.PreviousFamilyId, ip);
                 await db.SaveChangesAsync(cancellationToken);
 
@@ -79,9 +75,12 @@ public static class RefreshTokenEndpoint
             }
 
             case RefreshOutcome.Invalid:
+                RefreshCookie.Clear(httpContext.Response);
+                throw AppException.Unauthorized(ErrorCodes.RefreshTokenInvalid, "Refresh token gecersiz.");
+
             case RefreshOutcome.Expired:
                 RefreshCookie.Clear(httpContext.Response);
-                throw AppException.Unauthorized(ErrorCodes.RefreshTokenInvalid, "Refresh token gecersiz veya suresi dolmus.");
+                throw AppException.Unauthorized(ErrorCodes.RefreshTokenExpired, "Refresh token suresi dolmus.");
 
             case RefreshOutcome.Success:
             default:
@@ -94,27 +93,11 @@ public static class RefreshTokenEndpoint
         var roles = await userManager.GetRolesAsync(refreshedUser);
         var role = roles.FirstOrDefault() ?? throw new InvalidOperationException($"User {refreshedUser.Id} has no role.");
 
-        var specialties = Array.Empty<string>();
-        var regions = Array.Empty<string>();
-
-        if (refreshedUser.ActorType == ActorType.Staff)
-        {
-            var profile = await db.StaffProfiles
-                .Include(p => p.Specialties)
-                .Include(p => p.Regions)
-                .AsNoTracking()
-                .SingleOrDefaultAsync(p => p.UserId == refreshedUser.Id, cancellationToken);
-
-            if (profile is not null)
-            {
-                specialties = [.. profile.Specialties.Select(s => s.Specialty.ToString())];
-                regions = [.. profile.Regions.Select(r => r.Region.ToString())];
-            }
-        }
-
+        var (specialties, regions) = await sessionIssuer.GetStaffClaimsAsync(refreshedUser, cancellationToken);
         var access = jwtTokenService.GenerateAccessToken(refreshedUser, role, specialties, regions);
 
         RefreshCookie.Append(httpContext.Response, result.NewRawToken!, jwtOptions);
+        httpContext.Response.Headers.CacheControl = "no-store";
 
         return ApiResults.Ok(new RefreshTokenResponse(access.Token, access.ExpiresAt), correlation);
     }
