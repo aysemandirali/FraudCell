@@ -32,7 +32,7 @@ export function TransactionDetailPage({ transactionId }: { transactionId: string
 
   if (transaction.isPending) {
     return (
-      <div className="mx-auto max-w-lg space-y-4 px-4 py-6" role="status" aria-label="Yükleniyor">
+      <div className="mx-auto max-w-lg space-y-4 px-4 py-6 lg:max-w-6xl lg:px-6 lg:py-8" role="status" aria-label="Yükleniyor">
         <Skeleton className="h-10 w-48" />
         <Skeleton className="h-48 w-full rounded-card" />
         <Skeleton className="h-40 w-full rounded-card" />
@@ -50,7 +50,7 @@ export function TransactionDetailPage({ transactionId }: { transactionId: string
   const controlTone = CONTROL_TONE[item.controlStatus];
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-6">
+    <div className="mx-auto max-w-lg px-4 py-6 lg:max-w-6xl lg:px-6 lg:py-8 xl:px-8">
       <header className="mb-5 flex items-center gap-3">
         <Link
           to="/customer/transactions"
@@ -82,11 +82,12 @@ export function TransactionDetailPage({ transactionId }: { transactionId: string
         </Banner>
       ) : null}
 
-      {/* Risk kahramanı */}
-      <section
-        className="surface-card flex items-center justify-between gap-5 p-5"
-        aria-labelledby="risk-title"
-      >
+      <div className="grid gap-4 lg:grid-cols-2">
+        {/* Risk kahramanı */}
+        <section
+          className="surface-card flex items-center justify-between gap-5 p-5"
+          aria-labelledby="risk-title"
+        >
         <div className="min-w-0">
           <p className="text-sm text-ink-500">İşlem tutarı</p>
           <p className="mt-1 text-2xl font-bold tabular text-ink-900">
@@ -98,10 +99,10 @@ export function TransactionDetailPage({ transactionId }: { transactionId: string
           <p className="mt-1 text-xs text-ink-500">{CONTROL_STATUS_LABEL[item.controlStatus]}</p>
         </div>
         <RiskGauge score={assessment.riskScore} level={riskLevel} size="lg" />
-      </section>
+        </section>
 
       {/* İşlem bilgileri */}
-      <section className="mt-4 surface-card p-5" aria-labelledby="details-title">
+      <section className="surface-card p-5" aria-labelledby="details-title">
         <h2 id="details-title" className="text-h3 text-ink-900">
           İşlem bilgileri
         </h2>
@@ -131,7 +132,7 @@ export function TransactionDetailPage({ transactionId }: { transactionId: string
 
       {/* AI değerlendirmesi */}
       {assessment.status === 'COMPLETED' ? (
-        <section className="mt-4 surface-card p-5" aria-labelledby="assessment-title">
+        <section className="surface-card p-5 lg:col-span-2" aria-labelledby="assessment-title">
           <div className="flex items-center gap-2">
             <span className="flex size-8 items-center justify-center rounded-tile bg-brand-100 text-brand-700">
               <Bot className="size-4.5" aria-hidden />
@@ -171,6 +172,7 @@ export function TransactionDetailPage({ transactionId }: { transactionId: string
           ) : null}
         </section>
       ) : null}
+      </div>
     </div>
   );
 }

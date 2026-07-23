@@ -49,7 +49,7 @@ export function CustomerVerificationsPage() {
   const items = verifications.data ?? [];
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-6">
+    <div className="mx-auto max-w-lg px-4 py-6 lg:max-w-7xl lg:px-6 lg:py-8 xl:px-8">
       <header className="mb-6">
         <h1 className="text-h1 text-ink-900">Doğrulamalar</h1>
         <p className="mt-1 text-body text-ink-500">
@@ -57,7 +57,9 @@ export function CustomerVerificationsPage() {
         </p>
       </header>
 
-      {verifications.isPending ? <SkeletonList rows={2} /> : null}
+      {verifications.isPending ? (
+        <SkeletonList rows={2} className="lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0" />
+      ) : null}
       {verifications.isError ? (
         <ErrorState error={verifications.error} onRetry={() => void verifications.refetch()} />
       ) : null}
@@ -69,7 +71,7 @@ export function CustomerVerificationsPage() {
         />
       ) : null}
 
-      <div className="space-y-4">
+      <div className="grid gap-4 lg:grid-cols-2">
         {items.map((item) => (
           <article
             key={item.verificationId}

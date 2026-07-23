@@ -74,7 +74,7 @@ export function NewTransactionPage() {
   });
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-6">
+    <div className="mx-auto max-w-lg px-4 py-6 lg:max-w-3xl lg:px-6 lg:py-8 xl:px-8">
       <header className="mb-6 flex items-center gap-3">
         <button
           type="button"
@@ -90,7 +90,7 @@ export function NewTransactionPage() {
         </div>
       </header>
 
-      <form onSubmit={onSubmit} className="surface-card space-y-4 p-5" noValidate>
+      <form onSubmit={onSubmit} className="surface-card space-y-4 p-5 lg:p-7" noValidate>
         {requestError ? <Banner tone="danger">{requestError}</Banner> : null}
         <Field
           label="Tutar (TRY)"

@@ -1,78 +1,99 @@
 # FraudCell
 
-FraudCell; müşteri işlemlerini AI ile değerlendiren, risk vakalarını personele
-atayan ve analist performansını oyunlaştıran bir full-stack demo sistemidir.
-Tarayıcının tek giriş noktası Edge Gateway'dir. Frontend, Identity,
-Transaction, AI ve Gamification servislerinin gerçek akışlarıyla çalışır.
+FraudCell; müşteri işlemlerini makine öğrenmesiyle skorlayan, risk vakalarını uygun
+analiste atayan ve analist performansını oyunlaştıran event-driven bir fraud operasyon
+platformudur. Uygulamanın tek dış giriş noktası Edge Gateway'dir; frontend de gateway
+tarafından `http://127.0.0.1:8080` adresinde sunulur.
 
-## Hızlı Başlangıç
+## Mimari
 
-Günlük geliştirme için önerilen mod hibrittir. Uygulamalar Windows üzerinde,
-yalnızca PostgreSQL ve RabbitMQ Docker'da çalışır:
+```mermaid
+flowchart LR
+    UI[React SPA] --> EDGE[Edge Gateway]
+    EDGE --> ID[Identity Service]
+    EDGE --> TX[Transaction Service]
+    EDGE --> GAME[Gamification Service]
+    EDGE --> AI[AI Service]
+    ID <--> MQ[(RabbitMQ)]
+    TX <--> MQ
+    AI <--> MQ
+    GAME <--> MQ
+    ID --> DB[(Servis başına ayrı PostgreSQL DB)]
+    TX --> DB
+    AI --> DB
+    GAME --> DB
+```
+
+Stack 7 container'dan oluşur: Edge, Identity, Transaction, AI, Gamification,
+PostgreSQL ve RabbitMQ. PostgreSQL tek instance içinde servis başına ayrı database ve
+ayrı uygulama rolü kullanır. Yalnızca gateway host portu açar.
+
+## Hızlı başlangıç
+
+Gereksinim: güncel Docker Desktop ve Docker Compose v2.
 
 ```bat
-scripts\configure-wsl.bat --apply
-scripts\start-all.bat
+scripts\start-fraudcell.bat
 ```
 
-- Frontend: `http://127.0.0.1:5173`
-- Gateway: `http://127.0.0.1:8080`
+Script, yoksa `BACKEND\.env.example` dosyasından `BACKEND\.env` oluşturur; tüm
+imajları build eder, migrasyon/seed işlemlerini yürütür ve gateway hazır olunca
+tarayıcıyı açar. Aynı işlem terminalden de çalıştırılabilir:
 
-Tam Docker demosu için:
-
-```bat
-scripts\configure-pagefile.bat --apply
-scripts\start-docker.bat
+```powershell
+cd BACKEND
+docker compose up -d --build
+docker compose ps
 ```
 
-Bu mod frontend dahil bütün sistemi `http://127.0.0.1:8080` adresinde açar.
-İlk komut Yönetici terminalinde bir kez çalıştırılmalıdır. Windows pagefile
-kapalıyken tam Docker derlemesi sistemin commit belleğini tüketebilir.
+- Uygulama: `http://127.0.0.1:8080`
+- Gateway health: `http://127.0.0.1:8080/health/ready`
+- Admin: `admin@fraudcell.local` / `ChangeMe123!`
+- Yeni müşteri: herhangi bir `5xxxxxxxxx` GSM, demo OTP: `1234`
 
-Yerel demo yöneticisi:
+Bu kimlik bilgileri yalnızca `Development` demo ortamı içindir.
 
-```text
-admin@fraudcell.local
-ChangeMe123!
-```
+Sistemi durdurmak için `scripts\stop-fraudcell.bat`; volume'lar dahil sıfırlamak için
+`scripts\stop-fraudcell.bat --temizle` kullanılır.
 
-Bu bilgiler sadece `Development` ortamı içindir.
+## Zorunlu demo akışı
 
-## Çalışma Modları
-
-| Komut | Uygulamalar | Uzun süreli container | Adres |
-|---|---|---:|---|
-| `scripts\start-mock.bat` | Frontend + MSW | 0 | `5173` |
-| `scripts\start-local.bat` | Tamamen Windows native | 0 | `5173`, `8080` |
-| `scripts\start-hybrid.bat` | Native uygulamalar | 2 | `5173`, `8080` |
-| `scripts\start-docker.bat` | Tam Docker + statik frontend | 7 | `8080` |
-
-Tam Docker modu tek PostgreSQL sürecinde dört ayrı database ve dört ayrı login
-rolü kullanır. Böylece veri sahipliği korunurken dört PostgreSQL container'ının
-RAM/CPU maliyeti ödenmez. Yalnızca Gateway host portu açar. Compose hard RAM
-limitlerinin toplamı 3.4 GiB'dir; build işlemleri `COMPOSE_PARALLEL_LIMIT=1`
-ile seri yürütülür.
-
-Docker kullanmadan çalıştırmak için PostgreSQL 18, RabbitMQ 4.x/Erlang,
-.NET SDK 10, Node.js 22.13+ ve `uv` kurulu olmalıdır. Ardından
-`BACKEND\.env.local.example` dosyasını `BACKEND\.env.local` olarak oluşturup
-`POSTGRES_ADMIN_PASSWORD` değerini girin ve `scripts\start-local.bat` çalıştırın.
+1. Yeni müşteri oluşturup gece, yurt dışı, 50.000 TRY transfer girin.
+2. İşlem detayında yüksek risk, `ÇALINTI_KART` ve `İNCELEME` kararını gösterin.
+3. Analist hesabıyla vakayı başlatıp blok kararı ve not girin.
+4. Puan hareketini ve süpervizör liderlik tablosunu gösterin.
+5. `cd BACKEND && docker compose stop ai-service` çalıştırın; yeni işlemin yine
+   kaydedilip `TIMED_OUT / MANUAL_QUEUE` vakasına dönüştüğünü gösterin.
+6. `docker compose up -d ai-service` ile AI servisini geri kaldırın.
 
 ## Doğrulama
 
-```bat
-scripts\status.bat
-scripts\smoke-backend.bat
-scripts\test-fullstack.bat hybrid
-scripts\test-fullstack.bat docker
-scripts\check-contracts.bat
-scripts\stop-all.bat
+```powershell
+dotnet build BACKEND/FraudCell.sln -c Release
+dotnet test BACKEND/FraudCell.sln -c Release
+
+cd BACKEND/src/Ai/fraudcell-ai
+uv run ruff check .
+uv run mypy app
+uv run pytest -q
+
+cd ../../../../FRONTEND/app
+npm test
+npm run typecheck
+npm run build
+$env:PLAYWRIGHT_BASE_URL='http://127.0.0.1:8080'
+npm run e2e
 ```
 
-Full-stack baseline; .NET build, Python Ruff/Mypy/Pytest, gateway smoke,
-OpenAPI snapshot kontrolü, frontend contract üretimi, Vitest, typecheck,
-production build ve masaüstü/mobil Playwright akışlarını çalıştırır.
+## Dokümantasyon
 
-Ayrıntılı komutlar [scripts/README.md](scripts/README.md), kalan mühendislik
-fazları [BACKEND/docs/12-BACKEND-COMPLETION-PLAN.md](BACKEND/docs/12-BACKEND-COMPLETION-PLAN.md)
-dosyasındadır.
+- Gereksinim izlenebilirliği: [BACKEND/docs/01-REQUIREMENTS-TRACEABILITY.md](BACKEND/docs/01-REQUIREMENTS-TRACEABILITY.md)
+- Mimari ve servis sınırları: [BACKEND/docs/02-ARCHITECTURE-OVERVIEW.md](BACKEND/docs/02-ARCHITECTURE-OVERVIEW.md)
+- State machine: [BACKEND/docs/05-DOMAIN-AND-STATE-MACHINE.md](BACKEND/docs/05-DOMAIN-AND-STATE-MACHINE.md)
+- Event kataloğu: [BACKEND/EVENTS.md](BACKEND/EVENTS.md)
+- AI yaklaşımı/eğitim: [BACKEND/docs/10-AI-SERVICE-DESIGN.md](BACKEND/docs/10-AI-SERVICE-DESIGN.md)
+- Sunum ve teslim playbook'u: [BACKEND/docs/11-FINAL-DELIVERY-PLAYBOOK.md](BACKEND/docs/11-FINAL-DELIVERY-PLAYBOOK.md)
+- OpenAPI snapshot'ları: `BACKEND/contracts/openapi/`
+
+Servislerin sorumlulukları, endpoint grupları ve environment değişkenleri kendi
+klasörlerindeki README dosyalarında yer alır.

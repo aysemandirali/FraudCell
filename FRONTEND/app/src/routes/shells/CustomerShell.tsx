@@ -1,15 +1,14 @@
 import { Link, Outlet, useRouterState } from '@tanstack/react-router';
-import { CreditCard, Home, Plus, ShieldCheck, User } from 'lucide-react';
+import { Bell, CreditCard, Home, Plus, ShieldCheck, User } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
-import { LogoMark, LogoWordmark } from '@/shared/ui/Logo';
+import { LogoWordmark } from '@/shared/ui/Logo';
 
 /**
- * Müşteri kabuğu — mobil öncelikli, masaüstünde "vitrin".
+ * Müşteri kabuğu — mobil öncelikli, masaüstünde gerçek web çalışma alanı.
  *
  * Mobilde tam ekran Paycell dili (gradient, tam pill nav, ortada FAB).
- * Masaüstünde uygulama, markalı atmosferik bir zemin üzerinde yükseltilmiş bir
- * cihaz yüzeyi içinde durur: geniş ekranda ince bir şerit gibi görünmek yerine
- * kasıtlı, premium bir vitrin hissi verir (jüri sunumu için).
+ * Masaüstünde üst navigasyon ve geniş, merkezlenmiş içerik alanı kullanılır;
+ * sayfalar mobil cihaz maketine sıkışmadan ekranı verimli biçimde doldurur.
  *
  * Bildirimler alt barda değil ana sayfa kahramanındaki zil ikonundadır; alt bar
  * dört ana yüzeyi + "Yeni işlem" FAB'ını taşır.
@@ -32,48 +31,59 @@ const RIGHT: Tab[] = [
   { to: '/customer/profile', label: 'Profil', icon: User, exact: false },
 ];
 
+const DESKTOP_NAV = [...LEFT, ...RIGHT];
+
 export function CustomerShell() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   return (
-    <div className="relative min-h-dvh">
-      {/* Masaüstü atmosfer zemini — sabit, uygulamanın arkasında */}
-      <div aria-hidden className="fixed inset-0 -z-10 hidden overflow-hidden gradient-splash lg:block">
-        <div className="hero-mesh absolute inset-0" />
-        {/* Sol üst marka; sağ altta dev soluk kalkan filigranı */}
-        <div className="absolute top-8 left-10 xl:top-10 xl:left-14">
-          <LogoWordmark tone="white" className="opacity-90" />
+    <div className="relative min-h-dvh bg-canvas">
+      {/* Masaüstü web kabuğu — içerik artık cihaz maketine sıkışmaz. */}
+      <header className="sticky top-0 z-40 hidden border-b border-ink-100 bg-surface/90 backdrop-blur-xl lg:block">
+        <div className="mx-auto flex h-[4.5rem] w-full max-w-7xl items-center gap-6 px-6 xl:px-8">
+          <Link to="/customer" aria-label="Ana sayfa" className="shrink-0">
+            <LogoWordmark />
+          </Link>
+
+          <nav aria-label="Müşteri gezinme" className="flex min-w-0 items-center gap-1">
+            {DESKTOP_NAV.map((item) => (
+              <DesktopNavTab key={item.to} item={item} pathname={pathname} />
+            ))}
+          </nav>
+
+          <div className="ml-auto flex shrink-0 items-center gap-2">
+            <Link
+              to="/customer/notifications"
+              aria-label="Bildirimler"
+              className="flex size-10 items-center justify-center rounded-full text-ink-500 transition-colors hover:bg-brand-50 hover:text-brand-700"
+            >
+              <Bell className="size-5" aria-hidden />
+            </Link>
+            <Link
+              to="/customer/transactions/new"
+              className="gradient-brand inline-flex items-center gap-2 rounded-pill px-4 py-2.5 text-sm font-semibold text-white shadow-card transition-[filter,transform] hover:brightness-105 active:scale-[0.98]"
+            >
+              <Plus className="size-4" aria-hidden />
+              Yeni işlem
+            </Link>
+          </div>
         </div>
-        <LogoMark className="absolute -right-16 -bottom-16 size-[26rem] text-white opacity-[0.06]" />
-        <p className="absolute bottom-10 left-10 max-w-xs text-sm text-white/55 xl:left-14">
-          FraudCell · Paycell işlemleri için yapay zekâ destekli güvenlik.
-        </p>
-      </div>
+      </header>
 
-      {/* Uygulama yüzeyi — mobilde tam ekran, masaüstünde yükseltilmiş cihaz */}
-      <div
-        className={cn(
-          'relative mx-auto flex min-h-dvh w-full flex-col bg-canvas',
-          'lg:my-8 lg:min-h-[calc(100dvh-4rem)] lg:max-w-[460px] lg:overflow-hidden',
-          'lg:rounded-[2.25rem] lg:shadow-overlay lg:ring-1 lg:ring-black/5',
-        )}
-      >
-        <main className="flex-1 pb-24 lg:pb-28">
-          <Outlet />
-        </main>
-      </div>
+      <main className="min-h-dvh pb-24 lg:min-h-[calc(100dvh-4.5rem)] lg:pb-0">
+        <Outlet />
+      </main>
 
-      {/* Alt gezinme — mobilde tam genişlik bar, masaüstünde yüzen dock */}
+      {/* Alt gezinme yalnızca mobil uygulama yüzünde kalır. */}
       <nav
         aria-label="Ana gezinme"
         className={cn(
           'fixed z-40 border-ink-100 bg-surface/95 shadow-nav backdrop-blur-md safe-bottom',
           'inset-x-0 bottom-0 border-t',
-          'lg:inset-x-auto lg:bottom-12 lg:left-1/2 lg:w-[404px] lg:-translate-x-1/2',
-          'lg:rounded-full lg:border lg:shadow-raised',
+          'lg:hidden',
         )}
       >
-        <div className="relative mx-auto flex max-w-lg items-stretch lg:max-w-none">
+        <div className="relative mx-auto flex max-w-lg items-stretch">
           {LEFT.map((item) => (
             <NavTab key={item.to} item={item} pathname={pathname} />
           ))}
@@ -95,6 +105,27 @@ export function CustomerShell() {
         </div>
       </nav>
     </div>
+  );
+}
+
+function DesktopNavTab({ item, pathname }: { item: Tab; pathname: string }) {
+  const { to, label, icon: Icon, exact } = item;
+  const active = exact ? pathname === to : pathname.startsWith(to);
+
+  return (
+    <Link
+      to={to}
+      aria-current={active ? 'page' : undefined}
+      className={cn(
+        'inline-flex items-center gap-2 rounded-pill px-3 py-2 text-sm font-medium transition-colors',
+        active
+          ? 'bg-brand-50 text-brand-700'
+          : 'text-ink-500 hover:bg-ink-100/70 hover:text-ink-900',
+      )}
+    >
+      <Icon className="size-4" aria-hidden />
+      {label}
+    </Link>
   );
 }
 

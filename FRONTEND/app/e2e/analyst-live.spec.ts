@@ -200,7 +200,7 @@ test('operations flow reaches analyst points and supervisor leaderboard', async 
   await page.screenshot({ path: testInfo.outputPath('supervisor-dashboard.png'), fullPage: true });
   await clickConsoleLink(page, 'Tüm Vakalar');
   await expect(page.getByRole('heading', { name: 'Tüm vakalar' })).toBeVisible();
-  await page.getByRole('link', { name: new RegExp(riskCase.transactionNo) }).click();
+  await page.getByRole('button', { name: new RegExp(riskCase.transactionNo) }).click();
   await expect(page.getByRole('heading', { name: riskCase.transactionNo })).toBeVisible();
   await expect(page.getByText('Süpervizör işlemleri', { exact: true })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('supervisor-case-detail.png'), fullPage: true });

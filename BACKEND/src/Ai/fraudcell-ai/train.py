@@ -73,12 +73,18 @@ def _group_holdout(df: pd.DataFrame) -> tuple[np.ndarray, np.ndarray, np.ndarray
     return train_idx, temp_idx[val_local], temp_idx[test_local]
 
 
-def _binary_metrics(y_true: np.ndarray, proba: np.ndarray) -> dict:
-    pred = (proba >= 0.5).astype(int)
+# Metrikler operasyonel "incele" kapisinda raporlanir: risk >= 0.40 -> INCELEME/BLOK
+# (decision_policy.py). Bu, standart 0.5 esiginden daha faithful bir operasyon noktasidir.
+OPERATING_THRESHOLD = 0.40
+
+
+def _binary_metrics(y_true: np.ndarray, proba: np.ndarray, threshold: float = OPERATING_THRESHOLD) -> dict:
+    pred = (proba >= threshold).astype(int)
     tn, fp, fn, tp = confusion_matrix(y_true, pred, labels=[0, 1]).ravel()
     fpr = float(fp / (fp + tn)) if (fp + tn) else 0.0
     return {
-        "prAuc": float(average_precision_score(y_true, proba)),
+        "threshold": threshold,
+        "prAuc": float(average_precision_score(y_true, proba)),  # esikten bagimsiz headline
         "precision": float(precision_score(y_true, pred, zero_division=0)),
         "recall": float(recall_score(y_true, pred, zero_division=0)),
         "f1": float(f1_score(y_true, pred, zero_division=0)),

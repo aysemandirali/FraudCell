@@ -34,9 +34,9 @@ export function Skeleton({
 }
 
 /** Liste yüklenirken gösterilen kart iskeletleri. */
-export function SkeletonList({ rows = 3 }: { rows?: number }) {
+export function SkeletonList({ rows = 3, className }: { rows?: number; className?: string }) {
   return (
-    <div className="space-y-3" role="status" aria-label="Yükleniyor">
+    <div className={cn('space-y-3', className)} role="status" aria-label="Yükleniyor">
       {Array.from({ length: rows }, (_, i) => (
         <div key={i} className="surface-card flex items-center gap-3 p-4">
           <Skeleton className="size-11 rounded-full" />

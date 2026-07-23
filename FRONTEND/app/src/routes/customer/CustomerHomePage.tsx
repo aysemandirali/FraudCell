@@ -40,11 +40,11 @@ export function CustomerHomePage() {
   const secure = pendingCount === 0;
 
   return (
-    <div>
+    <div className="lg:mx-auto lg:max-w-7xl lg:px-6 lg:py-8 xl:px-8">
       {/* Kahraman blok — güvenlik durumu */}
-      <header className="relative overflow-hidden gradient-header text-white">
+      <header className="relative overflow-hidden gradient-header text-white lg:rounded-[1.75rem] lg:shadow-raised">
         <div className="hero-mesh absolute inset-0" aria-hidden />
-        <div className="relative mx-auto max-w-lg px-5 pt-7 pb-9">
+        <div className="relative mx-auto max-w-lg px-5 pt-7 pb-9 lg:max-w-none lg:px-8 lg:pt-8 lg:pb-10">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <p className="text-sm text-white/75">Merhaba</p>
@@ -62,7 +62,7 @@ export function CustomerHomePage() {
           </div>
 
           {/* Güvenlik durumu kartı */}
-          <div className="mt-5 flex items-center gap-4 rounded-card bg-white/12 p-4 ring-1 ring-white/15 backdrop-blur-sm">
+          <div className="mt-5 flex items-center gap-4 rounded-card bg-white/12 p-4 ring-1 ring-white/15 backdrop-blur-sm lg:max-w-2xl lg:p-5">
             <span
               className={`flex size-12 shrink-0 items-center justify-center rounded-full ${
                 secure ? 'bg-success-500/90' : 'bg-tc-500'
@@ -97,8 +97,8 @@ export function CustomerHomePage() {
       </header>
 
       {/* Hızlı aksiyonlar */}
-      <section className="mx-auto -mt-5 max-w-lg px-4" aria-label="Hızlı işlemler">
-        <div className="grid grid-cols-4 gap-2 rounded-card bg-surface p-3 shadow-card">
+      <section className="mx-auto -mt-5 max-w-lg px-4 lg:max-w-6xl lg:px-8" aria-label="Hızlı işlemler">
+        <div className="grid grid-cols-4 gap-2 rounded-card bg-surface p-3 shadow-card lg:px-6 lg:py-4">
           {QUICK_ACTIONS.map(({ to, label, icon: Icon, tint }) => (
             <Link
               key={to}
@@ -115,7 +115,7 @@ export function CustomerHomePage() {
       </section>
 
       {/* Son işlemler */}
-      <section className="mx-auto max-w-lg px-4 py-6" aria-labelledby="recent-title">
+      <section className="mx-auto max-w-lg px-4 py-6 lg:max-w-none lg:px-0 lg:pt-8" aria-labelledby="recent-title">
         <div className="mb-4 flex items-center justify-between gap-4">
           <h2 id="recent-title" className="text-h2 text-ink-900">
             Son işlemler
@@ -128,7 +128,9 @@ export function CustomerHomePage() {
           </Link>
         </div>
 
-        {transactions.isPending ? <SkeletonList rows={3} /> : null}
+        {transactions.isPending ? (
+          <SkeletonList rows={3} className="lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0" />
+        ) : null}
         {transactions.isError ? (
           <ErrorState error={transactions.error} onRetry={() => void transactions.refetch()} />
         ) : null}
@@ -148,7 +150,7 @@ export function CustomerHomePage() {
           />
         ) : null}
 
-        <div className="space-y-2.5">
+        <div className="grid gap-3 lg:grid-cols-2">
           {transactions.data?.items.map((item) => {
             const level = item.displayRiskLevel;
             const tone = riskTone(level);

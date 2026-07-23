@@ -23,6 +23,12 @@ _TRANSACTION_TYPE_KEYS = {
     "CEKIM": "transaction_type_cekim",
 }
 
+# Yeni musteride kisisel gecmis yoktur. Tutari kendisine bolmek her ilk islemi
+# yapay olarak "1x normal" gosteriyor ve PDF'deki zorunlu yuksek-tutarli,
+# yurt-disi ilk islem demosunun en guclu sinyalini siliyordu. 5.000 TRY,
+# cold-start icin acik ve muhafazakar bir operasyonel referanstir.
+_COLD_START_AVERAGE_AMOUNT_TRY = 5_000.0
+
 
 async def build_feature_vector(
     session: AsyncSession,
@@ -71,7 +77,9 @@ async def build_feature_vector(
         if dt.timedelta(0) <= age <= dt.timedelta(hours=24):
             last_24h += 1
 
-    customer_average_amount = sum(amounts) / len(amounts) if amounts else amount
+    customer_average_amount = (
+        sum(amounts) / len(amounts) if amounts else _COLD_START_AVERAGE_AMOUNT_TRY
+    )
     amount_deviation_ratio = amount / customer_average_amount if customer_average_amount > 0 else 1.0
 
     device_age_days = (now - device_seen_at).days if device_seen_at else 0

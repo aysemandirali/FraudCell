@@ -35,7 +35,7 @@ export function CustomerTransactionsPage({ riskLevel }: { riskLevel?: RiskLevel 
   });
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-6">
+    <div className="mx-auto max-w-lg px-4 py-6 lg:max-w-7xl lg:px-6 lg:py-8 xl:px-8">
       <header className="mb-5 flex items-start justify-between gap-4">
         <div>
           <h1 className="text-h1 text-ink-900">İşlemlerim</h1>
@@ -63,7 +63,9 @@ export function CustomerTransactionsPage({ riskLevel }: { riskLevel?: RiskLevel 
         />
       </div>
 
-      {transactions.isPending ? <SkeletonList rows={5} /> : null}
+      {transactions.isPending ? (
+        <SkeletonList rows={5} className="lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0" />
+      ) : null}
       {transactions.isError ? (
         <ErrorState error={transactions.error} onRetry={() => void transactions.refetch()} />
       ) : null}
@@ -88,7 +90,7 @@ export function CustomerTransactionsPage({ riskLevel }: { riskLevel?: RiskLevel 
         />
       ) : null}
 
-      <div className="space-y-3">
+      <div className="grid gap-3 lg:grid-cols-2">
         {transactions.data?.items.map((item) => {
           const level = item.displayRiskLevel;
           const tone = riskTone(level);

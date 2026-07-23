@@ -53,29 +53,29 @@ def latent_fraud_probability(features: dict[str, float], rng: np.random.Generato
     cikabilir. Lojistik link + orta duzey gurultu, sinyalsiz bolgede fraud'u nadir
     tutar (ogrenilebilir), sinirda ise ortusme birakir (durust metrikler).
     """
-    logit = -3.3  # taban: sinyalsiz islemde ~%4
-    logit += 1.3 if features["is_new_device"] >= 1.0 else 0.0
+    logit = -4.3  # taban: sinyalsiz islemde ~%1.3 (gorunmez-fraud kuyrugu kucuk kalsin)
+    logit += 1.6 if features["is_new_device"] >= 1.0 else 0.0
     logit += 0.7 if features["is_night"] >= 1.0 else 0.0
-    logit += 1.0 if features["is_foreign_country"] >= 1.0 else 0.0
-    logit += 0.6 if features["is_new_recipient"] >= 1.0 else 0.0
+    logit += 1.2 if features["is_foreign_country"] >= 1.0 else 0.0
+    logit += 0.55 if features["is_new_recipient"] >= 1.0 else 0.0
 
     ratio = features["amount_deviation_ratio"]
     if ratio >= 6.0:
-        logit += 1.4
+        logit += 1.8
     elif ratio >= 3.0:
-        logit += 0.8
+        logit += 1.0
     elif ratio >= 1.8:
-        logit += 0.3
+        logit += 0.35
 
     if features["transactions_last_10_minutes"] >= 4:
-        logit += 1.2
+        logit += 1.5
     elif features["transactions_last_24_hours"] >= 8:
-        logit += 0.6
+        logit += 0.7
 
     if features["device_age_days"] < 3:
         logit += 0.6
 
-    logit += float(rng.normal(0.0, 0.5))  # irreducible gurultu -> Bayes hatasi > 0
+    logit += float(rng.normal(0.0, 0.35))  # irreducible gurultu -> Bayes hatasi > 0 (ama ranking'i bozacak kadar degil)
     return float(_sigmoid(logit))
 
 
@@ -83,7 +83,7 @@ def _sample_customers(rng: np.random.Generator, n_customers: int) -> list[dict]:
     """Her musteri icin latent fraud egilimi ve davranis parametreleri uretir."""
     customers = []
     for i in range(n_customers):
-        propensity = float(rng.beta(1.5, 6.0))  # cogunlukla dusuk, az sayida yuksek riskli
+        propensity = float(rng.beta(1.6, 5.0))  # cogunlukla dusuk, az sayida yuksek riskli
         customers.append(
             {
                 "customer_id": f"cust-{i:05d}",
@@ -110,27 +110,27 @@ def _archetype_params(customer: dict, archetype: str) -> dict:
         }
     if archetype == "CALINTI_KART":
         return {
-            "p_new_device": 0.65, "p_night": 0.50, "p_foreign": 0.55, "p_new_recipient": 0.62,
-            "dev_center": 5.0, "dev_sigma": 3.0, "spike_chance": 0.0, "spike_range": (0.0, 0.0),
-            "last10_lam": 2.4, "last24_lam": 6.0, "device_age_range": (0, 6), "recipient_age_range": (0, 6),
+            "p_new_device": 0.82, "p_night": 0.55, "p_foreign": 0.62, "p_new_recipient": 0.72,
+            "dev_center": 5.5, "dev_sigma": 3.0, "spike_chance": 0.0, "spike_range": (0.0, 0.0),
+            "last10_lam": 2.6, "last24_lam": 6.5, "device_age_range": (0, 4), "recipient_age_range": (0, 5),
         }
     if archetype == "HESAP_ELE_GECIRME":
         return {
-            "p_new_device": 0.60, "p_night": 0.42, "p_foreign": 0.38, "p_new_recipient": 0.58,
-            "dev_center": 3.2, "dev_sigma": 2.0, "spike_chance": 0.0, "spike_range": (0.0, 0.0),
-            "last10_lam": 1.6, "last24_lam": 5.0, "device_age_range": (0, 20), "recipient_age_range": (0, 15),
+            "p_new_device": 0.78, "p_night": 0.48, "p_foreign": 0.45, "p_new_recipient": 0.68,
+            "dev_center": 3.8, "dev_sigma": 2.0, "spike_chance": 0.0, "spike_range": (0.0, 0.0),
+            "last10_lam": 1.8, "last24_lam": 5.5, "device_age_range": (0, 15), "recipient_age_range": (0, 12),
         }
     if archetype == "PARA_AKLAMA":
         return {
-            "p_new_device": 0.30, "p_night": 0.28, "p_foreign": 0.55, "p_new_recipient": 0.70,
-            "dev_center": 6.0, "dev_sigma": 3.5, "spike_chance": 0.0, "spike_range": (0.0, 0.0),
-            "last10_lam": 0.6, "last24_lam": 4.5, "device_age_range": (20, 400), "recipient_age_range": (0, 8),
+            "p_new_device": 0.40, "p_night": 0.28, "p_foreign": 0.68, "p_new_recipient": 0.80,
+            "dev_center": 7.0, "dev_sigma": 3.5, "spike_chance": 0.0, "spike_range": (0.0, 0.0),
+            "last10_lam": 0.6, "last24_lam": 5.5, "device_age_range": (20, 400), "recipient_age_range": (0, 6),
         }
-    # SUPHELI_DAVRANIS — temiz ile en cok ortusen, en belirsiz arketip
+    # SUPHELI_DAVRANIS — temiz ile en cok ortusen, en belirsiz arketip (bilincli olarak zayif sinyalli)
     return {
-        "p_new_device": 0.38, "p_night": 0.32, "p_foreign": 0.24, "p_new_recipient": 0.48,
-        "dev_center": 2.2, "dev_sigma": 1.5, "spike_chance": 0.05, "spike_range": (2.5, 6.0),
-        "last10_lam": 1.0, "last24_lam": 4.0, "device_age_range": (0, 120), "recipient_age_range": (0, 120),
+        "p_new_device": 0.45, "p_night": 0.34, "p_foreign": 0.26, "p_new_recipient": 0.52,
+        "dev_center": 2.4, "dev_sigma": 1.5, "spike_chance": 0.05, "spike_range": (2.5, 6.0),
+        "last10_lam": 1.1, "last24_lam": 4.2, "device_age_range": (0, 90), "recipient_age_range": (0, 90),
     }
 
 
@@ -197,7 +197,7 @@ def generate_dataset(n_samples: int = 10_000, seed: int = RANDOM_SEED) -> pd.Dat
         date_base = window_start + dt.timedelta(seconds=offset)
 
         # Arketip secimi: musteri egilimi fraud-senaryo olasiligini yukseltir.
-        p_fraud_scenario = float(np.clip(0.02 + 0.60 * customer["propensity"], 0.02, 0.70))
+        p_fraud_scenario = float(np.clip(0.02 + 0.65 * customer["propensity"], 0.02, 0.72))
         if rng.random() < p_fraud_scenario:
             archetype = str(rng.choice(_FRAUD_ARCHETYPES, p=_FRAUD_ARCHETYPE_WEIGHTS))
         else:

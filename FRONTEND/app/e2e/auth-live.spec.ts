@@ -94,15 +94,16 @@ test('new customer can register and complete the live AI transaction flow', asyn
   await page.getByRole('button', { name: 'İşlemi gönder' }).click();
 
   await expect(page).toHaveURL(/\/customer\/transactions\/[0-9A-Z]+$/);
-  await expect(page.getByRole('heading', { name: 'AI değerlendirmesi' })).toBeVisible({
+  await expect(page.getByRole('heading', { name: 'Yapay zekâ değerlendirmesi' })).toBeVisible({
     timeout: 20_000,
   });
   await expect(page.getByText('Islem degerlendirmesi tamamlandi', { exact: true })).toBeVisible();
-  await expect(page.getByText('Geçici blokta')).toBeVisible();
+  await expect(page.getByRole('img', { name: /Risk skoru %\d+, seviye Yüksek/ })).toBeVisible();
+  await expect(page.getByText('İnceleme', { exact: true })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('customer-ai-assessment.png'), fullPage: true });
 
   await page.getByRole('link', { name: 'Ana Sayfa', exact: true }).click();
-  await page.getByRole('link', { name: 'Bildirimler', exact: true }).click();
+  await page.locator('a[href="/customer/notifications"]:visible').first().click();
   await expect(page.getByRole('heading', { name: 'Bildirimler' })).toBeVisible();
   await expect(page.getByText('Islem degerlendirmesi tamamlandi', { exact: true }).first()).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('customer-notifications.png'), fullPage: true });

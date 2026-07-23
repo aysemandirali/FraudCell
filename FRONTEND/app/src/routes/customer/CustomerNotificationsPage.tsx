@@ -22,7 +22,7 @@ export function CustomerNotificationsPage() {
   };
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-6">
+    <div className="mx-auto max-w-lg px-4 py-6 lg:max-w-5xl lg:px-6 lg:py-8 xl:px-8">
       <header className="mb-6 flex items-start justify-between gap-4">
         <div>
           <h1 className="text-h1 text-ink-900">Bildirimler</h1>
@@ -48,7 +48,7 @@ export function CustomerNotificationsPage() {
           description="İşlemlerinle ilgili güncellemeler burada canlı olarak görünecek."
         />
       ) : (
-        <div className="space-y-3">
+        <div className="grid gap-3 lg:grid-cols-2">
           {notifications.data.map((item) => {
             const content = (
               <article
@@ -89,4 +89,3 @@ export function CustomerNotificationsPage() {
     </div>
   );
 }
-
