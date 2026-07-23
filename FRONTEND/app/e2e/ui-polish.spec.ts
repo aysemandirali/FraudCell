@@ -18,6 +18,38 @@ function pageData(items: unknown[]) {
   return { items, page: { nextCursor: null, hasMore: false, limit: 100 } };
 }
 
+async function stubAnonymousBootstrap(page: Page): Promise<void> {
+  await page.route('**/api/v1/auth/refresh', (route) =>
+    route.fulfill({
+      status: 401,
+      json: { success: false, data: null, error: { code: 'REFRESH_TOKEN_INVALID', message: 'Oturum yok', details: null }, meta: { traceId: 'ui-polish', pagination: null, generatedAt: null } },
+    }),
+  );
+}
+
+async function stubCustomerAuth(page: Page): Promise<void> {
+  await stubAnonymousBootstrap(page);
+  await page.route('**/api/v1/auth/customer/otp/challenges', (route) =>
+    route.fulfill({ json: envelope({ challengeId: 'challenge-ui', expiresAt: '2026-07-23T05:00:00Z', maskedGsmNumber: '555 *** ** 12', demoHint: 'Demo kodu: 1234' }) }),
+  );
+  await page.route('**/api/v1/auth/customer/otp/verifications', (route) =>
+    route.fulfill({ json: envelope({ accessToken: 'customer-token', accessTokenExpiresAt: '2026-07-23T05:00:00Z', user: { id: 'customer-1', role: 'CUSTOMER', firstName: 'Ayşe', lastName: 'Mandıralı', gsmNumberMasked: '555 *** ** 12' } }) }),
+  );
+}
+
+async function stubStaffAuth(page: Page, role: 'ANALYST' | 'SUPERVISOR' | 'ADMIN'): Promise<void> {
+  const people = {
+    ANALYST: ['analyst-1', 'Deniz', 'Kaya'],
+    SUPERVISOR: ['supervisor-1', 'Selin', 'Arslan'],
+    ADMIN: ['admin-1', 'Mert', 'Doğan'],
+  } as const;
+  const [id, firstName, lastName] = people[role];
+  await stubAnonymousBootstrap(page);
+  await page.route('**/api/v1/auth/staff/login', (route) =>
+    route.fulfill({ json: envelope({ accessToken: `${role.toLowerCase()}-token`, accessTokenExpiresAt: '2026-07-23T05:00:00Z', user: { id, role, firstName, lastName, specialties: role === 'ANALYST' ? ['CALINTI_KART'] : [], regions: role === 'ANALYST' ? ['MARMARA'] : [] } }) }),
+  );
+}
+
 const transactions = [
   { transactionId: 'trx-1', transactionNo: 'TRX-2026-004281', amount: 24_750, currency: 'TRY', transactionType: 'TRANSFER', assessmentStatus: 'COMPLETED', displayRiskLevel: 'DUSUK', screeningDecision: 'ONAY', controlStatus: 'ONAYLANDI', createdAt: now },
   { transactionId: 'trx-2', transactionNo: 'TRX-2026-004173', amount: 8_490, currency: 'TRY', transactionType: 'ODEME', assessmentStatus: 'COMPLETED', displayRiskLevel: 'ORTA', screeningDecision: 'INCELEME', controlStatus: 'KONTROL_BEKLIYOR', createdAt: '2026-07-22T18:30:00Z' },
@@ -104,6 +136,7 @@ test.beforeAll(async () => {
 
 test('customer dashboard — desktop', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
+  await stubCustomerAuth(page);
   await stubCustomerData(page);
   await loginCustomer(page);
   await expect(page.getByRole('heading', { name: /Merhaba/ })).toBeVisible();
@@ -113,6 +146,7 @@ test('customer dashboard — desktop', async ({ page }) => {
 
 test('customer dashboard — mobile', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
+  await stubCustomerAuth(page);
   await stubCustomerData(page);
   await loginCustomer(page);
   await expect(page.getByRole('heading', { name: /Merhaba/ })).toBeVisible();
@@ -122,6 +156,7 @@ test('customer dashboard — mobile', async ({ page }) => {
 
 test('analyst dashboard', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
+  await stubStaffAuth(page, 'ANALYST');
   await stubCaseData(page);
   await loginStaff(page, 'analist@fraudcell.com');
   await expect(page.getByRole('heading', { name: 'Analist çalışma alanı' })).toBeVisible();
@@ -131,6 +166,7 @@ test('analyst dashboard', async ({ page }) => {
 
 test('supervisor dashboard', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
+  await stubStaffAuth(page, 'SUPERVISOR');
   await stubSupervisorData(page);
   await loginStaff(page, 'supervizor@fraudcell.com');
   await expect(page.getByRole('heading', { name: 'Operasyon kontrol merkezi' })).toBeVisible();
@@ -140,6 +176,7 @@ test('supervisor dashboard', async ({ page }) => {
 
 test('admin dashboard', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
+  await stubStaffAuth(page, 'ADMIN');
   await stubAdminData(page);
   await loginStaff(page, 'admin@fraudcell.com');
   await expect(page.getByRole('heading', { name: 'Ekip ve yetki merkezi' })).toBeVisible();
