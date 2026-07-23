@@ -10,6 +10,7 @@ import { formatDateTime, formatMoney, formatRelative } from '@/shared/lib/format
 import {
   Button,
   ConfirmDialog,
+  CustomerPageHeader,
   EmptyState,
   ErrorState,
   SkeletonList,
@@ -49,13 +50,11 @@ export function CustomerVerificationsPage() {
   const items = verifications.data ?? [];
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-6 lg:max-w-7xl lg:px-6 lg:py-8 xl:px-8">
-      <header className="mb-6">
-        <h1 className="text-h1 text-ink-900">Doğrulamalar</h1>
-        <p className="mt-1 text-body text-ink-500">
-          Güvenlik için sana ait olup olmadığını sorduğumuz işlemler.
-        </p>
-      </header>
+    <div className="mx-auto w-full max-w-[90rem] px-4 py-5 sm:px-6 lg:px-8 lg:py-7">
+      <CustomerPageHeader
+        title="Doğrulamalar"
+        description="Güvenlik için sana ait olup olmadığını sorduğumuz işlemleri buradan yönet."
+      />
 
       {verifications.isPending ? (
         <SkeletonList rows={2} className="lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0" />
@@ -64,14 +63,30 @@ export function CustomerVerificationsPage() {
         <ErrorState error={verifications.error} onRetry={() => void verifications.refetch()} />
       ) : null}
       {!verifications.isPending && !verifications.isError && items.length === 0 ? (
-        <EmptyState
-          illustration="secure"
-          title="Bekleyen doğrulama yok"
-          description="Şüpheli bir işlem tespit edilirse burada onayın istenecek."
-        />
+        <section className="surface-elevated overflow-hidden">
+          <EmptyState
+            illustration="secure"
+            title="Bekleyen doğrulama yok"
+            description="Şüpheli bir işlem tespit edilirse burada onayın istenecek."
+            className="py-10 sm:py-12"
+          />
+          <div className="grid border-t border-ink-100 bg-brand-50/55 sm:grid-cols-3">
+            {[
+              ['01', 'Anlık tarama', 'İşlem sinyalleri risk motorunda değerlendirilir.'],
+              ['02', 'Hızlı bildirim', 'Kontrol gerektiğinde anında haberdar edilirsin.'],
+              ['03', 'Senin kararın', 'Onayın olmadan şüpheli adım tamamlanmaz.'],
+            ].map(([number, title, description]) => (
+              <div key={number} className="border-b border-ink-100 p-4 last:border-b-0 sm:border-r sm:border-b-0 sm:last:border-r-0 sm:p-5">
+                <p className="text-[10px] font-bold tracking-[0.14em] text-brand-500">{number}</p>
+                <p className="mt-2 text-sm font-semibold text-ink-800">{title}</p>
+                <p className="mt-1 text-xs leading-relaxed text-ink-500">{description}</p>
+              </div>
+            ))}
+          </div>
+        </section>
       ) : null}
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,32rem),1fr))] gap-4">
         {items.map((item) => (
           <article
             key={item.verificationId}

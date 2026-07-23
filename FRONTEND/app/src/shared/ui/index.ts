@@ -12,6 +12,7 @@ export { Card, CardHeader, SectionTitle, StatTile, type CardProps } from './Card
 export { Avatar } from './Avatar';
 export { StatusDot } from './StatusDot';
 export { PageHeader, type Breadcrumb } from './PageHeader';
+export { CustomerPageHeader } from './CustomerPageHeader';
 export {
   Field,
   PasswordField,

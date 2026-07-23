@@ -24,7 +24,8 @@ export function ChartFrame({
   className?: string;
 }) {
   return (
-    <section className={cn('surface-panel p-5', className)}>
+    <section className={cn('surface-panel relative overflow-hidden p-5 transition-shadow hover:shadow-card', className)}>
+      <span className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-brand-700 via-aqua-500 to-tc-500" aria-hidden />
       <div className="mb-4 flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="text-h3 text-ink-900">{title}</h3>

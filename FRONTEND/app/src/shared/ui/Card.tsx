@@ -12,7 +12,7 @@ export function Card({ flush = false, rail, className, children, ...rest }: Card
   return (
     <div
       className={cn(
-        'surface-card relative overflow-hidden',
+        'surface-card relative overflow-hidden transition-[box-shadow,transform] duration-200',
         !flush && 'p-4',
         rail && 'pl-5',
         className,
@@ -91,17 +91,21 @@ export function StatTile({
   className?: string;
 }) {
   return (
-    <div className={cn('surface-panel p-4', className)}>
+    <div className={cn('group surface-panel relative min-h-36 overflow-hidden p-5 transition-[box-shadow,transform] hover:-translate-y-0.5 hover:shadow-card', className)}>
+      <span
+        className="absolute top-0 right-0 size-24 translate-x-9 -translate-y-10 rounded-full bg-brand-100/70 transition-transform group-hover:scale-125"
+        aria-hidden
+      />
       <div className="flex items-start justify-between gap-2">
-        <p className="text-sm text-ink-500">{label}</p>
+        <p className="relative text-sm font-medium text-ink-500">{label}</p>
         {icon && (
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-tile bg-brand-50 text-brand-600">
+          <span className="relative flex size-10 shrink-0 items-center justify-center rounded-tile bg-brand-50 text-brand-700 ring-1 ring-brand-100/80">
             {icon}
           </span>
         )}
       </div>
-      <div className="mt-2 flex items-baseline gap-2">
-        <p className={cn('text-2xl font-bold tabular', tone)}>{value}</p>
+      <div className="mt-3 flex items-baseline gap-2">
+        <p className={cn('text-[1.75rem] leading-none font-bold tracking-[-0.035em] tabular', tone)}>{value}</p>
         {trend && (
           <span
             className={cn(

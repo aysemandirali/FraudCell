@@ -9,6 +9,7 @@ dist-ssr
 coverage
 playwright-report
 test-results
+.visual-checks
 *.log
 .DS_Store
 

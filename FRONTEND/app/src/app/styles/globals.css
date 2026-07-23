@@ -22,30 +22,33 @@
 
 @theme {
   /* --- Marka: Paycell mavi–camgöbeği rampası ------------------------------ */
-  --color-brand-950: #052a58;
-  --color-brand-900: #06356e;
-  --color-brand-800: #0a4a94; /* gradient başlangıcı ("Devam Et" sol ucu) */
-  --color-brand-700: #0b5cb0;
-  --color-brand-600: #0f6fd1;
-  --color-brand-500: #1e88e5;
-  --color-brand-400: #4da3ec;
-  --color-brand-300: #8cc4f3;
-  --color-brand-200: #c2e0f9;
-  --color-brand-100: #e3f2fd; /* ikon tile arkaplanı */
-  --color-brand-50: #f2f9ff;
+  --color-brand-950: #001331;
+  --color-brand-900: #001f4d;
+  --color-brand-800: #003b7a;
+  --color-brand-700: #0056a6;
+  --color-brand-600: #0075c9;
+  --color-brand-500: #1598df;
+  --color-brand-400: #45b9ee;
+  --color-brand-300: #83d2f6;
+  --color-brand-200: #b9e7fb;
+  --color-brand-100: #daf3ff;
+  --color-brand-50: #eefaff;
 
   /* --- Aksan: camgöbeği (gradient bitişi, aktif sekme, link) -------------- */
-  --color-aqua-700: #0e8fae;
-  --color-aqua-600: #17a9cc;
-  --color-aqua-500: #2fc4e0; /* gradient bitişi */
-  --color-aqua-400: #45d2ea;
-  --color-aqua-300: #7ee0f2;
-  --color-aqua-100: #d9f4fb;
-  --color-aqua-50: #e8f7fc;
+  --color-aqua-700: #007f9e;
+  --color-aqua-600: #009fbd;
+  --color-aqua-500: #00c2de;
+  --color-aqua-400: #28d5e8;
+  --color-aqua-300: #73e5f0;
+  --color-aqua-100: #d3f7fb;
+  --color-aqua-50: #ebfbfd;
 
   /* --- Turkcell sarısı (logo noktası, Turkcell İşlemleri tile) ------------ */
-  --color-tc-500: #ffc800;
-  --color-tc-100: #fff4cc;
+  --color-tc-600: #e6ad00;
+  --color-tc-500: #ffc900;
+  --color-tc-400: #ffd94a;
+  --color-tc-100: #fff4bd;
+  --color-tc-50: #fffae8;
 
   /* --- Semantik ----------------------------------------------------------- */
   --color-success-700: #2e7d32;
@@ -66,24 +69,27 @@
   --color-critical-100: #fbe3e3;
 
   /* --- Nötr / yüzey -------------------------------------------------------- */
-  --color-ink-900: #14202e; /* başlıklar */
-  --color-ink-700: #34445a; /* gövde metni */
-  --color-ink-500: #5f6b7a; /* ikincil metin */
-  --color-ink-400: #8e98a4; /* placeholder / muted */
-  --color-ink-200: #e4e8ee; /* kenarlık */
-  --color-ink-100: #eef1f5; /* ayırıcı */
-  --color-canvas: #f4f6f9; /* sayfa arkaplanı */
+  --color-ink-900: #071a33;
+  --color-ink-800: #122a45;
+  --color-ink-700: #2f4661;
+  --color-ink-600: #4c6076;
+  --color-ink-500: #697b8f;
+  --color-ink-400: #94a3b3;
+  --color-ink-300: #c4ced8;
+  --color-ink-200: #dce4eb;
+  --color-ink-100: #edf2f6;
+  --color-canvas: #f3f8fc;
   --color-surface: #ffffff; /* kart */
 
   /* --- Konsol yüzeyleri (koyu kenar çubuğu) --------------------------------
      Yalnızca operasyon konsolunun kenar çubuğu ve üst barı bu ölçeği kullanır.
      İçerik alanı açık kalır: grafikler ve risk renkleri açık zeminde okunur. */
-  --color-console-bg: #04204a; /* kenar çubuğu tabanı */
-  --color-console-surface: #0a2f63; /* çubuk içi yükseltilmiş yüzey */
-  --color-console-hover: #0d3a78;
-  --color-console-border: #14406f; /* çubuk içi ayırıcı */
-  --color-console-text: #e8f1fb; /* çubuk üstü birincil metin */
-  --color-console-muted: #8fb2d8; /* çubuk üstü ikincil metin */
+  --color-console-bg: #001739;
+  --color-console-surface: #062653;
+  --color-console-hover: #0a376f;
+  --color-console-border: #153866;
+  --color-console-text: #f2f8ff;
+  --color-console-muted: #99b7d7;
 
   /* --- Grafik serisi -------------------------------------------------------
      Kategorik seriler için. Risk paleti (yeşil→kırmızı) ile KASITLI olarak
@@ -137,20 +143,20 @@
   --text-micro--letter-spacing: 0.01em;
 
   /* --- Yarıçap (ekranlardan ölçüldü) --------------------------------------- */
-  --radius-tile: 0.875rem; /* 14px — ikon kutuları */
-  --radius-card: 1rem; /* 16px — kartlar */
-  --radius-sheet: 1.5rem; /* 24px — bottom sheet */
+  --radius-tile: 1rem;
+  --radius-card: 1.25rem;
+  --radius-sheet: 1.75rem;
   --radius-pill: 9999px; /* butonlar & çipler tam pill */
 
   /* --- Gölge ---------------------------------------------------------------- */
-  --shadow-card: 0 2px 12px rgba(16, 42, 74, 0.06);
-  --shadow-raised: 0 6px 20px rgba(16, 42, 74, 0.1);
-  --shadow-nav: 0 -2px 16px rgba(16, 42, 74, 0.08);
-  --shadow-fab: 0 4px 16px rgba(10, 74, 148, 0.35);
+  --shadow-card: 0 10px 30px -18px rgba(0, 31, 77, 0.28), 0 2px 8px rgba(0, 31, 77, 0.05);
+  --shadow-raised: 0 22px 48px -22px rgba(0, 49, 111, 0.35), 0 8px 20px rgba(0, 31, 77, 0.08);
+  --shadow-nav: 0 14px 40px rgba(0, 31, 77, 0.16);
+  --shadow-fab: 0 10px 28px rgba(255, 201, 0, 0.38);
   /* Modal, drawer, dropdown — sayfadan kopan katman. */
   --shadow-overlay: 0 24px 48px -12px rgba(5, 42, 88, 0.28);
   /* Kenarlık yerine kullanılan 1px iç çizgi; kartı büyütmez. */
-  --shadow-hairline: inset 0 0 0 1px rgba(16, 42, 74, 0.07);
+  --shadow-hairline: inset 0 0 0 1px rgba(0, 67, 132, 0.09);
 
   /* --- Animasyon ------------------------------------------------------------ */
   --animate-shimmer: shimmer 1.6s linear infinite;
@@ -238,6 +244,11 @@
 
   body {
     background-color: var(--color-canvas);
+    background-image:
+      radial-gradient(circle at 6% -10%, rgba(0, 194, 222, 0.1), transparent 30rem),
+      radial-gradient(circle at 100% 12%, rgba(255, 201, 0, 0.065), transparent 26rem),
+      linear-gradient(180deg, #f8fbfe 0%, var(--color-canvas) 22rem);
+    background-attachment: fixed;
     color: var(--color-ink-900);
     font-family: var(--font-sans);
     /* cv02–cv04: tek katlı a/g/l — Inter'i Paycell'in geometrik grotesk'ine
@@ -251,8 +262,8 @@
 
   /* Klavye kullanıcısı için görünür odak halkası; fare tıklamasında gizli. */
   :focus-visible {
-    outline: 2px solid var(--color-brand-600);
-    outline-offset: 2px;
+    outline: 3px solid color-mix(in srgb, var(--color-brand-500) 78%, white);
+    outline-offset: 3px;
     border-radius: 4px;
   }
 
@@ -284,22 +295,30 @@
   }
 }
 
+::selection {
+  background: var(--color-tc-500);
+  color: var(--color-brand-950);
+}
+
 /* ==========================================================================
    Yardımcı sınıflar — tasarımda tekrar eden yüzeyler
    ========================================================================== */
 
 @utility gradient-brand {
-  /* Birincil CTA: "Devam Et", "Hesap Ekle" */
-  background-image: linear-gradient(90deg, var(--color-brand-800) 0%, var(--color-aqua-500) 100%);
+  background-image: linear-gradient(105deg, var(--color-brand-800) 0%, var(--color-brand-600) 52%, var(--color-aqua-500) 100%);
+}
+
+@utility gradient-action {
+  background-image: linear-gradient(105deg, var(--color-tc-500) 0%, #ffe06a 100%);
 }
 
 @utility gradient-header {
   /* Ana sayfa üst bloğu: sol üst koyu mavi → sağ alt camgöbeği */
   background-image: linear-gradient(
     135deg,
-    var(--color-brand-900) 0%,
-    var(--color-brand-700) 45%,
-    var(--color-aqua-500) 100%
+    var(--color-brand-950) 0%,
+    var(--color-brand-800) 52%,
+    var(--color-aqua-600) 100%
   );
 }
 
@@ -307,22 +326,25 @@
   /* Giriş/karşılama ekranı tam sayfa arkaplanı */
   background-image: linear-gradient(
     160deg,
-    var(--color-brand-900) 0%,
-    var(--color-brand-700) 40%,
-    var(--color-aqua-500) 100%
+    var(--color-brand-950) 0%,
+    var(--color-brand-800) 54%,
+    var(--color-aqua-600) 100%
   );
 }
 
 @utility gradient-console {
   /* Operasyon konsolu kenar çubuğu — hero gradientinin koyu, sakin akrabası.
      Kokpit hissi verir ama içerik alanı açık kaldığı için göz yorulmaz. */
-  background-image: linear-gradient(180deg, var(--color-console-bg) 0%, #061a3c 100%);
+  background-image:
+    radial-gradient(circle at 18% 8%, rgba(0, 194, 222, 0.17), transparent 18rem),
+    linear-gradient(180deg, var(--color-console-bg) 0%, #000d25 100%);
 }
 
 @utility surface-card {
   background-color: var(--color-surface);
   border-radius: var(--radius-card);
-  box-shadow: var(--shadow-card);
+  box-shadow: 0 16px 38px -28px rgba(0, 31, 77, 0.38), 0 2px 8px rgba(0, 31, 77, 0.035);
+  border: 1px solid rgba(0, 86, 166, 0.085);
 }
 
 @utility surface-panel {
@@ -330,7 +352,23 @@
      Yan yana dizilen panellerde 1px kenarlıkların çift görünmesini önler. */
   background-color: var(--color-surface);
   border-radius: var(--radius-card);
-  box-shadow: var(--shadow-hairline);
+  box-shadow: var(--shadow-hairline), 0 16px 34px -30px rgba(0, 31, 77, 0.3);
+  border: 1px solid rgba(0, 86, 166, 0.07);
+}
+
+@utility surface-elevated {
+  background-color: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(0, 86, 166, 0.1);
+  border-radius: 1.5rem;
+  box-shadow: 0 24px 54px -34px rgba(0, 31, 77, 0.46), 0 3px 10px rgba(0, 31, 77, 0.04);
+  backdrop-filter: blur(20px);
+}
+
+@utility canvas-grid {
+  background-image:
+    linear-gradient(rgba(0, 86, 166, 0.024) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 86, 166, 0.024) 1px, transparent 1px);
+  background-size: 32px 32px;
 }
 
 @utility text-gradient-brand {
@@ -343,8 +381,22 @@
   /* Gradient hero'nun üzerine binen yumuşak ışık — düz gradienti "basılı"
      görünmekten çıkarır. Referans ekranlardaki derinlik hissi buradan gelir. */
   background-image:
-    radial-gradient(60% 80% at 85% 5%, rgba(47, 196, 224, 0.45) 0%, transparent 60%),
-    radial-gradient(50% 70% at 5% 95%, rgba(255, 200, 0, 0.16) 0%, transparent 65%);
+    radial-gradient(64% 82% at 88% 3%, rgba(0, 194, 222, 0.5) 0%, transparent 62%),
+    radial-gradient(50% 70% at 5% 95%, rgba(255, 201, 0, 0.2) 0%, transparent 65%);
+}
+
+@utility brand-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.055) 1px, transparent 1px);
+  background-size: 36px 36px;
+}
+
+@utility glass-card {
+  background: color-mix(in srgb, white 88%, transparent);
+  border: 1px solid rgba(255, 255, 255, 0.74);
+  box-shadow: var(--shadow-raised);
+  backdrop-filter: blur(18px);
 }
 
 @utility focus-ring {

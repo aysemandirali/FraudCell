@@ -9,7 +9,7 @@ import { fromStaffLogin, startSession } from '@/features/authentication/session'
 import { HOME_BY_ROLE } from '@/app/router/guards';
 import { messageFor } from '@/shared/api/errors';
 import { Banner, Button, Field, PasswordField } from '@/shared/ui';
-import { AuthScaffold } from './AuthScaffold';
+import { AuthFlow, AuthScaffold } from './AuthScaffold';
 
 const schema = z.object({
   email: z.string().trim().email('Geçerli bir e-posta adresi gir.'),
@@ -49,17 +49,14 @@ export function StaffLoginPage({ redirectTo }: { redirectTo?: string }) {
 
   return (
     <AuthScaffold backTo="/auth">
-      <section className="w-full max-w-md" aria-labelledby="staff-login-title">
-        <div className="mb-6 text-center">
-          <span className="mx-auto flex size-14 items-center justify-center rounded-tile bg-brand-100 text-brand-700">
-            <BriefcaseBusiness className="size-7" aria-hidden />
-          </span>
-          <h1 id="staff-login-title" className="mt-4 text-h1 text-ink-900">
-            Personel girişi
-          </h1>
-        </div>
+      <AuthFlow
+        titleId="staff-login-title"
+        icon={<BriefcaseBusiness className="size-6 sm:size-7" aria-hidden />}
+        title="Personel girişi"
+        description="Kurumsal e-posta adresinle güvenli şekilde devam et."
+      >
 
-        <form onSubmit={onSubmit} className="surface-card space-y-4 p-5 sm:p-6" noValidate>
+        <form onSubmit={onSubmit} className="surface-card space-y-4 p-4 sm:p-6" noValidate>
           {requestError ? <Banner tone="danger">{requestError}</Banner> : null}
 
           <Field
@@ -82,7 +79,7 @@ export function StaffLoginPage({ redirectTo }: { redirectTo?: string }) {
             Giriş yap
           </Button>
         </form>
-      </section>
+      </AuthFlow>
     </AuthScaffold>
   );
 }

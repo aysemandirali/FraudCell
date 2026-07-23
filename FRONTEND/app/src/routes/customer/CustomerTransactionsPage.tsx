@@ -13,6 +13,7 @@ import { formatDateTime, formatMoney } from '@/shared/lib/format';
 import { DISPLAY_RISK_LABEL, riskTone } from '@/shared/lib/risk';
 import {
   Button,
+  CustomerPageHeader,
   EmptyState,
   ErrorState,
   FilterChips,
@@ -35,22 +36,20 @@ export function CustomerTransactionsPage({ riskLevel }: { riskLevel?: RiskLevel 
   });
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-6 lg:max-w-7xl lg:px-6 lg:py-8 xl:px-8">
-      <header className="mb-5 flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-h1 text-ink-900">İşlemlerim</h1>
-          <p className="mt-1 text-body text-ink-500">
-            Risk değerlendirmelerini ve kontrol durumlarını izle.
-          </p>
-        </div>
-        <Link to="/customer/transactions/new">
-          <Button size="sm" aria-label="Yeni işlem" leadingIcon={<Plus className="size-4" />}>
-            Yeni
-          </Button>
-        </Link>
-      </header>
+    <div className="mx-auto w-full max-w-[90rem] px-4 py-5 sm:px-6 lg:px-8 lg:py-7">
+      <CustomerPageHeader
+        title="İşlemlerim"
+        description="Risk değerlendirmelerini ve kontrol durumlarını tek akışta izle."
+        actions={
+          <Link to="/customer/transactions/new">
+            <Button size="sm" aria-label="Yeni işlem" leadingIcon={<Plus className="size-4" />}>
+              Yeni işlem
+            </Button>
+          </Link>
+        }
+      />
 
-      <div className="mb-5">
+      <div className="surface-elevated mb-5 p-2.5 sm:p-3">
         <FilterChips
           options={RISK_OPTIONS}
           value={riskLevel}
@@ -90,7 +89,7 @@ export function CustomerTransactionsPage({ riskLevel }: { riskLevel?: RiskLevel 
         />
       ) : null}
 
-      <div className="grid gap-3 lg:grid-cols-2">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,32rem),1fr))] gap-3">
         {transactions.data?.items.map((item) => {
           const level = item.displayRiskLevel;
           const tone = riskTone(level);
@@ -99,7 +98,7 @@ export function CustomerTransactionsPage({ riskLevel }: { riskLevel?: RiskLevel 
               key={item.transactionId}
               to="/customer/transactions/$transactionId"
               params={{ transactionId: item.transactionId }}
-              className="surface-card relative flex min-h-28 items-center overflow-hidden p-4 transition-shadow hover:shadow-raised"
+              className="surface-card relative flex min-h-28 items-center overflow-hidden p-4 transition-[box-shadow,transform] hover:-translate-y-0.5 hover:shadow-raised sm:p-5"
             >
               <span className={`absolute inset-y-0 left-0 w-1 ${tone.rail}`} aria-hidden />
               <div className="min-w-0 flex-1 pl-1">

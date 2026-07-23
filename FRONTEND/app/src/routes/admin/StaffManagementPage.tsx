@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
-import { Pencil, Plus } from 'lucide-react';
+import { CircleUserRound, Pencil, Plus, ShieldCheck, UserCheck, Users } from 'lucide-react';
 import {
   createStaff,
   getStaffReferences,
@@ -24,6 +24,8 @@ import {
   PageHeader,
   PasswordField,
   Sheet,
+  SkeletonCards,
+  StatTile,
   ToneBadge,
   useToast,
 } from '@/shared/ui';
@@ -53,6 +55,12 @@ export function StaffManagementPage() {
   const [values, setValues] = useState<StaffFormValues>(EMPTY_FORM);
   const staff = useQuery({ queryKey: queryKeys.staff.list, queryFn: () => listStaff(100) });
   const references = useQuery({ queryKey: ['staff', 'references'], queryFn: getStaffReferences });
+  const staffItems = staff.data?.items ?? [];
+  const activeCount = staffItems.filter((person) => person.isActive).length;
+  const analystCount = staffItems.filter((person) => person.role === 'ANALYST').length;
+  const assignableCount = staffItems.filter(
+    (person) => person.role === 'ANALYST' && person.isActive && person.assignmentEnabled,
+  ).length;
   const save = useMutation({
     mutationFn: async () => {
       if (editing) return updateStaffFully(editing, values);
@@ -206,8 +214,8 @@ export function StaffManagementPage() {
   return (
     <div>
       <PageHeader
-        title="Personel yönetimi"
-        description="Roller, uzmanlıklar ve atama uygunluğu."
+        title="Ekip ve yetki merkezi"
+        description="Personel rollerini, uzmanlıklarını ve operasyona katılım durumunu tek yerden yönet."
         actions={
           <Button leadingIcon={<Plus className="size-4" />} onClick={openCreate}>
             Personel ekle
@@ -215,11 +223,22 @@ export function StaffManagementPage() {
         }
       />
 
+      {staff.isPending ? (
+        <div className="mb-5"><SkeletonCards count={4} /></div>
+      ) : !staff.isError ? (
+        <section className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="Personel özeti">
+          <StatTile label="Toplam personel" value={staffItems.length} hint="Kayıtlı ekip üyesi" icon={<Users className="size-5" />} />
+          <StatTile label="Aktif hesap" value={activeCount} hint="Sisteme erişebilir" icon={<UserCheck className="size-5" />} />
+          <StatTile label="Analist" value={analystCount} hint="İnceleme ekibi" icon={<CircleUserRound className="size-5" />} />
+          <StatTile label="Atamaya açık" value={assignableCount} hint="Aktif analist kapasitesi" icon={<ShieldCheck className="size-5" />} />
+        </section>
+      ) : null}
+
       {staff.isError ? (
         <ErrorState error={staff.error} onRetry={() => void staff.refetch()} />
       ) : (
         <DataTable
-          data={staff.data?.items ?? []}
+          data={staffItems}
           columns={columns}
           isLoading={staff.isPending}
           rowKey={(row) => row.id}

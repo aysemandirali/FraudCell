@@ -4,7 +4,7 @@ import { CheckCheck, ChevronRight } from 'lucide-react';
 import type { LiveNotification } from '@/features/notifications/model';
 import { queryKeys } from '@/shared/api/query-keys';
 import { formatRelative } from '@/shared/lib/format';
-import { Button, EmptyState } from '@/shared/ui';
+import { Button, CustomerPageHeader, EmptyState } from '@/shared/ui';
 
 export function CustomerNotificationsPage() {
   const queryClient = useQueryClient();
@@ -22,13 +22,11 @@ export function CustomerNotificationsPage() {
   };
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-6 lg:max-w-5xl lg:px-6 lg:py-8 xl:px-8">
-      <header className="mb-6 flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-h1 text-ink-900">Bildirimler</h1>
-          <p className="mt-1 text-body text-ink-500">Bu oturumdaki güvenlik güncellemeleri.</p>
-        </div>
-        {notifications.data.length > 0 ? (
+    <div className="mx-auto w-full max-w-[90rem] px-4 py-5 sm:px-6 lg:px-8 lg:py-7">
+      <CustomerPageHeader
+        title="Bildirimler"
+        description="Bu oturumdaki işlem ve güvenlik güncellemelerini takip et."
+        actions={notifications.data.length > 0 ? (
           <Button
             size="sm"
             variant="ghost"
@@ -39,16 +37,18 @@ export function CustomerNotificationsPage() {
             Okundu
           </Button>
         ) : null}
-      </header>
+      />
 
       {notifications.data.length === 0 ? (
-        <EmptyState
-          illustration="inbox"
-          title="Yeni bildirim yok"
-          description="İşlemlerinle ilgili güncellemeler burada canlı olarak görünecek."
-        />
+        <div className="surface-elevated">
+          <EmptyState
+            illustration="inbox"
+            title="Yeni bildirim yok"
+            description="İşlemlerinle ilgili güncellemeler burada canlı olarak görünecek."
+          />
+        </div>
       ) : (
-        <div className="grid gap-3 lg:grid-cols-2">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,32rem),1fr))] gap-3">
           {notifications.data.map((item) => {
             const content = (
               <article

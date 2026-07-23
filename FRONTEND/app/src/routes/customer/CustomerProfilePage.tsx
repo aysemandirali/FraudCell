@@ -10,6 +10,7 @@ import { formatDateTime, fullName } from '@/shared/lib/format';
 import {
   Avatar,
   Button,
+  CustomerPageHeader,
   EmptyState,
   ErrorState,
   SkeletonList,
@@ -35,15 +36,16 @@ export function CustomerProfilePage() {
   const displayName = fullName(user.firstName, user.lastName) || 'FraudCell müşterisi';
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-6 lg:max-w-7xl lg:px-6 lg:py-8 xl:px-8">
-      <header className="mb-6">
-        <h1 className="text-h1 text-ink-900">Profil ve güvenlik</h1>
-      </header>
+    <div className="mx-auto w-full max-w-[90rem] px-4 py-5 sm:px-6 lg:px-8 lg:py-7">
+      <CustomerPageHeader
+        title="Profil ve güvenlik"
+        description="Hesap bilgilerini ve oturum açılmış cihazlarını güvenle yönet."
+      />
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(18rem,0.75fr)_minmax(0,1.5fr)] lg:items-start">
+      <div className="grid gap-6 lg:grid-cols-[minmax(20rem,.8fr)_minmax(0,1.55fr)] lg:items-start">
         <div className="contents lg:block">
         <section
-          className="order-1 surface-card p-4 lg:p-5"
+          className="order-1 surface-elevated overflow-hidden p-5 lg:p-6"
           aria-labelledby="profile-title"
         >
           <div className="flex items-center gap-3">
@@ -58,15 +60,27 @@ export function CustomerProfilePage() {
               {ROLE_LABEL[user.role]}
             </ToneBadge>
           </div>
+          <dl className="mt-6 grid grid-cols-2 gap-3 border-t border-ink-100 pt-5">
+            <div className="rounded-[1rem] bg-brand-50 p-3.5">
+              <dt className="text-[11px] text-ink-500">Hesap durumu</dt>
+              <dd className="mt-1 text-sm font-semibold text-success-700">Korumada</dd>
+            </div>
+            <div className="rounded-[1rem] bg-brand-50 p-3.5">
+              <dt className="text-[11px] text-ink-500">Aktif cihaz</dt>
+              <dd className="mt-1 text-sm font-semibold tabular text-brand-900">
+                {sessions.isPending ? '—' : sessions.data?.length ?? 0}
+              </dd>
+            </div>
+          </dl>
         </section>
 
-          <section className="order-3 mt-7 lg:mt-6">
+          <section className="order-3 mt-4">
             <button
               type="button"
               onClick={() => {
                 void logout().then(() => navigate({ to: '/auth', replace: true }));
               }}
-              className="flex w-full items-center justify-center gap-2 rounded-pill border border-danger-500/40 bg-white py-3 text-sm font-semibold text-danger-500 transition-colors hover:bg-danger-100"
+              className="flex w-full items-center justify-center gap-2 rounded-[1rem] border border-danger-500/25 bg-white/80 py-3 text-sm font-semibold text-danger-600 shadow-[0_10px_24px_-22px_rgba(198,40,40,.7)] transition-colors hover:bg-danger-100"
             >
               <LogOut className="size-4" aria-hidden />
               Çıkış yap
@@ -78,9 +92,11 @@ export function CustomerProfilePage() {
           className="order-2 mt-7 lg:mt-0"
           aria-labelledby="sessions-title"
         >
-          <h2 id="sessions-title" className="mb-3 text-h2 text-ink-800">
-            Aktif cihazlar
-          </h2>
+          <div className="mb-4">
+            <p className="text-[10px] font-bold tracking-[0.14em] text-brand-600 uppercase">Oturum güvenliği</p>
+            <h2 id="sessions-title" className="mt-1 text-h2 text-ink-800">Aktif cihazlar</h2>
+            <p className="mt-1 text-sm text-ink-500">Tanımadığın bir cihazın oturumunu tek dokunuşla kapat.</p>
+          </div>
           {sessions.isPending ? <SkeletonList rows={2} /> : null}
           {sessions.isError ? (
             <ErrorState error={sessions.error} onRetry={() => void sessions.refetch()} />
@@ -90,7 +106,7 @@ export function CustomerProfilePage() {
           ) : null}
           <div className="space-y-3">
             {sessions.data?.map((session) => (
-              <article key={session.id} className="surface-card flex items-start gap-3 p-4">
+              <article key={session.id} className="surface-card flex items-start gap-3 p-4 sm:p-5">
                 <span className="mt-0.5 text-ink-400">
                   {session.userAgent?.toLocaleLowerCase('tr-TR').includes('mobile') ? (
                     <Smartphone className="size-5" aria-hidden />

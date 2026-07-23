@@ -5,18 +5,15 @@ import { cn } from '@/shared/lib/cn';
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'onBrand';
 type Size = 'sm' | 'md' | 'lg';
 
-/**
- * Paycell butonları tam pill. Birincil CTA mavi→camgöbeği gradient,
- * ikincil beyaz zemin üzerinde mavi kenarlık.
- */
+/** Turkcell eylem hiyerarşisi: sarı birincil, mavi ikincil, tam pill form. */
 const VARIANTS: Record<Variant, string> = {
-  primary: 'gradient-brand text-white shadow-raised hover:brightness-105 active:brightness-95',
+  primary:
+    'gradient-action text-brand-950 shadow-[0_10px_26px_-12px_rgba(255,201,0,.75)] hover:brightness-105 active:brightness-95',
   secondary:
-    'bg-white text-brand-700 border border-brand-700 hover:bg-brand-50 active:bg-brand-100',
+    'bg-white text-brand-800 border border-brand-200 shadow-card hover:border-brand-400 hover:bg-brand-50 active:bg-brand-100',
   ghost: 'bg-transparent text-brand-700 hover:bg-brand-50 active:bg-brand-100',
   danger: 'bg-danger-500 text-white hover:bg-danger-700 active:brightness-95',
-  // Gradient başlığın üzerinde duran buton — beyaz zemin, koyu mavi metin.
-  onBrand: 'bg-white text-brand-800 shadow-raised hover:bg-brand-50 active:bg-brand-100',
+  onBrand: 'gradient-action text-brand-950 shadow-raised hover:brightness-105 active:brightness-95',
 };
 
 const SIZES: Record<Size, string> = {
@@ -59,7 +56,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       aria-busy={loading || undefined}
       className={cn(
         'inline-flex items-center justify-center rounded-pill font-semibold',
-        'transition-[filter,background-color,box-shadow] duration-150',
+        'transition-[filter,background-color,box-shadow,transform] duration-150 hover:-translate-y-0.5 active:translate-y-0',
         // Devre dışı hâli tasarımda düz gri dolgu + gri metin.
         'disabled:pointer-events-none disabled:bg-none disabled:bg-ink-100',
         'disabled:text-ink-400 disabled:shadow-none disabled:border-transparent',

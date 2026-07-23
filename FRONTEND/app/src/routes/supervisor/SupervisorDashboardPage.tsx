@@ -7,6 +7,7 @@ import {
   Clock3,
   FolderKanban,
   Handshake,
+  ListChecks,
 } from 'lucide-react';
 import {
   getAiCategoryAccuracy,
@@ -106,7 +107,28 @@ export function SupervisorDashboardPage() {
 
   return (
     <div>
-      <PageHeader title="Operasyon panosu" description="Açık vaka yükü, SLA ve model görünümü." />
+      <PageHeader
+        title="Operasyon kontrol merkezi"
+        description="Açık vaka yükünü, SLA sağlığını ve model performansını tek bakışta izle."
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <Link
+              to="/supervisor/queue"
+              search={{ queueType: 'QUEUED' }}
+              className="inline-flex items-center gap-2 rounded-pill border border-brand-100 bg-white px-4 py-2.5 text-sm font-semibold text-brand-800 shadow-card transition-colors hover:bg-brand-50"
+            >
+              <ListChecks className="size-4" /> Atama kuyruğu
+            </Link>
+            <Link
+              to="/supervisor/cases"
+              search={{}}
+              className="inline-flex items-center gap-2 rounded-pill bg-brand-950 px-4 py-2.5 text-sm font-semibold text-white shadow-card transition-colors hover:bg-brand-800"
+            >
+              Vakaları aç <ArrowRight className="size-4" />
+            </Link>
+          </div>
+        }
+      />
 
       {/* KPI satırı */}
       {cases.isError ? (
@@ -189,7 +211,7 @@ export function SupervisorDashboardPage() {
       </div>
 
       {/* AI model kartı */}
-      <section className="mt-6 surface-panel p-5">
+      <section className="mt-6 surface-elevated p-5 sm:p-6">
         <div className="flex items-center gap-2">
           <span className="flex size-8 items-center justify-center rounded-tile bg-brand-100 text-brand-700">
             <BrainCircuit className="size-4.5" aria-hidden />
@@ -247,7 +269,7 @@ export function SupervisorDashboardPage() {
             Tüm vakalar <ArrowRight className="size-4" aria-hidden />
           </Link>
         </div>
-        <div className="grid gap-3 lg:grid-cols-2">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,28rem),1fr))] gap-3">
           {openCases.slice(0, 6).map((riskCase) => {
             const tone = riskTone(riskCase.effectiveRisk.riskLevel);
             return (

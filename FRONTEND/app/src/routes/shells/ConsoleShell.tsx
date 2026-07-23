@@ -7,11 +7,11 @@ import {
   Bell,
   ClipboardList,
   FolderKanban,
-  Gavel,
   LayoutDashboard,
   ListChecks,
   LogOut,
   Menu,
+  RadioTower,
   ScrollText,
   Trophy,
   Users,
@@ -95,11 +95,11 @@ function NavLinks({
   return (
     <nav
       aria-label="Konsol gezinme"
-      className="flex-1 space-y-6 overflow-y-auto px-3 py-4 scroll-slim"
+      className="flex-1 space-y-7 overflow-y-auto px-3 py-5 scroll-slim"
     >
       {groups.map((group) => (
         <div key={group.heading}>
-          <p className="px-3 pb-1.5 text-micro font-semibold tracking-wide text-console-muted/80 uppercase">
+          <p className="px-3 pb-2 text-[10px] font-bold tracking-[0.18em] text-console-muted/65 uppercase">
             {group.heading}
           </p>
           <ul className="space-y-0.5">
@@ -113,22 +113,22 @@ function NavLinks({
                     onClick={onNavigate}
                     aria-current={active ? 'page' : undefined}
                     className={cn(
-                      'group relative flex items-center gap-3 rounded-tile px-3 py-2.5 text-sm font-medium transition-colors',
+                      'group relative flex items-center gap-3 rounded-tile px-3 py-3 text-sm font-semibold transition-all',
                       active
-                        ? 'bg-white/10 text-white'
-                        : 'text-console-muted hover:bg-white/5 hover:text-console-text',
+                        ? 'border border-white/10 bg-white/9 text-white shadow-[0_14px_28px_-20px_rgba(0,0,0,.8)]'
+                        : 'border border-transparent text-console-muted hover:bg-white/5 hover:text-console-text',
                     )}
                   >
                     {active && (
                       <span
-                        className="absolute inset-y-1.5 left-0 w-1 rounded-r-full bg-tc-500"
+                        className="absolute inset-y-2 left-0 w-1 rounded-r-full bg-tc-500"
                         aria-hidden
                       />
                     )}
                     <Icon
                       className={cn(
                         'size-5 shrink-0 transition-colors',
-                        active ? 'text-white' : 'text-console-muted group-hover:text-console-text',
+                        active ? 'text-tc-500' : 'text-console-muted group-hover:text-console-text',
                       )}
                     />
                     {item.label}
@@ -160,14 +160,17 @@ function SidebarInner({
 }) {
   return (
     <div className="on-console flex h-full flex-col gradient-console text-console-text">
-      <div className="flex h-16 shrink-0 items-center gap-2 border-b border-console-border px-5">
+      <div className="flex h-[4.75rem] shrink-0 items-center justify-between gap-2 border-b border-console-border px-5">
         <LogoWordmark tone="white" />
+        <span className="rounded-pill border border-white/10 bg-white/5 px-2 py-1 text-[8px] font-bold tracking-[0.15em] text-aqua-300 uppercase">
+          Ops
+        </span>
       </div>
 
       <NavLinks groups={groups} pathname={pathname} onNavigate={onNavigate} />
 
       <div className="shrink-0 border-t border-console-border p-3">
-        <div className="flex items-center gap-3 rounded-tile bg-white/5 px-3 py-2.5">
+        <div className="flex items-center gap-3 rounded-card border border-white/8 bg-white/6 px-3 py-3">
           <Avatar name={name} size="sm" onDark />
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold text-console-text">{name}</p>
@@ -218,9 +221,9 @@ export function ConsoleShell() {
     groups.flatMap((g) => g.items).find((item) => isActive(pathname, item))?.label ?? 'Konsol';
 
   return (
-    <div className="flex min-h-dvh bg-canvas">
+    <div className="relative flex min-h-dvh overflow-x-clip bg-canvas">
       {/* Masaüstü sabit kenar çubuğu */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 lg:block">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-[17rem] border-r border-console-border lg:block">
         <SidebarInner
           groups={groups}
           pathname={pathname}
@@ -259,9 +262,11 @@ export function ConsoleShell() {
         </Dialog.Portal>
       </Dialog.Root>
 
-      <div className="flex min-w-0 flex-1 flex-col lg:pl-64">
+      <div className="relative flex min-w-0 flex-1 flex-col lg:pl-[17rem]">
+        <div className="pointer-events-none fixed top-20 right-0 h-72 w-[38rem] bg-[radial-gradient(circle_at_top_right,rgba(0,194,222,.1),transparent_65%)]" aria-hidden />
+        <div className="pointer-events-none fixed inset-0 canvas-grid opacity-50 lg:left-[17rem]" aria-hidden />
         {/* Bağlam çubuğu */}
-        <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-ink-100 bg-surface/85 px-4 backdrop-blur-md sm:px-6">
+        <header className="sticky top-0 z-20 flex h-[4.75rem] items-center gap-3 border-b border-brand-100/70 bg-white/88 px-4 shadow-[0_8px_28px_-24px_rgba(0,31,77,.45)] backdrop-blur-2xl sm:px-6 lg:px-8">
           <button
             type="button"
             onClick={() => setDrawerOpen(true)}
@@ -272,8 +277,13 @@ export function ConsoleShell() {
           </button>
 
           <div className="flex min-w-0 flex-1 items-center gap-3">
-            <Gavel className="hidden size-5 text-brand-700 sm:block" aria-hidden />
-            <span className="truncate text-h3 text-ink-900">{activeLabel}</span>
+            <span className="hidden size-10 items-center justify-center rounded-tile bg-brand-950 text-tc-500 shadow-card sm:flex">
+              <RadioTower className="size-5" aria-hidden />
+            </span>
+            <div className="min-w-0">
+              <p className="hidden text-[9px] font-bold tracking-[0.16em] text-brand-600 uppercase sm:block">Canlı operasyon merkezi</p>
+              <span className="block truncate text-h3 text-brand-950">{activeLabel}</span>
+            </div>
           </div>
 
           <StatusDot tone="live" label="Canlı" className="hidden sm:inline-flex" />
@@ -319,8 +329,8 @@ export function ConsoleShell() {
           </Dropdown.Root>
         </header>
 
-        <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">
-          <div className="mx-auto w-full max-w-7xl">
+        <main className="relative min-w-0 flex-1 px-4 py-5 sm:px-6 lg:px-8 lg:py-7">
+          <div className="mx-auto w-full max-w-[90rem]">
             <Outlet />
           </div>
         </main>

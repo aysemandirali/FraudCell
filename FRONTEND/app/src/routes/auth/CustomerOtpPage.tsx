@@ -11,7 +11,7 @@ import type { RequestOtpChallengeResponse } from '@/shared/api/contract';
 import { messageFor } from '@/shared/api/errors';
 import { Banner, Button, Field } from '@/shared/ui';
 import { OtpInput } from '@/shared/ui/OtpInput';
-import { AuthScaffold } from './AuthScaffold';
+import { AuthFlow, AuthScaffold } from './AuthScaffold';
 
 const phoneSchema = z.object({
   gsmNumber: z
@@ -127,23 +127,25 @@ export function CustomerOtpPage({
 
   return (
     <AuthScaffold backTo="/auth">
-      <section className="w-full max-w-md" aria-labelledby="customer-auth-title">
-        <div className="mb-6 text-center">
-          <span className="mx-auto flex size-14 items-center justify-center rounded-tile bg-brand-100 text-brand-700">
-            {challenge ? <ShieldCheck className="size-7" /> : <Phone className="size-7" />}
-          </span>
-          <h1 id="customer-auth-title" className="mt-4 text-h1 text-ink-900">
-            {mode === 'register' ? 'Müşteri kaydı' : 'Müşteri girişi'}
-          </h1>
-          <p className="mt-2 text-sm text-ink-500">
-            {challenge
-              ? `${challenge.maskedGsmNumber} numarasına gönderilen kodu gir.`
-              : 'Cep telefonu numaranla devam et.'}
-          </p>
-        </div>
+      <AuthFlow
+        titleId="customer-auth-title"
+        icon={
+          challenge ? (
+            <ShieldCheck className="size-6 sm:size-7" aria-hidden />
+          ) : (
+            <Phone className="size-6 sm:size-7" aria-hidden />
+          )
+        }
+        title={mode === 'register' ? 'Müşteri kaydı' : 'Müşteri girişi'}
+        description={
+          challenge
+            ? `${challenge.maskedGsmNumber} numarasına gönderilen kodu gir.`
+            : 'Cep telefonu numaranla devam et.'
+        }
+      >
 
         {!challenge ? (
-          <form onSubmit={submitPhone} className="surface-card space-y-4 p-5 sm:p-6" noValidate>
+          <form onSubmit={submitPhone} className="surface-card space-y-4 p-4 sm:p-6" noValidate>
             {requestError ? <Banner tone="danger">{requestError}</Banner> : null}
             <Field
               label="Cep telefonu"
@@ -178,7 +180,7 @@ export function CustomerOtpPage({
             </Button>
           </form>
         ) : (
-          <form onSubmit={submitCode} className="surface-card space-y-5 p-5 sm:p-6">
+          <form onSubmit={submitCode} className="surface-card space-y-5 p-4 sm:p-6">
             {requestError ? <Banner tone="danger">{requestError}</Banner> : null}
             {challenge.demoHint ? <Banner tone="info">{challenge.demoHint}</Banner> : null}
 
@@ -211,7 +213,7 @@ export function CustomerOtpPage({
             </button>
           </form>
         )}
-      </section>
+      </AuthFlow>
     </AuthScaffold>
   );
 }
