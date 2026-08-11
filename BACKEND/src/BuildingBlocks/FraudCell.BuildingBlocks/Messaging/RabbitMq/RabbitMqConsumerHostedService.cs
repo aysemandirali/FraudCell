@@ -76,7 +76,10 @@ public abstract class RabbitMqConsumerHostedService(
 
         await channel.BasicConsumeAsync(QueueName, autoAck: false, consumer, stoppingToken);
 
-        logger.LogInformation("Consumer started for queue {QueueName}.", QueueName);
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation("Consumer started for queue {QueueName}.", QueueName);
+        }
 
         // Kanal acik oldugu surece bekle; kanal/baglanti koparsa disariya cikilir
         // ve ExecuteAsync yeniden baglanmayi dener.
@@ -127,9 +130,12 @@ public abstract class RabbitMqConsumerHostedService(
                 body: args.Body,
                 cancellationToken: cancellationToken);
 
-            logger.LogInformation(
-                "Message for {QueueName} scheduled for retry #{RetryCount} via {RetryQueue}.",
-                QueueName, retryCount + 1, retryQueue);
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(
+                    "Message for {QueueName} scheduled for retry #{RetryCount} via {RetryQueue}.",
+                    QueueName, retryCount + 1, retryQueue);
+            }
         }
         else
         {

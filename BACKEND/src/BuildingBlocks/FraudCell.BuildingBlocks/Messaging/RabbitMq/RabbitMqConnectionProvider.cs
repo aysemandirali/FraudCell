@@ -73,7 +73,10 @@ public sealed class RabbitMqConnectionProvider : IAsyncDisposable
             }
 
             _connection = await _factory.CreateConnectionAsync(cancellationToken);
-            _logger.LogInformation("Connected to RabbitMQ at {Host}:{Port}", _options.Host, _options.Port);
+            if (_logger.IsEnabled(LogLevel.Information))
+            {
+                _logger.LogInformation("Connected to RabbitMQ at {Host}:{Port}", _options.Host, _options.Port);
+            }
             return _connection;
         }
         finally

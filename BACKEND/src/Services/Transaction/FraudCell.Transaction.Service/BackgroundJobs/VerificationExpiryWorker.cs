@@ -61,7 +61,10 @@ public sealed class VerificationExpiryWorker(IServiceScopeFactory scopeFactory, 
         if (expired.Count > 0)
         {
             await db.SaveChangesAsync(cancellationToken);
-            logger.LogInformation("Expired {Count} pending customer verification(s).", expired.Count);
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("Expired {Count} pending customer verification(s).", expired.Count);
+            }
         }
     }
 }

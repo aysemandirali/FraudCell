@@ -37,7 +37,10 @@ public sealed class RsaPublicKeyProvider
 
             var rsa = RSA.Create();
             rsa.ImportFromPem(File.ReadAllText(path));
-            logger.LogInformation("Loaded RSA public key from {Path}.", path);
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("Loaded RSA public key from {Path}.", path);
+            }
             return rsa;
         });
     }

@@ -75,9 +75,12 @@ public sealed class OtpService(
 
         // SMS entegrasyonu case kapsami disinda; demo/dogrulama amacli loglanir.
         // Kodun kendisi yalnizca demo modda ve sabit oldugu icin log'a yazilmaz.
-        logger.LogInformation(
-            "OTP challenge issued for gsm ending {GsmSuffix} (purpose {Purpose}), expires at {ExpiresAt}.",
-            gsmNumber[^4..], purpose, challenge.ExpiresAt);
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation(
+                "OTP challenge issued for gsm ending {GsmSuffix} (purpose {Purpose}), expires at {ExpiresAt}.",
+                gsmNumber[^4..], purpose, challenge.ExpiresAt);
+        }
 
         var demoHint = environment.IsDevelopment() && _options.UseFixedDemoCode
             ? $"Demo ortaminda OTP: {_options.FixedDemoCode}"

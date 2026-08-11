@@ -59,9 +59,12 @@ public sealed class RabbitMqEventPublisher(
             body: body,
             cancellationToken: cancellationToken);
 
-        logger.LogDebug(
-            "Published {EventType} {EventId} with routing key {RoutingKey}",
-            message.EventType, message.Id, message.RoutingKey);
+        if (logger.IsEnabled(LogLevel.Debug))
+        {
+            logger.LogDebug(
+                "Published {EventType} {EventId} with routing key {RoutingKey}",
+                message.EventType, message.Id, message.RoutingKey);
+        }
     }
 
     private static ReadOnlyMemory<byte> BuildEnvelopeBytes(OutboxMessage message)

@@ -50,7 +50,10 @@ public sealed class RsaKeyProvider
         {
             var rsa = RSA.Create();
             rsa.ImportFromPem(File.ReadAllText(options.PrivateKeyPath));
-            logger.LogInformation("Loaded RSA signing key from {Path}.", options.PrivateKeyPath);
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("Loaded RSA signing key from {Path}.", options.PrivateKeyPath);
+            }
             return rsa;
         }
 
@@ -98,7 +101,10 @@ public sealed class RsaKeyProvider
                 File.WriteAllText(publicKeyPath, rsa.ExportSubjectPublicKeyInfoPem());
             }
 
-            logger.LogInformation("Persisted generated development RSA key pair to {PrivateKeyPath}.", privateKeyPath);
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("Persisted generated development RSA key pair to {PrivateKeyPath}.", privateKeyPath);
+            }
         }
         catch (IOException ex)
         {

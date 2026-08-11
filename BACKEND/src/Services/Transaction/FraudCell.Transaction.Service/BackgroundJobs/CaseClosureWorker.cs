@@ -68,7 +68,10 @@ public sealed class CaseClosureWorker(IServiceScopeFactory scopeFactory, IClock 
         if (dueCases.Count > 0)
         {
             await db.SaveChangesAsync(cancellationToken);
-            logger.LogInformation("Closed {Count} case(s) after 48h retention.", dueCases.Count);
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("Closed {Count} case(s) after 48h retention.", dueCases.Count);
+            }
         }
 
         await dbTransaction.CommitAsync(cancellationToken);

@@ -60,7 +60,7 @@ public sealed class ExpiredCleanupWorker(
             .Where(m => m.ProcessedAt < retentionCutoff)
             .ExecuteDeleteAsync(cancellationToken);
 
-        if (otpDeleted + refreshDeleted + inboxDeleted > 0)
+        if (otpDeleted + refreshDeleted + inboxDeleted > 0 && logger.IsEnabled(LogLevel.Information))
         {
             logger.LogInformation(
                 "Cleanup removed {OtpDeleted} OTP challenge(s), {RefreshDeleted} refresh session(s), {InboxDeleted} inbox record(s).",

@@ -32,7 +32,10 @@ public sealed class OutboxPublisherService(
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        logger.LogInformation("Outbox publisher started (poll interval {IntervalMs} ms).", _options.PollIntervalMilliseconds);
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation("Outbox publisher started (poll interval {IntervalMs} ms).", _options.PollIntervalMilliseconds);
+        }
 
         // Uygulama acilisinda migration/seed ile yarismamak icin kisa bir gecikme.
         await Task.Delay(TimeSpan.FromSeconds(_options.StartupDelaySeconds), stoppingToken);
@@ -113,7 +116,7 @@ public sealed class OutboxPublisherService(
         await dbContext.SaveChangesAsync(cancellationToken);
 
         var publishedCount = leased.Count(m => m.PublishedAt is not null);
-        if (publishedCount > 0)
+        if (publishedCount > 0 && logger.IsEnabled(LogLevel.Information))
         {
             logger.LogInformation("Published {PublishedCount} outbox message(s).", publishedCount);
         }

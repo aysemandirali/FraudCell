@@ -50,7 +50,10 @@ public sealed class ExceptionHandlingMiddleware(
         catch (OperationCanceledException) when (context.RequestAborted.IsCancellationRequested)
         {
             // Istemci baglantiyi kapatti; bu bir hata degil, loglamaya deger bilgi degil.
-            logger.LogDebug("Request aborted by client: {Method} {Path}", context.Request.Method, context.Request.Path);
+            if (logger.IsEnabled(LogLevel.Debug))
+            {
+                logger.LogDebug("Request aborted by client: {Method} {Path}", context.Request.Method, context.Request.Path);
+            }
         }
         catch (Exception ex)
         {
