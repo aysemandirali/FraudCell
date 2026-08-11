@@ -91,6 +91,11 @@ public static class VerifyOtpChallengeEndpoint
                 throw AppException.Validation("Kayit icin musteri ad/soyad bilgisi zorunludur.");
             }
 
+            if (PlainTextGuard.ContainsHtml(request.Customer.FirstName) || PlainTextGuard.ContainsHtml(request.Customer.LastName))
+            {
+                throw AppException.Validation("Ad/soyad HTML icermemelidir.");
+            }
+
             var now = clock.UtcNow;
             user = new ApplicationUser
             {

@@ -195,6 +195,11 @@ public sealed class RiskCase
     {
         RequireInReview();
 
+        if (note is not null && PlainTextGuard.ContainsHtml(note))
+        {
+            throw AppException.DomainRule(ErrorCodes.ValidationFailed, "Karar notu HTML icermemelidir.");
+        }
+
         FinalDecision = Domain.FinalDecision.APPROVE;
         DecisionNote = note;
         DecidedBy = decidedBy;
@@ -214,6 +219,11 @@ public sealed class RiskCase
         if (string.IsNullOrWhiteSpace(note))
         {
             throw AppException.DomainRule(ErrorCodes.DecisionNoteRequired, "Blok kararinda karar notu zorunludur.");
+        }
+
+        if (PlainTextGuard.ContainsHtml(note))
+        {
+            throw AppException.DomainRule(ErrorCodes.ValidationFailed, "Karar notu HTML icermemelidir.");
         }
 
         FinalDecision = Domain.FinalDecision.BLOCK;
