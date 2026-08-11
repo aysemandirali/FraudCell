@@ -2,8 +2,8 @@ namespace FraudCell.Identity.Service.Domain;
 
 public enum OtpPurpose
 {
-    CustomerRegister,
-    CustomerLogin,
+    CUSTOMER_REGISTER,
+    CUSTOMER_LOGIN,
 }
 
 public enum OtpStatus

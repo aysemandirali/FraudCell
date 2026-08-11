@@ -290,13 +290,7 @@ export const TRANSITION_SOURCE_LABEL: Record<TransitionSource, string> = {
 
 /* -------------------------------------------------------------------- OTP -- */
 
-/**
- * OtpPurpose C# tarafında PascalCase üyelerdir (`CustomerRegister`) ve
- * JsonStringEnumConverter naming policy'siz çalıştığı için wire'da da
- * PascalCase görünür. Diğer enum'lardaki SCREAMING_SNAKE kalıbı burada geçerli
- * DEĞİLDİR; yazım birebir korunmalıdır.
- */
-export const OTP_PURPOSES = ['CustomerRegister', 'CustomerLogin'] as const;
+export const OTP_PURPOSES = ['CUSTOMER_REGISTER', 'CUSTOMER_LOGIN'] as const;
 export type OtpPurpose = (typeof OTP_PURPOSES)[number];
 
 /* ------------------------------------------------------------- Denetim -- */

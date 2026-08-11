@@ -740,14 +740,20 @@ Transaction Service içinde bir Assessment Watchdog bulunur.
 Varsayılan assessment bekleme süresi:
 
 ```text
-2 saniye
+8 saniye
 ```
 
 Bu değer environment variable ile değiştirilebilir:
 
 ```text
-AI_ASSESSMENT_DEADLINE_SECONDS=2
+AI_ASSESSMENT_DEADLINE_SECONDS=8
 ```
+
+Not: İlk değer (2 saniye) RabbitMQ + AI Service round-trip'inin gözlemlenen
+gerçek süresinden (~4 saniye) kısaydı; watchdog neredeyse her zaman AI
+sonucundan önce devreye giriyordu. 8 saniye, gözlemlenen süreye pay
+bırakarak "happy path"in (risk skoru zamanında gelip otomatik karar
+üretmesi) gerçekten çalışmasını sağlar.
 
 Assessment Watchdog aşağıdaki kayıtları arar:
 

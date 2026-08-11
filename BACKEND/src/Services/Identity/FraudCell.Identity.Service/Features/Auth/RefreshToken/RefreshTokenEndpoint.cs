@@ -95,7 +95,7 @@ public static class RefreshTokenEndpoint
         var role = roles.FirstOrDefault() ?? throw new InvalidOperationException($"User {refreshedUser.Id} has no role.");
 
         var (specialties, regions) = await sessionIssuer.GetStaffClaimsAsync(refreshedUser, cancellationToken);
-        var access = jwtTokenService.GenerateAccessToken(refreshedUser, role, specialties, regions);
+        var access = jwtTokenService.GenerateAccessToken(refreshedUser, role, specialties, regions, result.NewSession!.Id);
 
         RefreshCookie.Append(httpContext.Response, result.NewRawToken!, jwtOptions);
         httpContext.Response.Headers.CacheControl = "no-store";

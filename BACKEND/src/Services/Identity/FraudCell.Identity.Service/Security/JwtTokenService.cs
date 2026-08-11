@@ -22,17 +22,23 @@ public sealed class JwtTokenService(RsaKeyProvider keyProvider, IOptions<JwtSign
         ApplicationUser user,
         string role,
         IReadOnlyCollection<string> specialties,
-        IReadOnlyCollection<string> regions)
+        IReadOnlyCollection<string> regions,
+        string sessionId)
     {
         var now = clock.UtcNow;
         var expiresAt = now.AddMinutes(_options.AccessTokenLifetimeMinutes);
         var jti = Ulid.NewUlid().ToString();
+        var issuedAtUnix = now.ToUnixTimeSeconds().ToString(System.Globalization.CultureInfo.InvariantCulture);
 
         var claims = new List<Claim>
         {
             new(JwtRegisteredClaimNames.Sub, user.Id),
+            new("user_id", user.Id),
             new(JwtRegisteredClaimNames.Jti, jti),
             new("role", role),
+            new("sid", sessionId),
+            new(JwtRegisteredClaimNames.Iat, issuedAtUnix, ClaimValueTypes.Integer64),
+            new("auth_time", issuedAtUnix, ClaimValueTypes.Integer64),
         };
 
         claims.AddRange(specialties.Select(specialty => new Claim("specialties", specialty)));

@@ -131,6 +131,8 @@ internal static class GatewayMiddlewareExtensions
                 headers["X-Frame-Options"] = "DENY";
                 headers["Referrer-Policy"] = "no-referrer";
                 headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
+                headers["Cross-Origin-Opener-Policy"] = "same-origin";
+                headers["Cross-Origin-Resource-Policy"] = "same-origin";
                 headers["Content-Security-Policy"] =
                     "default-src 'self'; " +
                     "script-src 'self'; " +

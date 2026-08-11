@@ -77,7 +77,7 @@ public static class VerifyOtpChallengeEndpoint
         var gsmNumber = challenge.GsmNumber;
         var user = await db.Users.SingleOrDefaultAsync(u => u.GsmNumber == gsmNumber, cancellationToken);
 
-        if (challenge.Purpose == OtpPurpose.CustomerRegister)
+        if (challenge.Purpose == OtpPurpose.CUSTOMER_REGISTER)
         {
             if (user is not null)
             {
@@ -133,8 +133,6 @@ public static class VerifyOtpChallengeEndpoint
             throw AppException.Forbidden("Hesap pasif durumda.");
         }
 
-        var profile = await db.CustomerProfiles.AsNoTracking().SingleOrDefaultAsync(p => p.UserId == user.Id, cancellationToken);
-
         user.LastLoginAt = clock.UtcNow;
         user.Version++;
 
@@ -143,6 +141,10 @@ public static class VerifyOtpChallengeEndpoint
 
         auditWriter.Record(user.Id, RoleNames.Customer, AuditActions.LoginSucceeded, AuditResult.Success, "user", user.Id, ip);
         await db.SaveChangesAsync(cancellationToken);
+
+        // Kayittan hemen sonra profil ayni transaction icinde eklendigi icin,
+        // ad/soyadin yanitta dolu donmesi adina SaveChanges sonrasi okunur.
+        var profile = await db.CustomerProfiles.AsNoTracking().SingleOrDefaultAsync(p => p.UserId == user.Id, cancellationToken);
 
         RefreshCookie.Append(httpContext.Response, session.RefreshToken, jwtOptions);
         httpContext.Response.Headers.CacheControl = "no-store";

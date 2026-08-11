@@ -433,7 +433,7 @@ export interface components {
         /** @enum {unknown} */
         OperationRegion: "MARMARA" | "EGE" | "AKDENIZ" | "IC_ANADOLU" | "KARADENIZ" | "DOGU_ANADOLU" | "GUNEYDOGU_ANADOLU" | "YURT_DISI";
         /** @enum {unknown} */
-        OtpPurpose: "CustomerRegister" | "CustomerLogin";
+        OtpPurpose: "CUSTOMER_REGISTER" | "CUSTOMER_LOGIN";
         PageInfo: {
             hasMore: boolean;
             /** Format: int32 */

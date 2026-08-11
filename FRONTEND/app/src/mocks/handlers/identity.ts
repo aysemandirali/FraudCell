@@ -107,7 +107,7 @@ export const identityHandlers = [
 
     let user = findByGsm(challenge.gsmNumber);
 
-    if (challenge.purpose === 'CustomerRegister') {
+    if (challenge.purpose === 'CUSTOMER_REGISTER') {
       if (user) {
         return fail(409, 'GSM_NUMBER_ALREADY_REGISTERED', 'Bu numara zaten kayıtlı.');
       }

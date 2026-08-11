@@ -82,7 +82,7 @@ export function CustomerOtpPage({
     try {
       const response = await requestOtp({
         gsmNumber: values.gsmNumber,
-        purpose: mode === 'register' ? 'CustomerRegister' : 'CustomerLogin',
+        purpose: mode === 'register' ? 'CUSTOMER_REGISTER' : 'CUSTOMER_LOGIN',
       });
       setPhoneValues(values);
       setChallenge(response);

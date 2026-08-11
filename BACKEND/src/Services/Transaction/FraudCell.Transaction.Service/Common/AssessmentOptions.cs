@@ -5,7 +5,7 @@ public sealed class AssessmentOptions
 {
     public const string SectionName = "Assessment";
 
-    public int DeadlineSeconds { get; set; } = 2;
+    public int DeadlineSeconds { get; set; } = 8;
 
     /// <summary>Dokuman §22 muşteri dogrulama timeout'u.</summary>
     public int CustomerVerificationTimeoutMinutes { get; set; } = 10;

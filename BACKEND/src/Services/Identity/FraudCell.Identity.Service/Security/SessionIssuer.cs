@@ -32,8 +32,8 @@ public sealed class SessionIssuer(
 
         var (specialties, regions) = await GetStaffClaimsAsync(user, cancellationToken);
 
-        var access = jwtTokenService.GenerateAccessToken(user, role, specialties, regions);
-        var (refreshRaw, _) = await refreshTokenService.IssueAsync(user.Id, ip, userAgent, existingFamilyId, parentSessionId: null, cancellationToken);
+        var (refreshRaw, session) = await refreshTokenService.IssueAsync(user.Id, ip, userAgent, existingFamilyId, parentSessionId: null, cancellationToken);
+        var access = jwtTokenService.GenerateAccessToken(user, role, specialties, regions, session.Id);
 
         return new IssuedSession(access.Token, access.ExpiresAt, refreshRaw, role, specialties, regions);
     }
